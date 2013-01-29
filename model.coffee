@@ -1,3 +1,5 @@
+# Project Riemann data model
+
 # The state of a given game is represented by a document in the games
 # collection:
 # Game {
@@ -9,6 +11,11 @@
 #     isX: Boolean
 #   }]
 # }
+# 
+# Squares are numbered as: 1  2  3
+#                          4  5  6
+#                          7  8  9
+
 root = exports ? this
 root.Games = new Meteor.Collection("games")
 
