@@ -3,7 +3,7 @@
  <tileset firstgid="1" name="tileset" tilewidth="128" tileheight="128">
   <image source="tileset.png" width="256" height="256"/>
  </tileset>
- <layer name="Tile Layer 1" width="3" height="3">
+ <layer name="mainLayer" width="3" height="3">
   <data encoding="base64">
    AgAAAAIAAAACAAAAAgAAAAIAAAACAAAAAgAAAAIAAAACAAAA
   </data>

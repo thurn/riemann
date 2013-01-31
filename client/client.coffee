@@ -10,6 +10,22 @@ gameResources = [{
   src: "/tilemaps/tilemap.tmx"
 }]
 
+# Tile square size in pixels
+TILE_SIZE = 128
+
+PlayScreen = me.ScreenObject.extend
+  handleClick_: (tile) ->
+    console.dir(tile.pos)
+
+  onResetEvent: ->
+    me.levelDirector.loadLevel("tilemap")
+    this.mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
+    for column in [0..2]
+      for row in [0..2]
+        tile = this.mainLayer_.getTile(column * TILE_SIZE, row * TILE_SIZE)
+        me.input.registerMouseEvent('mousedown', tile,
+            _.bind(this.handleClick_, this, tile))
+
 onload = ->
   initialized = me.video.init('jsapp', 384, 384)
   if not initialized
@@ -23,9 +39,5 @@ onload = ->
 loaded = ->
   me.state.set(me.state.PLAY, new PlayScreen())
   me.state.change(me.state.PLAY);
-
-PlayScreen = me.ScreenObject.extend
-  onResetEvent: ->
-    me.levelDirector.loadLevel("tilemap")
 
 Meteor.startup(onload)

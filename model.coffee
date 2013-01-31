@@ -7,14 +7,11 @@
 #   oPlayer: UserID
 #   currentPlayer: UserID
 #   moves: [{
-#     squareNumber: Number
-#     isX: Boolean
+#     squareRow: Number - Square row number (numbered from zero)
+#     squareColumn: Number - Square column number (numbered from zero)
+#     isX: Boolean - True if square is "X", false if "O"
 #   }]
 # }
-# 
-# Squares are numbered as: 1  2  3
-#                          4  5  6
-#                          7  8  9
 
 root = exports ? this
 root.Games = new Meteor.Collection("games")
