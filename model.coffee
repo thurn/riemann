@@ -13,8 +13,7 @@
 #   }]
 # }
 
-root = exports ? this
-root.Games = new Meteor.Collection("games")
+noughts.Games = new Meteor.Collection("games")
 
 checkLoggedIn = ->
   if not this.userId
@@ -25,7 +24,7 @@ Meteor.methods
   # the document ID of the newly created game.
   createGame: (opponentId) ->
     checkLoggedIn()
-    Games.insert
+    noughts.Games.insert
       xPlayer: this.userId
       oPlayer: opponentId
       currentPlayer: xPlayer

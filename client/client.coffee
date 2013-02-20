@@ -52,7 +52,11 @@ onload = ->
   me.loader.preload(gameResources)
 
 loaded = ->
-  me.state.set(me.state.PLAY, new PlayScreen())
-  me.state.change(me.state.PLAY);
+  FB.getLoginStatus (response) ->
+    if response.status == 'connected'
+      me.state.set(me.state.PLAY, new PlayScreen())
+      me.state.change(me.state.PLAY);
+    else
+      $(".fb-login-button").show();
 
 Meteor.startup(onload)

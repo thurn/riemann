@@ -5,12 +5,21 @@
 </head>
 
 <body>
-	<div id="info" style="width: 640px;">
-		<div id="jsapp">
-			<font color="#FFFFFF" 
+  {{> facebook}}
+  <div id="info" style="width: 640px;">
+    <div id="jsapp">
+      <font color="#FFFFFF" 
           style="position: absolute; font-size: 10px; font-family: Courier New">
-				<span id="framecounter">(0/0 fps)</span>
+        <span id="framecounter">(0/0 fps)</span>
 			</font>
 		</div>
 	</div>
+  <a href="#" class="noughtsSendInvite">Invite somebody to play!</a>
+  <div class="fb-login-button" style="display: none;"></div>
 </body>
+
+<template name="facebook">
+  {{#constant}}
+    <div id="fb-root"></div>
+  {{/constant}}
+</template>

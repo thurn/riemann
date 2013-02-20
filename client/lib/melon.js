@@ -9343,9 +9343,9 @@ var me = me || {};
 	 * @private
 	 * @constructor
 	 */
-	CollisionTiledLayer = Object.extend({
+	me.CollisionTiledLayer = Object.extend({
 		// constructor
-		init: function CollisionTiledLayer(realwidth, realheight) {
+		init: function(realwidth, realheight) {
 			this.realwidth = realwidth;
 			this.realheight = realheight;
 
@@ -9993,7 +9993,7 @@ var me = me || {};
 
 			// return a fake collision layer if not found
 			if ((name.toLowerCase().contains(me.LevelConstants.COLLISION_MAP)) && (layer == null)) {
-				layer = new CollisionTiledLayer(me.game.currentLevel.realwidth,	me.game.currentLevel.realheight);
+				layer = new me.CollisionTiledLayer(me.game.currentLevel.realwidth,	me.game.currentLevel.realheight);
 			}
 
 			return layer;
