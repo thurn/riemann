@@ -1,0 +1,16 @@
+#noughtsAppContainer {
+  width: 384px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 25px;
+}
+
+.appTitle {
+  text-align: center;
+}
+
+.noughtsNewGame {
+  position: relative;
+  top: 320px;
+  left: 130px;
+}

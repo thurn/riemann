@@ -1,16 +1,7 @@
-inviteCallback = (response) ->
-  console.log response
-
-facebookLoaded = () ->
-  $('.noughtsSendInvite').live('click', onInviteClick)
-
-onInviteClick = () ->
-  FB.ui {
-      method: 'apprequests',
-      title: 'Noughts Invitation',
-      message: 'Would you like to play Noughts?',
-      filters: ['app_non_users', 'app_users']
-    }, inviteCallback
+getOathUrl = ->
+  return """https://www.facebook.com/dialog/oauth/?
+    client_id=#{noughts.Config.appId}
+    &redirect_uri=#{noughts.Config.appUrl}"""
 
 Template.facebook.created = ->
   window.fbAsyncInit = ->
@@ -25,9 +16,7 @@ Template.facebook.created = ->
 
     FB.getLoginStatus (response) ->
       if response.status != 'connected'
-        $(".fb-login-button").show();
-      else
-        facebookLoaded()
+        top.location.href = getOathUrl() # Redirect to facebook login
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')
