@@ -1,7 +1,7 @@
 getOathUrl = ->
-  return """https://www.facebook.com/dialog/oauth/?
+  return "https://www.facebook.com/dialog/oauth/?
     client_id=#{noughts.Config.appId}
-    &redirect_uri=#{noughts.Config.appUrl}"""
+    &redirect_uri=#{noughts.Config.appUrl}"
 
 Template.facebook.created = ->
   window.fbAsyncInit = ->
@@ -17,6 +17,14 @@ Template.facebook.created = ->
     FB.getLoginStatus (response) ->
       if response.status != 'connected'
         top.location.href = getOathUrl() # Redirect to facebook login
+      else
+        noughts.userId = response.authResponse.userID
+        #state = Random.id()
+        #meteorOathUrl = "/_oauth/facebook?close&state=#{state}
+            #&access_token=#{FB.getAccessToken()}"
+        #$.get meteorOathUrl, (one, two) ->
+          #Meteor.call 'login', {oauth: {state: state}}, (e, result) ->
+            #console.log result
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')

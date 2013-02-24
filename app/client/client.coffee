@@ -26,7 +26,7 @@ gameResources = [{
 TILE_SIZE = 128
 SPRITE_Z_INDEX = 2
 
-showInviteDialog = (inviteCallback) -> FB.ui
+showInviteDialog = (gameId, inviteCallback) -> FB.ui
   method: 'apprequests',
   title: 'Select an opponent',
   filters: ['app_non_users', 'app_users'],
@@ -35,18 +35,22 @@ showInviteDialog = (inviteCallback) -> FB.ui
 
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
-    image = if this.xPlayerTurn_ then this.xImg_ else this.oImg_
-    sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
-    me.game.add(sprite, SPRITE_Z_INDEX)
-    me.game.sort()
-    this.xPlayerTurn_ = not this.xPlayerTurn_
+    game = noughts.Games.findOne {_id: this.gameId_}
+    if game and game.currentPlayer == noughts.userId
+      isXPlayer = game.currentPlayer == game.xPlayer
+      image = if isXPlayer then this.xImg_ else this.oImg_
+      sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
+      me.game.add(sprite, SPRITE_Z_INDEX)
+      me.game.sort()
+      noughts.Games.update {_id: this.gameId_},
+        $set:
+          currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
 
-  onResetEvent: (requestId, invitedUser) ->
-    console.log(invitedUser)
+  onResetEvent: (gameId) ->
     $('.noughtsNewGame').css('visibility', 'hidden')
     this.xImg_ = me.loader.getImage('x')
     this.oImg_ = me.loader.getImage('o')
-    this.xPlayerTurn_ = true # x player goes first
+    this.gameId = gameId
 
     me.levelDirector.loadLevel('tilemap')
     mainLayer = me.game.currentLevel.getLayerByName('mainLayer')
@@ -56,16 +60,24 @@ PlayScreen = me.ScreenObject.extend
         me.input.registerMouseEvent('mousedown', tile,
             _.bind(this.handleClick_, this, tile))
 
+handleNewGameClick = ->
+  gameId = noughts.Games.insert
+    xPlayer: noughts.userId
+    currentPlayer: noughts.userId
+  showInviteDialog gameId, (inviteResponse) ->
+    if inviteResponse
+      invitedUser = inviteResponse.to[0]
+      noughts.Games.update {_id: gameId}
+        $set:
+          oPlayer: invitedUser
+          requestId: inviteResponse.request
+      me.state.change(me.state.PLAY, gameId)
+
 TitleScreen = me.ScreenObject.extend
   init: ->
     this.parent(true)
     this.title_ = me.loader.getImage('title')
-    $('.noughtsNewGame').on 'click', ->
-      showInviteDialog (inviteResponse) ->
-        if inviteResponse
-          requestId = inviteResponse.request
-          invitedUser = inviteResponse.to[0]
-          me.state.change(me.state.PLAY, requestId, invitedUser)
+    $('.noughtsNewGame').on('click', handleNewGameClick)
 
   draw: (context) ->
     $('.noughtsNewGame').css('visibility', 'visible')
