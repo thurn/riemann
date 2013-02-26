@@ -12,7 +12,7 @@ gameResources = [
 TILE_SIZE = 128
 SPRITE_Z_INDEX = 2
 
-showInviteDialog = (gameId, inviteCallback) -> FB.ui
+showInviteDialog = (inviteCallback) -> FB.ui
   method: 'apprequests',
   title: 'Select an opponent',
   filters: ['app_non_users', 'app_users'],
@@ -21,89 +21,105 @@ showInviteDialog = (gameId, inviteCallback) -> FB.ui
 
 PlayScreen = me.ScreenObject.extend
   getTile_: (row, column) ->
-    this.mainLayer_.getTile(column * TILE_SIZE, row * TILE_SIZE)
+    @mainLayer_.getTile(column * TILE_SIZE, row * TILE_SIZE)
 
-  renderGameState_: ->
-    game = noughts.Games.findOne {_id: this.gameId_}
-    for move in game.moves
-      tile = this.getTile_(move.row, move.column)
-      image = if move.isX then this.xImg_ else this.oImg_
-      sprite = new me.SpriteObject(
-          move.column * TILE_SIZE, move.row * TILE_SIZE, image)
-      me.game.add(sprite, SPRITE_Z_INDEX)
-      me.game.sort()
-      me.input.releaseMouseEvent('mousedown', tile)
+  monitorGameState_: ->
+    Meteor.autorun =>
+      game = noughts.Games.findOne {_id: Session.get("gameId")}
+      console.log ">>>>> re-rendering"
+      return if not game
+      for move in game.moves
+        tile = @getTile_(move.row, move.column)
+        image = if move.isX then @xImg_ else @oImg_
+        sprite = new me.SpriteObject(
+            move.column * TILE_SIZE, move.row * TILE_SIZE, image)
+        me.game.add(sprite, SPRITE_Z_INDEX)
+        me.game.sort()
+        me.input.releaseMouseEvent('mousedown', tile)
 
   handleClick_: (tile) ->
-    game = noughts.Games.findOne {_id: this.gameId_}
+    game = noughts.Games.findOne {_id: Session.get("gameId")}
     if game and game.currentPlayer == noughts.userId
       isXPlayer = game.currentPlayer == game.xPlayer
-      image = if isXPlayer then this.xImg_ else this.oImg_
+      image = if isXPlayer then @xImg_ else @oImg_
       sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
       me.game.add(sprite, SPRITE_Z_INDEX)
       me.game.sort()
-      noughts.Games.update {_id: this.gameId_},
+      noughts.Games.update {_id: Session.get("gameId")},
         $set:
           currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
         $push: # melon.js is basically totally insane about .row and .col...
           moves: {row: tile.col, column: tile.row, isX: isXPlayer}
 
-  onResetEvent: (gameId) ->
+  onResetEvent: () ->
     $('.noughtsNewGame').css('visibility', 'hidden')
-    this.xImg_ = me.loader.getImage('x')
-    this.oImg_ = me.loader.getImage('o')
-    this.gameId_ = gameId
+    @xImg_ = me.loader.getImage('x')
+    @oImg_ = me.loader.getImage('o')
 
     me.levelDirector.loadLevel('tilemap')
-    this.mainLayer_ = me.game.currentLevel.getLayerByName('mainLayer')
+    @mainLayer_ = me.game.currentLevel.getLayerByName('mainLayer')
     for column in [0..2]
       for row in [0..2]
-        tile = this.getTile_(row, column)
+        tile = @getTile_(row, column)
         me.input.registerMouseEvent('mousedown', tile,
-            _.bind(this.handleClick_, this, tile))
-    this.renderGameState_()
+            _.bind(@handleClick_, this, tile))
+    @monitorGameState_()
 
 handleNewGameClick = ->
   gameId = noughts.Games.insert
     xPlayer: noughts.userId
     currentPlayer: noughts.userId
     moves: []
-  showInviteDialog gameId, (inviteResponse) ->
-    if inviteResponse
-      invitedUser = inviteResponse.to[0]
-      noughts.Games.update {_id: gameId}
-        $set:
-          oPlayer: invitedUser
-          requestId: inviteResponse.request
-      me.state.change(me.state.PLAY, gameId)
+  showInviteDialog (inviteResponse) ->
+    return if not inviteResponse
+    invitedUser = inviteResponse.to[0]
+    noughts.Games.update {_id: gameId}
+      $set:
+        oPlayer: invitedUser
+        requestId: inviteResponse.request
+    Session.set("gameId", gameId)
+    me.state.change(me.state.PLAY)
 
 TitleScreen = me.ScreenObject.extend
   init: ->
-    this.parent(true)
-    this.title_ = me.loader.getImage('title')
+    @parent(true)
+    @title_ = me.loader.getImage('title')
     $('.noughtsNewGame').on('click', handleNewGameClick)
 
   draw: (context) ->
     $('.noughtsNewGame').css('visibility', 'visible')
-    context.drawImage(this.title_, 0, 0)
+    context.drawImage(@title_, 0, 0)
 
 onload = ->
   initialized = me.video.init('jsapp', 384, 384)
   if not initialized
     alert('Sorry, your browser doesn\'t support HTML 5 canvas!')
     return
-  me.loader.onload = loaded
+  me.loader.onload = noughts.runOnSecondCall
   me.loader.preload(gameResources)
 
-loaded = ->
+Meteor.startup(onload)
+
+# In order to wait for both Meteor and the Facebook SDK, this function
+# does nothing when first called and then proceeds on the second call.
+numCalls = 0
+noughts.runOnSecondCall = ->
+  return numCalls++ if numCalls == 0
   me.state.set(me.state.PLAY, new PlayScreen())
   me.state.set(me.state.MENU, new TitleScreen())
-  requestId = $.url().param('request_ids')?.split(',')[0]
-  if requestId
-    game = noughts.Games.findOne {requestId: requestId}
-    FB.api(requestId, 'delete')
+  requestIds = $.url().param('request_ids')?.split(',')
+  if requestIds
+    for requestId in requestIds
+      fullId = "#{requestId}_#{noughts.userId}"
+      game = noughts.Games.findOne {requestId: requestId}
+      FB.api fullId, 'delete', (response) ->
+        if response != true
+          throw new Error('Request delete failed: ' + response.error.message)
+        if game
+          noughts.Games.update({_id: game._id}, {$unset: {requestId: ''}})
     if game
-      return me.state.change(me.state.PLAY, game._id)
+      # TODO(dthurn) do something smarter with multiple request_ids than loading
+      # the game for the last one.
+      Session.set("gameId", game._id)
+      return me.state.change(me.state.PLAY)
   me.state.change(me.state.MENU)
-
-Meteor.startup(onload)

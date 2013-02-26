@@ -13,18 +13,12 @@ Template.facebook.created = ->
       status: true, # check the login status upon init?
       cookie: true, # set sessions cookies to allow your server to access the session?
       xfbml: true  # parse XFBML tags on this page?
-
     FB.getLoginStatus (response) ->
       if response.status != 'connected'
         top.location.href = getOathUrl() # Redirect to facebook login
       else
         noughts.userId = response.authResponse.userID
-        #state = Random.id()
-        #meteorOathUrl = "/_oauth/facebook?close&state=#{state}
-            #&access_token=#{FB.getAccessToken()}"
-        #$.get meteorOathUrl, (one, two) ->
-          #Meteor.call 'login', {oauth: {state: state}}, (e, result) ->
-            #console.log result
+        noughts.runOnSecondCall()
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')
