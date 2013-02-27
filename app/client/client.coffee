@@ -9,7 +9,6 @@ gameResources = [
 ]
 
 # Tile square size in pixels
-TILE_SIZE = 128
 SPRITE_Z_INDEX = 2
 
 showInviteDialog = (inviteCallback) -> FB.ui
@@ -20,18 +19,18 @@ showInviteDialog = (inviteCallback) -> FB.ui
   message: "Want to play some Noughts?", inviteCallback
 
 PlayScreen = me.ScreenObject.extend
-  getTile_: (row, column) ->
-    @mainLayer_.getTile(row * TILE_SIZE, column * TILE_SIZE)
-
   handleClick_: (tile) ->
     game = noughts.Games.findOne {_id: Session.get("gameId")}
     if game and game.currentPlayer == noughts.userId
+      spaceTaken = _.any game.moves, (move) ->
+        move.column == tile.col and move.row == tile.row
+      return if spaceTaken
       isXPlayer = game.currentPlayer == game.xPlayer
       noughts.Games.update {_id: Session.get("gameId")},
         $set:
           currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
-        $push: # melon.js is basically totally insane about .row and .col...
-          moves: {row: tile.col, column: tile.row, isX: isXPlayer}
+        $push:
+          moves: {column: tile.col, row: tile.row, isX: isXPlayer}
 
   onResetEvent: () ->
     $(".noughtsNewGame").css("visibility", "hidden")
@@ -47,16 +46,15 @@ PlayScreen = me.ScreenObject.extend
       @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
       for column in [0..2]
         for row in [0..2]
-          tile = @getTile_(row, column)
+          tile = @mainLayer_.layerData[column][row]
           me.input.registerMouseEvent("mousedown", tile,
               _.bind(@handleClick_, this, tile))
+
       for move in game.moves
-        tile = @getTile_(move.row, move.column)
+        tile = @mainLayer_.layerData[move.column][move.row]
         image = if move.isX then @xImg_ else @oImg_
-        sprite = new me.SpriteObject(
-            move.column * TILE_SIZE, move.row * TILE_SIZE, image)
+        sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
         me.game.add(sprite, SPRITE_Z_INDEX)
-        me.input.releaseMouseEvent("mousedown", tile)
       me.game.sort()
 
 handleNewGameClick = ->
@@ -92,9 +90,9 @@ onload = ->
   me.loader.onload = noughts.runOnSecondCall
   me.loader.preload(gameResources)
 
-Meteor.startup(onload)
+window.onReady -> onload()
 
-# In order to wait for both Meteor and the Facebook SDK, this function
+# In order to wait for both Melon and the Facebook SDK, this function
 # does nothing when first called and then proceeds on the second call.
 numCalls = 0
 noughts.runOnSecondCall = ->
