@@ -15,3 +15,8 @@
   left: 130px;
   visibility: hidden;
 }
+
+.notice {
+  font-size: x-large;
+  font-weight: bold;
+}

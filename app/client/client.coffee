@@ -18,6 +18,26 @@ showInviteDialog = (inviteCallback) -> FB.ui
   max_recipients: 1,
   message: "Want to play some Noughts?", inviteCallback
 
+checkForVictory = (game) ->
+  getMove = (column, row) ->
+    _.find(game.moves, (x) -> x.column == column and x.row == row)
+
+  # All possible winning lines in (col, row) format
+  victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
+      [[0,2], [1,2], [2,2]], [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]],
+      [[2,0], [2,1], [2,2]], [[0,0], [1,1], [2,2]], [[2,0], [1,1], [0,2]] ]
+
+  for line in victoryLines
+    move1 = getMove(line[0][0], line[0][1])
+    move2 = getMove(line[1][0], line[1][1])
+    move3 = getMove(line[2][0], line[2][1])
+    continue unless move1? and move2? and move3?
+    if move1.isX == move2.isX and move2.isX == move3.isX
+      return if move1.isX then game.xPlayer else game.oPlayer
+  return false
+
+displayNotice = (msg) -> $(".notice").text(msg)
+
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
     game = noughts.Games.findOne {_id: Session.get("gameId")}
@@ -27,15 +47,24 @@ PlayScreen = me.ScreenObject.extend
       return if spaceTaken
       isXPlayer = game.currentPlayer == game.xPlayer
       noughts.Games.update {_id: Session.get("gameId")},
-        $set:
+        {$set:
           currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
         $push:
-          moves: {column: tile.col, row: tile.row, isX: isXPlayer}
+          moves: {column: tile.col, row: tile.row, isX: isXPlayer}}
 
   onResetEvent: () ->
     $(".noughtsNewGame").css("visibility", "hidden")
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
+
+    game = noughts.Games.findOne {_id: Session.get("gameId")}
+    opponentId =
+      if noughts.userId == game.xPlayer
+      then game.oPlayer else game.xPlayer
+    FB.api "/#{opponentId}?fields=first_name", (response) ->
+      Session.set("opponentName", response.first_name)
+    FB.api "/#{noughts.userId}?fields=first_name", (response) ->
+      Session.set("userName", response.first_name)
 
     Meteor.autorun =>
       game = noughts.Games.findOne {_id: Session.get("gameId")}
@@ -56,6 +85,24 @@ PlayScreen = me.ScreenObject.extend
         sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
         me.game.add(sprite, SPRITE_Z_INDEX)
       me.game.sort()
+
+      winner = checkForVictory(game)
+      if winner
+        FB.api "/#{winner}?fields=first_name", (response) ->
+          Session.set("winnerName", response.first_name)
+
+      if game.moves.length == 9
+        Session.set("isDraw", true)
+
+      if Session.get("winnerName")
+        displayNotice("The game is over! #{Session.get("winnerName")} has won.")
+      else if Session.get("isDraw")
+        displayNotice("The game is over, and it was a draw!")
+      else if game.currentPlayer == noughts.userId
+        displayNotice("It's your turn, #{Session.get("userName")}. Click " +
+            "on a square above to make your move.")
+      else if game.currentPlayer == opponentId
+        displayNotice("It's #{Session.get("opponentName")}'s turn.")
 
 handleNewGameClick = ->
   gameId = noughts.Games.insert
@@ -90,13 +137,15 @@ onload = ->
   me.loader.onload = noughts.runOnSecondCall
   me.loader.preload(gameResources)
 
-window.onReady -> onload()
+Meteor.startup ->
+  window.onReady -> onload()
 
 # In order to wait for both Melon and the Facebook SDK, this function
 # does nothing when first called and then proceeds on the second call.
 numCalls = 0
 noughts.runOnSecondCall = ->
   return numCalls++ if numCalls == 0
+  debugger
   me.state.set(me.state.PLAY, new PlayScreen())
   me.state.set(me.state.MENU, new TitleScreen())
   requestIds = $.url().param("request_ids")?.split(",")
@@ -104,12 +153,12 @@ noughts.runOnSecondCall = ->
     for requestId in requestIds
       fullId = "#{requestId}_#{noughts.userId}"
       game = noughts.Games.findOne {requestId: requestId}
+      if not game
+        debugger
+        throw new Error("Game not found for requestId: " + requestId)
       FB.api fullId, "delete", (response) ->
         if response != true
           throw new Error("Request delete failed: " + response.error.message)
-        if game
-          noughts.Games.update({_id: game._id}, {$unset: {requestId: ""}})
-    if game
       # TODO(dthurn) do something smarter with multiple request_ids than loading
       # the game for the last one.
       Session.set("gameId", game._id)

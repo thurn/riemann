@@ -6,9 +6,10 @@
 #   xPlayer: UserID
 #   oPlayer: UserID
 #   currentPlayer: UserID
+#   requestId: Facebook request ID
 #   moves: [{
-#     row: Number - Square row number (numbered from zero)
 #     column: Number - Square column number (numbered from zero)
+#     row: Number - Square row number (numbered from zero)
 #     isX: Boolean - True if square is "X", false if "O"
 #   }]
 # }
