@@ -15,3 +15,13 @@
 # }
 
 noughts.Games = new Meteor.Collection("games")
+
+noughts.Games.allow
+  insert: (userId, game) ->
+    game.xPlayer == userId or game.oPlayer == userId
+  update: (userId, games) ->
+    _.every games, (game) =>
+      game.xPlayer == userId or game.oPlayer == userId
+
+Meteor.methods
+  setUserId: (id) -> this.setUserId(id)

@@ -41,7 +41,7 @@ displayNotice = (msg) -> $(".notice").text(msg)
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
     game = noughts.Games.findOne {_id: Session.get("gameId")}
-    if game and game.currentPlayer == noughts.userId
+    if game and game.currentPlayer == Meteor.userId()
       spaceTaken = _.any game.moves, (move) ->
         move.column == tile.col and move.row == tile.row
       return if spaceTaken
@@ -59,11 +59,11 @@ PlayScreen = me.ScreenObject.extend
 
     game = noughts.Games.findOne {_id: Session.get("gameId")}
     opponentId =
-      if noughts.userId == game.xPlayer
+      if Meteor.userId() == game.xPlayer
       then game.oPlayer else game.xPlayer
     FB.api "/#{opponentId}?fields=first_name", (response) ->
       Session.set("opponentName", response.first_name)
-    FB.api "/#{noughts.userId}?fields=first_name", (response) ->
+    FB.api "/#{Meteor.userId()}?fields=first_name", (response) ->
       Session.set("userName", response.first_name)
 
     Meteor.autorun =>
@@ -94,11 +94,14 @@ PlayScreen = me.ScreenObject.extend
       if game.moves.length == 9
         Session.set("isDraw", true)
 
-      if Session.get("winnerName")
-        displayNotice("The game is over! #{Session.get("winnerName")} has won.")
+      if winner
+        if Session.get("winnerName")
+          displayNotice("The game is over! #{Session.get("winnerName")} has won.")
+        else
+          displayNotice("The game is over!")
       else if Session.get("isDraw")
         displayNotice("The game is over, and it was a draw!")
-      else if game.currentPlayer == noughts.userId
+      else if game.currentPlayer == Meteor.userId()
         displayNotice("It's your turn, #{Session.get("userName")}. Click " +
             "on a square above to make your move.")
       else if game.currentPlayer == opponentId
@@ -106,8 +109,8 @@ PlayScreen = me.ScreenObject.extend
 
 handleNewGameClick = ->
   gameId = noughts.Games.insert
-    xPlayer: noughts.userId
-    currentPlayer: noughts.userId
+    xPlayer: Meteor.userId()
+    currentPlayer: Meteor.userId()
     moves: []
   showInviteDialog (inviteResponse) ->
     return if not inviteResponse
@@ -134,33 +137,29 @@ onload = ->
   if not initialized
     alert("Sorry, your browser doesn't support HTML 5 canvas!")
     return
-  me.loader.onload = noughts.runOnSecondCall
+  me.loader.onload = ->
+    noughts.melonLoaded = true
+    noughts.maybeInitialize()
   me.loader.preload(gameResources)
 
 Meteor.startup ->
   window.onReady -> onload()
 
-# In order to wait for both Melon and the Facebook SDK, this function
-# does nothing when first called and then proceeds on the second call.
-numCalls = 0
-noughts.runOnSecondCall = ->
-  return numCalls++ if numCalls == 0
-  debugger
+noughts.maybeInitialize = ->
+  return unless noughts.facebookLoaded and noughts.melonLoaded
   me.state.set(me.state.PLAY, new PlayScreen())
   me.state.set(me.state.MENU, new TitleScreen())
   requestIds = $.url().param("request_ids")?.split(",")
-  if requestIds
+  Meteor.subscribe "myGames", ->
+    if not requestIds
+      return me.state.change(me.state.MENU)
     for requestId in requestIds
-      fullId = "#{requestId}_#{noughts.userId}"
+      fullId = "#{requestId}_#{Meteor.userId()}"
       game = noughts.Games.findOne {requestId: requestId}
-      if not game
-        debugger
-        throw new Error("Game not found for requestId: " + requestId)
-      FB.api fullId, "delete", (response) ->
-        if response != true
-          throw new Error("Request delete failed: " + response.error.message)
+      FB.api fullId, "delete", ->
       # TODO(dthurn) do something smarter with multiple request_ids than loading
       # the game for the last one.
-      Session.set("gameId", game._id)
-      return me.state.change(me.state.PLAY)
-  me.state.change(me.state.MENU)
+    if not game
+      throw new Error("Game not found for requestIds: " + requestIds)
+    Session.set("gameId", game._id)
+    return me.state.change(me.state.PLAY)

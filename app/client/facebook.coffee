@@ -17,8 +17,9 @@ Template.facebook.created = ->
       if response.status != 'connected'
         top.location.href = getOathUrl() # Redirect to facebook login
       else
-        noughts.userId = response.authResponse.userID
-        noughts.runOnSecondCall()
+        noughts.facebookLoaded = true
+        Meteor.call("setUserId", response.authResponse.userID)
+        noughts.maybeInitialize()
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')
