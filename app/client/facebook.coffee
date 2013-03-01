@@ -1,7 +1,8 @@
-getOathUrl = ->
+getOathUrl = (requestIds) ->
   return "https://www.facebook.com/dialog/oauth/?
     client_id=#{noughts.Config.appId}
-    &redirect_uri=#{noughts.Config.appUrl}"
+    &scope=email
+    &redirect_uri=#{noughts.Config.appUrl}?request_ids=#{requestIds}"
 
 Template.facebook.created = ->
   window.fbAsyncInit = ->
@@ -15,7 +16,8 @@ Template.facebook.created = ->
       xfbml: true  # parse XFBML tags on this page?
     FB.getLoginStatus (response) ->
       if response.status != 'connected'
-        top.location.href = getOathUrl() # Redirect to facebook login
+        requestIds = $.url().param("request_ids")
+        top.location.href = getOathUrl(requestIds) # Redirect to facebook login
       else
         noughts.facebookLoaded = true
         Meteor.call("setUserId", response.authResponse.userID)
