@@ -135,3 +135,6 @@ noughts.maybeInitialize = ->
       throw new Error("Game not found for requestIds: " + requestIds)
     Session.set("gameId", game._id)
     return me.state.change(me.state.PLAY)
+
+Template.page.runTests = ->
+  noughts.Config.isLocalhost and $.url().param("test")?

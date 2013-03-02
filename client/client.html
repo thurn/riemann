@@ -5,15 +5,22 @@
 </head>
 
 <body>
-  {{> facebook}}
-  <div id="noughtsAppContainer">
-    <div id="jsapp">
-      <button class="btn btn-large noughtsNewGame">New Game</button>
-    </div>
-    <div class="notice"></div>
-	</div>
-  {{> mochaTestReport}}
+  {{> page}}
 </body>
+
+<template name="page">
+  {{#if runTests}}
+    {{> mochaTestReport}}
+  {{else}}
+    {{> facebook}}
+    <div id="noughtsAppContainer">
+      <div id="jsapp">
+        <button class="btn btn-large noughtsNewGame">New Game</button>
+      </div>
+      <div class="notice"></div>
+    </div>
+  {{/if}}  
+</template>
 
 <template name="facebook">
   {{#constant}}
