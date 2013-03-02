@@ -6,18 +6,13 @@
   },
   "dependencies": {
     "basePackages": {
-      "router": {}
+      "mocha-web": {}
     },
     "packages": {
-      "router": {
-        "git": "https://github.com/tmeasday/meteor-router.git",
-        "tag": "v0.3.5",
-        "commit": "e8e63db2411204f0a6589b74dd591babbfb2da1a"
-      },
-      "page-js": {
-        "git": "https://github.com/tmeasday/meteor-page-js.git",
-        "tag": "v1.3.5",
-        "commit": "c652f795a86498aa4609ab637a694710421cb218"
+      "mocha-web": {
+        "git": "https://github.com/mad-eye/meteor-mocha-web.git",
+        "tag": "v0.0.2",
+        "commit": "c534e901f9e5423240ab9c2de121890999d68bbb"
       }
     }
   }
