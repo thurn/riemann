@@ -18,39 +18,11 @@ showInviteDialog = (inviteCallback) -> FB.ui
   max_recipients: 1,
   message: "Want to play some Noughts?", inviteCallback
 
-checkForVictory = (game) ->
-  getMove = (column, row) ->
-    _.find(game.moves, (x) -> x.column == column and x.row == row)
-
-  # All possible winning lines in (col, row) format
-  victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
-      [[0,2], [1,2], [2,2]], [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]],
-      [[2,0], [2,1], [2,2]], [[0,0], [1,1], [2,2]], [[2,0], [1,1], [0,2]] ]
-
-  for line in victoryLines
-    move1 = getMove(line[0][0], line[0][1])
-    move2 = getMove(line[1][0], line[1][1])
-    move3 = getMove(line[2][0], line[2][1])
-    continue unless move1? and move2? and move3?
-    if move1.isX == move2.isX and move2.isX == move3.isX
-      return if move1.isX then game.xPlayer else game.oPlayer
-  return false
-
 displayNotice = (msg) -> $(".notice").text(msg)
 
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
-    game = noughts.Games.findOne {_id: Session.get("gameId")}
-    if game and game.currentPlayer == Meteor.userId()
-      spaceTaken = _.any game.moves, (move) ->
-        move.column == tile.col and move.row == tile.row
-      return if spaceTaken
-      isXPlayer = game.currentPlayer == game.xPlayer
-      noughts.Games.update {_id: Session.get("gameId")},
-        {$set:
-          currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
-        $push:
-          moves: {column: tile.col, row: tile.row, isX: isXPlayer}}
+    Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
 
   onResetEvent: () ->
     $(".noughtsNewGame").css("visibility", "hidden")
@@ -86,12 +58,12 @@ PlayScreen = me.ScreenObject.extend
         me.game.add(sprite, SPRITE_Z_INDEX)
       me.game.sort()
 
-      winner = checkForVictory(game)
+      winner = noughts.checkForVictory(game)
       if winner
         FB.api "/#{winner}?fields=first_name", (response) ->
           Session.set("winnerName", response.first_name)
 
-      if game.moves.length == 9
+      if noughts.isDraw(game)
         Session.set("isDraw", true)
 
       if winner

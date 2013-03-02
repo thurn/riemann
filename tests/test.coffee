@@ -1,7 +1,7 @@
 mocha.setup({globals: ['FB']})
-chai.should();
+should = chai.should();
 
-describe "Addition", ->
-  it "equals 4", ->
-    result = 3 + 1
-    result.should.equal(4)
+describe "noughts.checkForVictory", ->
+  it "should be false for an empty input", ->
+    result = noughts.checkForVictory({})
+    result.should.be.false;
