@@ -3,51 +3,14 @@
 ###
 
 mocha.setup({globals: ['FB']})
-should = chai.should();
+assert = chai.assert
+should = chai.should()
 
 XPLAYER = 123
 OPLAYER = 456
 
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
-
-FakeCollection = ->
-  this.localCollection_ = new LocalCollection()
-  this
-
-FakeCollection.prototype.insert = (doc, callback) ->
-  unless _.has(doc, '_id')
-    doc._id = Random.id()
-  try
-    this.localCollection_.insert(doc)
-  catch error
-    if callback
-      callback(error)
-    else
-      throw error
-  finally
-    if callback
-      callback(undefined, doc._id)
-    else
-      return doc._id
-
-FakeCollection.prototype.findOne = (selector, options) ->
-    this.localCollection_.findOne(selector, options)
-
-FakeCollection.prototype.update = (selector, modifier, options, callback) ->
-  try
-    this.localCollection_.update(selector, modifier, options)
-  catch error
-    if callback
-      callback(error)
-    else
-      throw error
-  finally
-    if callback
-      callback()
-
-FakeCollection.prototype.find = (selector, options) ->
-  this.localCollection_.find(selector, optoins)
 
 newGame = (callback) ->
   noughts.Games.insert
@@ -59,8 +22,18 @@ newGame = (callback) ->
       if err then throw err
       callback result
 
+errorOnMutateObserver = (collection) ->
+  collection.find({}).observe
+    _suppress_initial: true
+    added: (document) ->
+      throw new Error("Unexpected addition of\n" + JSON.stringify(document))
+    changed: (newDocument, oldDocument) ->
+      throw new Error("Unexpected change from\n" + JSON.stringify(oldDocument) +
+          "\nto\n" + JSON.stringify(newDocument))
+    removed: (document) ->
+      throw new Error("Unexpected removal of\n" + JSON.stringify(document))
+
 before (done) ->
-  noughts.Games = new FakeCollection()
   Meteor.call("setUserId", XPLAYER, done)
 
 describe "noughts.checkForVictory", ->
@@ -140,7 +113,8 @@ describe "noughts.isDraw", ->
 describe "performMoveIfLegal", ->
   it "should do nothing for a missing game ID", (done) ->
     newGame (gameId) ->
+      observer = errorOnMutateObserver(noughts.Games)
       Meteor.call "performMoveIfLegal", gameId, 1, 1, (err) ->
         if err then throw err
-        debugger
+        observer.stop()
         done()

@@ -38,8 +38,9 @@ Meteor.methods
         $set:
           currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
         $push:
-          moves: {column: column, row: row, isX: isXPlayer}
-
+          moves: {column: column, row: row, isX: isXPlayer},
+        (error) ->
+          if error then throw error
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
