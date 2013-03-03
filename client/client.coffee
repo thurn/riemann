@@ -119,9 +119,11 @@ Meteor.startup ->
 
 noughts.maybeInitialize = ->
   return unless noughts.facebookLoaded and noughts.melonLoaded
+
   me.state.set(me.state.PLAY, new PlayScreen())
   me.state.set(me.state.MENU, new TitleScreen())
   requestIds = $.url().param("request_ids")?.split(",")
+
   Meteor.subscribe "myGames", ->
     if not requestIds
       return me.state.change(me.state.MENU)

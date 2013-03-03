@@ -1,3 +1,7 @@
+###
+# Tests for model.coffee
+###
+
 mocha.setup({globals: ['FB']})
 should = chai.should();
 
@@ -6,6 +10,34 @@ OPLAYER = 456
 
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
+
+newGame = (callback) ->
+  noughts.Games.insert
+    xPlayer: XPLAYER
+    currentPlayer: XPLAYER
+    oPlayer: OPLAYER
+    moves: []
+    testing: true, callback
+
+errorOnChangeObserver = (collection) ->
+  collection.find().observeChanges
+      added: (id, fields) ->
+        throw new Error("unexpected addition of ID " + id + " with fields " +
+            fields)
+      changed: (id, fields) ->
+        throw new Error("unexpected mutation of ID " + id + " for fields " +
+            fields)
+      removed: (id) ->
+        throw new Error("unexpected deletion of ID " + id)
+
+before (done) ->
+  Meteor.call "setUserId", XPLAYER, (err) ->
+    if err then throw err
+    Meteor.subscribe "myGames", ->
+      done()
+
+after (done) ->
+  Meteor.call("clearTestGames", done)
 
 describe "noughts.checkForVictory", ->
   it "should be false for a game with no moves", ->
@@ -80,3 +112,11 @@ describe "noughts.isDraw", ->
         {column: 2, row: 2, isX: true}
     ]
     result.should.be.true
+
+describe "performMoveIfLegal", ->
+  it "should not modify the database for a missing game ID", (done) ->
+    observer = errorOnChangeObserver(noughts.Games)
+    Meteor.call "performMoveIfLegal", "invalidId", 1, 1, (err) ->
+      if err then throw err
+      observer.stop()
+      done()
