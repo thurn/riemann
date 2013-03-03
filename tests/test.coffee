@@ -11,33 +11,57 @@ OPLAYER = 456
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
 
+FakeCollection = ->
+  this.localCollection_ = new LocalCollection()
+  this
+
+FakeCollection.prototype.insert = (doc, callback) ->
+  unless _.has(doc, '_id')
+    doc._id = Random.id()
+  try
+    this.localCollection_.insert(doc)
+  catch error
+    if callback
+      callback(error)
+    else
+      throw error
+  finally
+    if callback
+      callback(undefined, doc._id)
+    else
+      return doc._id
+
+FakeCollection.prototype.findOne = (selector, options) ->
+    this.localCollection_.findOne(selector, options)
+
+FakeCollection.prototype.update = (selector, modifier, options, callback) ->
+  try
+    this.localCollection_.update(selector, modifier, options)
+  catch error
+    if callback
+      callback(error)
+    else
+      throw error
+  finally
+    if callback
+      callback()
+
+FakeCollection.prototype.find = (selector, options) ->
+  this.localCollection_.find(selector, optoins)
+
 newGame = (callback) ->
   noughts.Games.insert
     xPlayer: XPLAYER
     currentPlayer: XPLAYER
     oPlayer: OPLAYER
     moves: []
-    testing: true, callback
-
-errorOnChangeObserver = (collection) ->
-  collection.find().observeChanges
-      added: (id, fields) ->
-        throw new Error("unexpected addition of ID " + id + " with fields " +
-            fields)
-      changed: (id, fields) ->
-        throw new Error("unexpected mutation of ID " + id + " for fields " +
-            fields)
-      removed: (id) ->
-        throw new Error("unexpected deletion of ID " + id)
+    testing: true, (err, result) ->
+      if err then throw err
+      callback result
 
 before (done) ->
-  Meteor.call "setUserId", XPLAYER, (err) ->
-    if err then throw err
-    Meteor.subscribe "myGames", ->
-      done()
-
-after (done) ->
-  Meteor.call("clearTestGames", done)
+  noughts.Games = new FakeCollection()
+  Meteor.call("setUserId", XPLAYER, done)
 
 describe "noughts.checkForVictory", ->
   it "should be false for a game with no moves", ->
@@ -114,9 +138,9 @@ describe "noughts.isDraw", ->
     result.should.be.true
 
 describe "performMoveIfLegal", ->
-  it "should not modify the database for a missing game ID", (done) ->
-    observer = errorOnChangeObserver(noughts.Games)
-    Meteor.call "performMoveIfLegal", "invalidId", 1, 1, (err) ->
-      if err then throw err
-      observer.stop()
-      done()
+  it "should do nothing for a missing game ID", (done) ->
+    newGame (gameId) ->
+      Meteor.call "performMoveIfLegal", gameId, 1, 1, (err) ->
+        if err then throw err
+        debugger
+        done()

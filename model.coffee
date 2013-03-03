@@ -27,17 +27,14 @@ Meteor.methods
   # Used to set the user's facebook ID as the current Meteor ID
   setUserId: (id) -> this.setUserId(id)
 
-  # Remove games created for testing purposes.
-  clearTestGames: -> noughts.Games.remove {testing: true}
-
-  # Add the current player's symbol add the provided location if
+  # Add the current player's symbol at the provided location if
   # this is a legal move
   performMoveIfLegal: (gameId, column, row) ->
-    game = noughts.Games.findOne {_id: gameId}
+    game = noughts.Games.findOne gameId
     if (game and game.currentPlayer == Meteor.userId() and
         _.every game.moves, (move) -> move.column != column and move.row != row)
       isXPlayer = game.currentPlayer == game.xPlayer
-      noughts.Games.update {_id: gameId},
+      noughts.Games.update gameId,
         $set:
           currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
         $push:

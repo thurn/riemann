@@ -29,7 +29,7 @@ PlayScreen = me.ScreenObject.extend
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
 
-    game = noughts.Games.findOne {_id: Session.get("gameId")}
+    game = noughts.Games.findOne Session.get("gameId")
     opponentId =
       if Meteor.userId() == game.xPlayer
       then game.oPlayer else game.xPlayer
@@ -39,7 +39,7 @@ PlayScreen = me.ScreenObject.extend
       Session.set("userName", response.first_name)
 
     Meteor.autorun =>
-      game = noughts.Games.findOne {_id: Session.get("gameId")}
+      game = noughts.Games.findOne Session.get("gameId")
       return if not game
 
       me.game.removeAll()
@@ -87,7 +87,7 @@ handleNewGameClick = ->
   showInviteDialog (inviteResponse) ->
     return if not inviteResponse
     invitedUser = inviteResponse.to[0]
-    noughts.Games.update {_id: gameId}
+    noughts.Games.update gameId
       $set:
         oPlayer: invitedUser
         requestId: inviteResponse.request
