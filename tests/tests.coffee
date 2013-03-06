@@ -1,13 +1,22 @@
-###
-# Tests for model.coffee
-###
-
-mocha.setup({globals: ['FB']})
+chai = require("chai")
 assert = chai.assert
 should = chai.should()
 
-XPLAYER = 123
-OPLAYER = 456
+XPLAYER = "123"
+OPLAYER = "456"
+
+oldGames = Games = oldUserId = null
+
+before ->
+  oldGames = noughts.Games
+  oldUserId = Meteor.userId        
+  Meteor.userId = () -> XPLAYER
+  oldGames = noughts.Games
+  Games = noughts.Games = new Meteor.Collection(null)
+
+after ->
+  noughts.Games = oldGames
+  Meteor.userId = oldUserId
 
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
@@ -32,9 +41,6 @@ errorOnMutateObserver = (collection) ->
           "\nto\n" + JSON.stringify(newDocument))
     removed: (document) ->
       throw new Error("Unexpected removal of\n" + JSON.stringify(document))
-
-before (done) ->
-  Meteor.call("setUserId", XPLAYER, done)
 
 describe "noughts.checkForVictory", ->
   it "should be false for a game with no moves", ->
@@ -109,12 +115,3 @@ describe "noughts.isDraw", ->
         {column: 2, row: 2, isX: true}
     ]
     result.should.be.true
-
-describe "performMoveIfLegal", ->
-  it "should do nothing for a missing game ID", (done) ->
-    newGame (gameId) ->
-      observer = errorOnMutateObserver(noughts.Games)
-      Meteor.call "performMoveIfLegal", gameId, 1, 1, (err) ->
-        if err then throw err
-        observer.stop()
-        done()

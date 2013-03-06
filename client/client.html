@@ -9,17 +9,13 @@
 </body>
 
 <template name="page">
-  {{#if runTests}}
-    {{> mochaTestReport}}
-  {{else}}
-    {{> facebook}}
-    <div id="noughtsAppContainer">
-      <div id="jsapp">
-        <button class="btn btn-large noughtsNewGame">New Game</button>
-      </div>
-      <div class="notice"></div>
+  {{> facebook}}
+  <div id="noughtsAppContainer">
+    <div id="jsapp">
+      <button class="btn btn-large noughtsNewGame">New Game</button>
     </div>
-  {{/if}}  
+    <div class="notice"></div>
+  </div>
 </template>
 
 <template name="facebook">

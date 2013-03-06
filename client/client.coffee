@@ -1,5 +1,7 @@
 # Project Riemann client interface
 
+Games = noughts.Games
+
 gameResources = [
   {name: "tileset", type: "image", src: "/tilemaps/tileset.jpg"},
   {name: "x", type: "image", src: "/images/x.png"},
@@ -22,14 +24,19 @@ displayNotice = (msg) -> $(".notice").text(msg)
 
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
+    console.log "CLICK"
     Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
+
+  loadMainLevel_: ->
+    me.levelDirector.loadLevel("tilemap")
+    @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
 
   onResetEvent: () ->
     $(".noughtsNewGame").css("visibility", "hidden")
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
 
-    game = noughts.Games.findOne Session.get("gameId")
+    game = Games.findOne Session.get("gameId")
     opponentId =
       if Meteor.userId() == game.xPlayer
       then game.oPlayer else game.xPlayer
@@ -38,18 +45,19 @@ PlayScreen = me.ScreenObject.extend
     FB.api "/#{Meteor.userId()}?fields=first_name", (response) ->
       Session.set("userName", response.first_name)
 
+    this.loadMainLevel_()
+    for column in [0..2]
+      for row in [0..2]
+        tile = @mainLayer_.layerData[column][row]
+        me.input.registerMouseEvent("mouseup", tile,
+            _.bind(@handleClick_, this, tile))
+
     Meteor.autorun =>
-      game = noughts.Games.findOne Session.get("gameId")
+      game = Games.findOne Session.get("gameId")
       return if not game
 
       me.game.removeAll()
-      me.levelDirector.loadLevel("tilemap")
-      @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
-      for column in [0..2]
-        for row in [0..2]
-          tile = @mainLayer_.layerData[column][row]
-          me.input.registerMouseEvent("mousedown", tile,
-              _.bind(@handleClick_, this, tile))
+      this.loadMainLevel_()
 
       for move in game.moves
         tile = @mainLayer_.layerData[move.column][move.row]
@@ -68,7 +76,8 @@ PlayScreen = me.ScreenObject.extend
 
       if winner
         if Session.get("winnerName")
-          displayNotice("The game is over! #{Session.get("winnerName")} has won.")
+          displayNotice(
+              "The game is over! #{Session.get("winnerName")} has won.")
         else
           displayNotice("The game is over!")
       else if Session.get("isDraw")
@@ -80,14 +89,14 @@ PlayScreen = me.ScreenObject.extend
         displayNotice("It's #{Session.get("opponentName")}'s turn.")
 
 handleNewGameClick = ->
-  gameId = noughts.Games.insert
+  gameId = Games.insert
     xPlayer: Meteor.userId()
     currentPlayer: Meteor.userId()
     moves: []
   showInviteDialog (inviteResponse) ->
     return if not inviteResponse
     invitedUser = inviteResponse.to[0]
-    noughts.Games.update gameId
+    Games.update {_id: gameId}
       $set:
         oPlayer: invitedUser
         requestId: inviteResponse.request
@@ -129,7 +138,7 @@ noughts.maybeInitialize = ->
       return me.state.change(me.state.MENU)
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
-      game = noughts.Games.findOne {requestId: requestId}
+      game = Games.findOne {requestId: requestId}
       FB.api fullId, "delete", ->
       # TODO(dthurn) do something smarter with multiple request_ids than loading
       # the game for the last one.
@@ -137,6 +146,3 @@ noughts.maybeInitialize = ->
       throw new Error("Game not found for requestIds: " + requestIds)
     Session.set("gameId", game._id)
     return me.state.change(me.state.PLAY)
-
-Template.page.runTests = ->
-  noughts.Config.isLocalhost and $.url().param("test")?

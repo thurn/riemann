@@ -14,9 +14,9 @@
 #   }]
 # }
 
-noughts.Games = new Meteor.Collection("games")
+Games = noughts.Games = new Meteor.Collection("games")
 
-noughts.Games.allow
+Games.allow
   insert: (userId, game) ->
     game.xPlayer == userId or game.oPlayer == userId
   update: (userId, games) ->
@@ -25,22 +25,24 @@ noughts.Games.allow
 
 Meteor.methods
   # Used to set the user's facebook ID as the current Meteor ID
-  setUserId: (id) -> this.setUserId(id)
+  setUserId: (id) ->
+    this.setUserId(id)
 
   # Add the current player's symbol at the provided location if
   # this is a legal move
   performMoveIfLegal: (gameId, column, row) ->
-    game = noughts.Games.findOne gameId
-    if (game and game.currentPlayer == Meteor.userId() and
-        _.every game.moves, (move) -> move.column != column and move.row != row)
-      isXPlayer = game.currentPlayer == game.xPlayer
-      noughts.Games.update gameId,
-        $set:
-          currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
-        $push:
-          moves: {column: column, row: row, isX: isXPlayer},
-        (error) ->
-          if error then throw error
+    game = Games.findOne gameId
+    return unless game and game.currentPlayer == Meteor.userId()
+    return if _.some(game.moves,
+        (move) -> move.column == column and move.row == row)
+    isXPlayer = game.currentPlayer == game.xPlayer
+    Games.update {_id: gameId},
+      $set:
+        currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
+      $push:
+        moves: {column: column, row: row, isX: isXPlayer},
+      (error) ->
+        if error then throw error
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
