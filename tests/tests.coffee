@@ -5,7 +5,7 @@ should = chai.should()
 XPLAYER = "123"
 OPLAYER = "456"
 
-oldGames = Games = oldUserId = null
+fakeGameId = oldGames = Games = oldUserId = null
 
 before ->
   oldGames = noughts.Games
@@ -13,23 +13,26 @@ before ->
   Meteor.userId = () -> XPLAYER
   oldGames = noughts.Games
   Games = noughts.Games = new Meteor.Collection(null)
+  fakeGameId = Games.insert
+    xPlayer: XPLAYER
+    oPlayer: OPLAYER
+    currentPlayer: XPLAYER
+    moves: []
 
 after ->
   noughts.Games = oldGames
   Meteor.userId = oldUserId
 
+callMethod = (name) ->
+  args = Array.prototype.slice.call(arguments, 1);
+  if args.length and typeof args[args.length - 1] == "function"
+    callback = args.pop();
+  fiber = Fiber () ->
+    Meteor.apply(name, args, callback)
+  fiber.run()
+
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
-
-newGame = (callback) ->
-  noughts.Games.insert
-    xPlayer: XPLAYER
-    currentPlayer: XPLAYER
-    oPlayer: OPLAYER
-    moves: []
-    testing: true, (err, result) ->
-      if err then throw err
-      callback result
 
 errorOnMutateObserver = (collection) ->
   collection.find({}).observe
@@ -115,3 +118,13 @@ describe "noughts.isDraw", ->
         {column: 2, row: 2, isX: true}
     ]
     result.should.be.true
+
+describe "performMoveIfLegal", ->
+  it "should not mutate if called with an invalid ID", (done) ->
+    console.log "calling method"
+    callMethod "performMoveIfLegal", "invalidGameId", 1, 1, (err, result) ->
+      console.log "method returned"
+      if err then throw err
+      console.log "stopping observer"
+      console.log "done"
+      done()
