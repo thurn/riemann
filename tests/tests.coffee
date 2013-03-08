@@ -9,11 +9,11 @@ fakeGameId = oldGames = Games = oldUserId = null
 
 before ->
   oldGames = noughts.Games
-  oldUserId = Meteor.userId        
+  oldUserId = Meteor.userId
   Meteor.userId = () -> XPLAYER
   oldGames = noughts.Games
-  Games = noughts.Games = new Meteor.Collection(null)
-  fakeGameId = Games.insert
+  noughts.Games = new Meteor.Collection(null)
+  fakeGameId = noughts.Games.insert
     xPlayer: XPLAYER
     oPlayer: OPLAYER
     currentPlayer: XPLAYER
@@ -23,13 +23,8 @@ after ->
   noughts.Games = oldGames
   Meteor.userId = oldUserId
 
-callMethod = (name) ->
-  args = Array.prototype.slice.call(arguments, 1);
-  if args.length and typeof args[args.length - 1] == "function"
-    callback = args.pop();
-  fiber = Fiber () ->
-    Meteor.apply(name, args, callback)
-  fiber.run()
+itShould = (desc, fn) ->
+  it desc, (done) -> (Fiber -> fn(done)).run()
 
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
@@ -120,11 +115,8 @@ describe "noughts.isDraw", ->
     result.should.be.true
 
 describe "performMoveIfLegal", ->
-  it "should not mutate if called with an invalid ID", (done) ->
-    console.log "calling method"
-    callMethod "performMoveIfLegal", "invalidGameId", 1, 1, (err, result) ->
-      console.log "method returned"
-      if err then throw err
-      console.log "stopping observer"
-      console.log "done"
-      done()
+  itShould "not mutate if called with an invalid ID", (done) ->
+    observer = errorOnMutateObserver(noughts.Games)
+    Meteor.call("performMoveIfLegal", "invalidId", 1, 1)
+    observer.stop()
+    done()

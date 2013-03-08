@@ -36,7 +36,7 @@ PlayScreen = me.ScreenObject.extend
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
 
-    game = Games.findOne Session.get("gameId")
+    game = noughts.Games.findOne Session.get("gameId")
     opponentId =
       if Meteor.userId() == game.xPlayer
       then game.oPlayer else game.xPlayer
@@ -53,7 +53,7 @@ PlayScreen = me.ScreenObject.extend
             _.bind(@handleClick_, this, tile))
 
     Meteor.autorun =>
-      game = Games.findOne Session.get("gameId")
+      game = noughts.Games.findOne Session.get("gameId")
       return if not game
 
       me.game.removeAll()
@@ -89,14 +89,14 @@ PlayScreen = me.ScreenObject.extend
         displayNotice("It's #{Session.get("opponentName")}'s turn.")
 
 handleNewGameClick = ->
-  gameId = Games.insert
+  gameId = noughts.Games.insert
     xPlayer: Meteor.userId()
     currentPlayer: Meteor.userId()
     moves: []
   showInviteDialog (inviteResponse) ->
     return if not inviteResponse
     invitedUser = inviteResponse.to[0]
-    Games.update {_id: gameId}
+    noughts.Games.update {_id: gameId}
       $set:
         oPlayer: invitedUser
         requestId: inviteResponse.request
@@ -138,7 +138,7 @@ noughts.maybeInitialize = ->
       return me.state.change(me.state.MENU)
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
-      game = Games.findOne {requestId: requestId}
+      game = noughts.Games.findOne {requestId: requestId}
       FB.api fullId, "delete", ->
       # TODO(dthurn) do something smarter with multiple request_ids than loading
       # the game for the last one.

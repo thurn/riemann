@@ -14,9 +14,9 @@
 #   }]
 # }
 
-Games = noughts.Games = new Meteor.Collection("games")
+noughts.Games = new Meteor.Collection("games")
 
-Games.allow
+noughts.Games.allow
   insert: (userId, game) ->
     game.xPlayer == userId or game.oPlayer == userId
   update: (userId, games) ->
@@ -31,12 +31,12 @@ Meteor.methods
   # Add the current player's symbol at the provided location if
   # this is a legal move
   performMoveIfLegal: (gameId, column, row) ->
-    game = Games.findOne gameId
+    game = noughts.Games.findOne({})
     return unless game and game.currentPlayer == Meteor.userId()
     return if _.some(game.moves,
         (move) -> move.column == column and move.row == row)
     isXPlayer = game.currentPlayer == game.xPlayer
-    Games.update {_id: gameId},
+    noughts.Games.update {_id: gameId},
       $set:
         currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
       $push:
