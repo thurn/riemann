@@ -33,16 +33,15 @@ Meteor.methods
   performMoveIfLegal: (gameId, column, row) ->
     game = noughts.Games.findOne({})
     return unless game and game.currentPlayer == Meteor.userId()
-    return if _.some(game.moves,
-        (move) -> move.column == column and move.row == row)
+    if _.some(game.moves, (move) -> move.column == column and move.row == row)
+      # Space already taken!
+      return
     isXPlayer = game.currentPlayer == game.xPlayer
-    noughts.Games.update {_id: gameId},
+    noughts.Games.update gameId,
       $set:
         currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
       $push:
-        moves: {column: column, row: row, isX: isXPlayer},
-      (error) ->
-        if error then throw error
+        moves: {column: column, row: row, isX: isXPlayer}
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.

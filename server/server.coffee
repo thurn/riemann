@@ -16,5 +16,6 @@ Meteor.startup ->
   basePath = fs.realpathSync("tests")
   for file in files
     continue unless file.match(/\.coffee$/) or file.match(/\.js$/)
+    continue if file[0] == "."
     mocha.addFile(path.join(basePath, file))
   mocha.run()

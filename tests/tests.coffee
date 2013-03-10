@@ -13,18 +13,25 @@ before ->
   Meteor.userId = () -> XPLAYER
   oldGames = noughts.Games
   noughts.Games = new Meteor.Collection(null)
+
+after ->
+  noughts.Games = oldGames
+  Meteor.userId = oldUserId
+
+beforeEach ->
   fakeGameId = noughts.Games.insert
     xPlayer: XPLAYER
     oPlayer: OPLAYER
     currentPlayer: XPLAYER
     moves: []
 
-after ->
-  noughts.Games = oldGames
-  Meteor.userId = oldUserId
+afterEach ->
+  noughts.Games.remove fakeGameId
 
 itShould = (desc, fn) ->
-  it desc, (done) -> (Fiber -> fn(done)).run()
+  it(("should " + desc), (done) -> (Fiber ->
+    fn()
+    done()).run())
 
 fakeGame = (moves) ->
   {xPlayer: XPLAYER, oPlayer: OPLAYER, currentPlayer: XPLAYER, moves: moves}
@@ -39,6 +46,11 @@ errorOnMutateObserver = (collection) ->
           "\nto\n" + JSON.stringify(newDocument))
     removed: (document) ->
       throw new Error("Unexpected removal of\n" + JSON.stringify(document))
+
+callWithErrorOnMutate = (fn) ->
+  observer = errorOnMutateObserver(noughts.Games)
+  fn()
+  observer.stop()
 
 describe "noughts.checkForVictory", ->
   it "should be false for a game with no moves", ->
@@ -115,8 +127,29 @@ describe "noughts.isDraw", ->
     result.should.be.true
 
 describe "performMoveIfLegal", ->
-  itShould "not mutate if called with an invalid ID", (done) ->
-    observer = errorOnMutateObserver(noughts.Games)
-    Meteor.call("performMoveIfLegal", "invalidId", 1, 1)
-    observer.stop()
-    done()
+  itShould "not mutate if called with an invalid ID", ->
+    callWithErrorOnMutate ->
+      Meteor.call("performMoveIfLegal", "invalidId", 1, 1)
+
+  itShould "not mutate if the current player isn't the calling  user", ->
+    noughts.Games.update fakeGameId, {$set: {currentPlayer: OPLAYER}}
+    callWithErrorOnMutate ->
+      Meteor.call("performMoveIfLegal", fakeGameId, 1, 1)
+
+  itShould "not mutate if called with a space that's taken", ->
+    noughts.Games.update fakeGameId,
+      $push: {moves: {column: 1, row: 1, isX: true}}
+    callWithErrorOnMutate ->
+      Meteor.call("performMoveIfLegal", fakeGameId, 1, 1)
+
+  itShould "execute a valid move if it's passed one", ->
+    Meteor.call("performMoveIfLegal", fakeGameId, 1, 1)
+    game = noughts.Games.findOne fakeGameId
+    game.currentPlayer.should.equal(OPLAYER)
+    game.xPlayer.should.equal(XPLAYER)
+    game.oPlayer.should.equal(OPLAYER)
+    game.moves.should.have.length(1)
+    move = game.moves[0]
+    move.column.should.equal(1)
+    move.row.should.equal(1)
+    move.isX.should.be.true

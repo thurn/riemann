@@ -96,7 +96,7 @@ handleNewGameClick = ->
   showInviteDialog (inviteResponse) ->
     return if not inviteResponse
     invitedUser = inviteResponse.to[0]
-    noughts.Games.update {_id: gameId}
+    noughts.Games.update gameId
       $set:
         oPlayer: invitedUser
         requestId: inviteResponse.request
