@@ -19,7 +19,6 @@ Template.facebook.created = ->
         requestIds = $.url().param("request_ids")
         top.location.href = getOathUrl(requestIds) # Redirect to facebook login
       else
-        noughts.facebookLoaded = true
         Meteor.call("setUserId", response.authResponse.userID)
         noughts.maybeInitialize()
 

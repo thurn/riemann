@@ -16,13 +16,6 @@
 
 noughts.Games = new Meteor.Collection("games")
 
-noughts.Games.allow
-  insert: (userId, game) ->
-    game.xPlayer == userId or game.oPlayer == userId
-  update: (userId, games) ->
-    _.every games, (game) =>
-      game.xPlayer == userId or game.oPlayer == userId
-
 Meteor.methods
   # Used to set the user's facebook ID as the current Meteor ID
   setUserId: (id) ->
@@ -42,6 +35,20 @@ Meteor.methods
         currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
       $push:
         moves: {column: column, row: row, isX: isXPlayer}
+
+  # Partially create a new game with no opponent specified yet
+  newGame: (creatorId) ->
+    return unless creatorId == Meteor.userId()
+    noughts.Games.insert
+      xPlayer: creatorId
+      currentPlayer: creatorId
+      moves: []
+
+  # Add an opponent to a partially-created game
+  inviteOpponent: (gameId, opponentId, requestId) ->
+    # Only allow updates by the current player
+    noughts.Games.update {_id: gameId, currentPlayer: Meteor.userId()}
+      $set: {oPlayer: opponentId, requestId: requestId}
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.

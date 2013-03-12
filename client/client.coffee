@@ -1,7 +1,5 @@
 # Project Riemann client interface
 
-Games = noughts.Games
-
 gameResources = [
   {name: "tileset", type: "image", src: "/tilemaps/tileset.jpg"},
   {name: "x", type: "image", src: "/images/x.png"},
@@ -35,17 +33,9 @@ PlayScreen = me.ScreenObject.extend
     $(".noughtsNewGame").css("visibility", "hidden")
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
-
-    game = noughts.Games.findOne Session.get("gameId")
-    opponentId =
-      if Meteor.userId() == game.xPlayer
-      then game.oPlayer else game.xPlayer
-    FB.api "/#{opponentId}?fields=first_name", (response) ->
-      Session.set("opponentName", response.first_name)
-    FB.api "/#{Meteor.userId()}?fields=first_name", (response) ->
-      Session.set("userName", response.first_name)
-
     this.loadMainLevel_()
+
+    # Attach click event listeners
     for column in [0..2]
       for row in [0..2]
         tile = @mainLayer_.layerData[column][row]
@@ -59,6 +49,7 @@ PlayScreen = me.ScreenObject.extend
       me.game.removeAll()
       this.loadMainLevel_()
 
+      # Redraw all previous moves
       for move in game.moves
         tile = @mainLayer_.layerData[move.column][move.row]
         image = if move.isX then @xImg_ else @oImg_
@@ -66,42 +57,26 @@ PlayScreen = me.ScreenObject.extend
         me.game.add(sprite, SPRITE_Z_INDEX)
       me.game.sort()
 
-      winner = noughts.checkForVictory(game)
-      if winner
-        FB.api "/#{winner}?fields=first_name", (response) ->
-          Session.set("winnerName", response.first_name)
-
-      if noughts.isDraw(game)
-        Session.set("isDraw", true)
-
-      if winner
-        if Session.get("winnerName")
-          displayNotice(
-              "The game is over! #{Session.get("winnerName")} has won.")
-        else
-          displayNotice("The game is over!")
-      else if Session.get("isDraw")
+      if noughts.checkForVictory(game)
+        displayNotice("The game is over!")
+      else if noughts.isDraw(game)
         displayNotice("The game is over, and it was a draw!")
       else if game.currentPlayer == Meteor.userId()
-        displayNotice("It's your turn, #{Session.get("userName")}. Click " +
-            "on a square above to make your move.")
-      else if game.currentPlayer == opponentId
-        displayNotice("It's #{Session.get("opponentName")}'s turn.")
+        displayNotice("It's your turn. Click on a square to make your move.")
+      else
+        displayNotice("It's your opponent's turn.")
 
 handleNewGameClick = ->
-  gameId = noughts.Games.insert
-    xPlayer: Meteor.userId()
-    currentPlayer: Meteor.userId()
-    moves: []
-  showInviteDialog (inviteResponse) ->
-    return if not inviteResponse
-    invitedUser = inviteResponse.to[0]
-    noughts.Games.update gameId
-      $set:
-        oPlayer: invitedUser
-        requestId: inviteResponse.request
-    Session.set("gameId", gameId)
-    me.state.change(me.state.PLAY)
+  Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
+    if err then throw err
+    showInviteDialog (inviteResponse) ->
+      return if not inviteResponse
+      invitedUser = inviteResponse.to[0]
+      requestId = inviteResponse.request
+      Meteor.call "inviteOpponent", gameId, invitedUser, requestId, (err) ->
+        if err then throw err
+        Session.set("gameId", gameId)
+        me.state.change(me.state.PLAY)
 
 TitleScreen = me.ScreenObject.extend
   init: ->
@@ -119,16 +94,15 @@ onload = ->
     alert("Sorry, your browser doesn't support HTML 5 canvas!")
     return
   me.loader.onload = ->
-    noughts.melonLoaded = true
     noughts.maybeInitialize()
   me.loader.preload(gameResources)
 
 Meteor.startup ->
   window.onReady -> onload()
 
-noughts.maybeInitialize = ->
-  return unless noughts.facebookLoaded and noughts.melonLoaded
-
+# Only runs the second time it's called, to ensure both facebook and melon.js
+# are loaded
+noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
   me.state.set(me.state.MENU, new TitleScreen())
   requestIds = $.url().param("request_ids")?.split(",")
