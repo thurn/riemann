@@ -22,7 +22,6 @@ displayNotice = (msg) -> $(".notice").text(msg)
 
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
-    console.log "CLICK"
     Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
 
   loadMainLevel_: ->
@@ -57,8 +56,12 @@ PlayScreen = me.ScreenObject.extend
         me.game.add(sprite, SPRITE_Z_INDEX)
       me.game.sort()
 
-      if noughts.checkForVictory(game)
-        displayNotice("The game is over!")
+      winner = noughts.checkForVictory(game)
+      if winner
+        if winner == Meteor.userId()
+          displayNotice("Hooray! You win!")
+        else
+          displayNotice("Sorry, you lose!")
       else if noughts.isDraw(game)
         displayNotice("The game is over, and it was a draw!")
       else if game.currentPlayer == Meteor.userId()

@@ -16,16 +16,29 @@
 
 noughts.Games = new Meteor.Collection("games")
 
+noughts.BadRequestError = (message) ->
+  this.name = "BadRequestError"
+  this.message = message || ""
+  this
+noughts.BadRequestError.prototype = new Error()
+
+die = (msg) ->
+  throw new noughts.BadRequestError(msg)
+
 Meteor.methods
-  # Used to set the user's facebook ID as the current Meteor ID
-  setUserId: (id) ->
+  # Validate that the user has logged in as the Facebook user with ID "userId".
+  authenticate: (userId, accessToken) ->
+    # TODO(dthurn) On the server, hit
+    # https://graph.facebook.com/me?fields=id&access_token={accessToken} to
+    # validate this token, then setUserId() if it validates.
     this.setUserId(id)
 
   # Add the current player's symbol at the provided location if
   # this is a legal move
   performMoveIfLegal: (gameId, column, row) ->
-    game = noughts.Games.findOne({})
-    return unless game and game.currentPlayer == Meteor.userId()
+    game = noughts.Games.findOne gameId
+    die("invalid game ID") unless game
+    die("user not current player") unless game.currentPlayer == Meteor.userId()
     if _.some(game.moves, (move) -> move.column == column and move.row == row)
       # Space already taken!
       return
@@ -38,7 +51,7 @@ Meteor.methods
 
   # Partially create a new game with no opponent specified yet
   newGame: (creatorId) ->
-    return unless creatorId == Meteor.userId()
+    die("invalid user id") unless creatorId == Meteor.userId()
     noughts.Games.insert
       xPlayer: creatorId
       currentPlayer: creatorId
@@ -46,8 +59,10 @@ Meteor.methods
 
   # Add an opponent to a partially-created game
   inviteOpponent: (gameId, opponentId, requestId) ->
-    # Only allow updates by the current player
-    noughts.Games.update {_id: gameId, currentPlayer: Meteor.userId()}
+    game = noughts.Games.findOne gameId
+    die("user not current player") unless game.currentPlayer == Meteor.userId()
+    die("game already has opponent") if game.oPlayer
+    noughts.Games.update gameId,
       $set: {oPlayer: opponentId, requestId: requestId}
 
 # Checks if somebody has won this game. If they have, returns the winner's
