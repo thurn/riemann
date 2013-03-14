@@ -17,28 +17,46 @@
 noughts.Games = new Meteor.Collection("games")
 
 noughts.BadRequestError = (message) ->
-  this.name = "BadRequestError"
-  this.message = message || ""
+  @error = 500
+  @reason = message
+  @name = "BadRequestError"
+  @message = message || ""
   this
-noughts.BadRequestError.prototype = new Error()
+noughts.BadRequestError.prototype = new Meteor.Error()
+noughts.BadRequestError.constructor = noughts.BadRequestError
 
+# Translates a message into a BadRequestError
 die = (msg) ->
   throw new noughts.BadRequestError(msg)
+
+# Ensures that the provided userId is the ID of the current user
+ensureIsCurrentUser = (userId) ->
+  unless userId and Meteor.userId() and userId == Meteor.userId()
+    die("Unauthorized user: '#{Meteor.userId()}'")
+
+getGame = (gameId) ->
+  game = noughts.Games.findOne(gameId)
+  if game then game else die("Invalid game ID: '#{gameId}'")
 
 Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
   authenticate: (userId, accessToken) ->
-    # TODO(dthurn) On the server, hit
-    # https://graph.facebook.com/me?fields=id&access_token={accessToken} to
-    # validate this token, then setUserId() if it validates.
-    this.setUserId(id)
+    if Meteor.isServer
+      result = Meteor.http.get "https://graph.facebook.com/me",
+          params: {fields: "id", access_token: accessToken}
+      responseUserId = JSON.parse(result.content)["id"]
+      unless userId and responseUserId and responseUserId == userId
+        die("invalid access token")
+      this.setUserId(responseUserId)
+    else
+      # Don't need to check the user ID on the client
+      this.setUserId(userId)
 
   # Add the current player's symbol at the provided location if
   # this is a legal move
   performMoveIfLegal: (gameId, column, row) ->
-    game = noughts.Games.findOne gameId
-    die("invalid game ID") unless game
-    die("user not current player") unless game.currentPlayer == Meteor.userId()
+    game = getGame(gameId)
+    ensureIsCurrentUser(game.currentPlayer)
     if _.some(game.moves, (move) -> move.column == column and move.row == row)
       # Space already taken!
       return
@@ -51,7 +69,7 @@ Meteor.methods
 
   # Partially create a new game with no opponent specified yet
   newGame: (creatorId) ->
-    die("invalid user id") unless creatorId == Meteor.userId()
+    ensureIsCurrentUser(creatorId)
     noughts.Games.insert
       xPlayer: creatorId
       currentPlayer: creatorId
@@ -59,8 +77,8 @@ Meteor.methods
 
   # Add an opponent to a partially-created game
   inviteOpponent: (gameId, opponentId, requestId) ->
-    game = noughts.Games.findOne gameId
-    die("user not current player") unless game.currentPlayer == Meteor.userId()
+    game = getGame(gameId)
+    ensureIsCurrentUser(game.currentPlayer)
     die("game already has opponent") if game.oPlayer
     noughts.Games.update gameId,
       $set: {oPlayer: opponentId, requestId: requestId}
@@ -87,3 +105,4 @@ noughts.checkForVictory = (game) ->
 
 # Returns true if this game is a draw, otherwise false.
 noughts.isDraw = (game) -> game.moves.length == 9
+

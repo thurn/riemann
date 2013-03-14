@@ -8,7 +8,6 @@ Meteor.startup ->
   require("coffee-script")
   fs = require("fs")
   path = require("path")
-  require("coffee-script")
   Mocha = require("mocha")
 
   mocha = new Mocha()
@@ -17,5 +16,7 @@ Meteor.startup ->
   for file in files
     continue unless file.match(/\.coffee$/) or file.match(/\.js$/)
     continue if file[0] == "."
-    mocha.addFile(path.join(basePath, file))
+    filePath = path.join(basePath, file)
+    continue unless fs.statSync(filePath).isFile()
+    mocha.addFile(filePath)
   mocha.run()

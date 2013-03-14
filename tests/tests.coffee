@@ -1,23 +1,23 @@
 chai = require("chai")
 expect = chai.expect
 should = chai.should()
+nock = require("nock")
 
 XPLAYER = "123"
 OPLAYER = "456"
 REQUEST_ID = "789"
 
-fakeGameId = oldGames = Games = oldUserId = null
+fakeGameId = realGamesCollection = Games = realUserIdFn = null
 
 before ->
-  oldGames = noughts.Games
-  oldUserId = Meteor.userId
-  Meteor.userId = () -> XPLAYER
-  oldGames = noughts.Games
+  realUserIdFn = Meteor.userId
+  Meteor.userId = -> XPLAYER
+  realGamesCollection = noughts.Games
   noughts.Games = new Meteor.Collection(null)
 
 after ->
-  noughts.Games = oldGames
-  Meteor.userId = oldUserId
+  noughts.Games = realGamesCollection
+  Meteor.userId = realUserIdFn
 
 beforeEach ->
   fakeGameId = noughts.Games.insert
@@ -145,6 +145,27 @@ describe "noughts.isDraw", ->
     ]
     result.should.be.true
 
+describe "authenticate", ->
+  itShould "fail if the GET to facebook returns an error", ->
+    nock("https://graph.facebook.com", {allowUnmocked: true}).
+        get("/me?fields=id&access_token=accessToken").
+        reply(404, {})
+    fn = (-> Meteor.call("authenticate", OPLAYER, "accessToken"))
+    fn.should.throw(Error)
+    Meteor.userId().should.equal(XPLAYER)
+
+  itShould "fail if facebook returns the wrong user ID", ->
+    nock("https://graph.facebook.com", {allowUnmocked: true}).
+        get("/me?fields=id&access_token=accessToken").
+        reply(200, {id: XPLAYER})
+    fn = (-> Meteor.call("authenticate", OPLAYER, "accessToken"))
+    fn.should.throw(noughts.BadRequestError)
+    Meteor.userId().should.equal(XPLAYER)
+
+  # itShould "correctly change the user ID if facebook validates it"
+  # This is currently not possible to easily test here because Meteor
+  # rejects calls to setUserId which are initiated by server-side code
+
 describe "performMoveIfLegal", ->
   itShould "not work if called with an invalid ID", ->
     expectBadRequestAndNoMutate ->
@@ -196,6 +217,10 @@ describe "inviteOpponent", ->
   itShould "not work if the game already has an opponent", ->
     expectBadRequestAndNoMutate ->
       Meteor.call("inviteOpponent", fakeGameId, OPLAYER, REQUEST_ID)
+
+  itShould "not work for an invalid game ID", ->
+    expectBadRequestAndNoMutate ->
+      Meteor.call("inviteOpponent", "invalidGameId", OPLAYER, REQUEST_ID)
 
   itShould "add an opponent to the game", ->
     gameId = Meteor.call("newGame", XPLAYER)

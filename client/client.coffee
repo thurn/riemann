@@ -1,5 +1,6 @@
 # Project Riemann client interface
 
+
 gameResources = [
   {name: "tileset", type: "image", src: "/tilemaps/tileset.jpg"},
   {name: "x", type: "image", src: "/images/x.png"},
