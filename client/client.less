@@ -1,0 +1,115 @@
+/*
+To the extent possible under law, the author(s) have dedicated all copyright
+and related and neighboring rights to this software to the public domain
+worldwide. This software is distributed without any warranty. You should have
+received a copy of the CC0 Public Domain Dedication along with this software.
+If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+*/
+
+#noughtsAppContainer {
+  width: 384px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 25px;
+}
+
+.appTitle {
+  text-align: center;
+}
+
+.noughtsNewGame {
+  position: relative;
+  top: 320px;
+  left: 130px;
+  visibility: hidden;
+}
+
+.notice {
+  font-size: x-large;
+  font-weight: bold;
+}
+
+
+@largeFontSize: 26px;
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+@largeHeight: 768px;
+@largeWidth: 1024px;
+
+.nContainer {
+  height: @largeHeight;
+  width: @largeWidth;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -(@largeHeight/2);
+  margin-left: -(@largeWidth/2);
+}
+
+@menuWidth: 400px;
+@gameWidth: 600px;
+
+.nMenu {
+  height: @largeHeight;
+  width: @menuWidth;
+  float: left;
+  background-color: #f5f5f5;
+}
+
+.nGame {
+  height: @largeHeight;
+  width: @gameWidth;
+  float: right;
+}
+
+@canvasHeight: 600px;
+@canvasWidth: 600px;
+
+.nCanvas {
+  height: @canvasHeight;
+  width: @canvasWidth;
+  border: 1px solid #aaaaaa;
+}
+
+.nNewGamePromo {
+  @explanationWidth: 400px;
+  @explanationHeight: 400px;
+  width: @explanationWidth;
+  height: @explanationHeight;
+  position: relative;
+  top: 50%;
+  left: 50%;
+  margin-top: -(@explanationHeight/2);
+  margin-left: -(@explanationWidth/2);
+}
+
+.nButtonContainer {
+  margin-top: 100px;
+  text-align: center;
+}
+
+.nGameDescription {
+  // I always find that left-aligned text blocks need to be nudged to the right
+  // a bit to make them not look off-center.
+  margin-left: 25px;
+}
+
+.nMenuButton {
+  background-image: none;
+  border-radius: 0;
+  border-color: #aaaaaa;
+  width: 400px;
+  height: 90px;
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+  font-size: 26px;
+}
+
+.nMenuIcon {
+  margin-right: 20px;
+  font-size: 32px;
+}
