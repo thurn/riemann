@@ -19,6 +19,8 @@ gameResources = [
 # Tile square size in pixels
 SPRITE_Z_INDEX = 2
 
+Template.page.bigScreen = document.documentElement.clientWidth > 1200
+
 showInviteDialog = (inviteCallback) -> FB.ui
   method: "apprequests",
   title: "Select an opponent",

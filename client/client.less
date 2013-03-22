@@ -29,87 +29,151 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   font-weight: bold;
 }
 
+@defaultFontSize: 13px;
 
-@largeFontSize: 26px;
+@bigScreen: ~"(min-width: 1200px)";
+@smallScreen: ~"(max-width: 1199px)";
+@bigScreenMultiplier: 2;
+@smallScreenMultiplier: 1;
 
 body {
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-  font-size: 26px;
   line-height: 1.1;
+  @media @bigScreen {
+    font-size: @defaultFontSize * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    font-size: @defaultFontSize * @smallScreenMultiplier;
+  }
 }
 
-@largeHeight: 768px;
-@largeWidth: 1024px;
-
-.nContainer {
-  height: @largeHeight;
-  width: @largeWidth;
-  position: fixed;
+.centeredBlock (@width, @height) {
+  height: @height;
+  width: @width;
+  margin-top: -(@height/2);
+  margin-left: -(@width/2);
   top: 50%;
   left: 50%;
-  margin-top: -(@largeHeight/2);
-  margin-left: -(@largeWidth/2);
 }
 
-@menuWidth: 400px;
-@gameWidth: 600px;
+@containerHeight: 384px;
+@containerWidth: 512px;
+
+.nContainer {
+  @media @bigScreen {
+    .centeredBlock(@containerWidth * @bigScreenMultiplier,
+         @containerHeight * @bigScreenMultiplier)
+  }
+  @media @smallScreen {
+    .centeredBlock(@containerWidth * @smallScreenMultiplier,
+         @containerHeight * @smallScreenMultiplier)
+  }
+  position: fixed;
+}
+
+@menuWidth: 200px;
 
 .nMenu {
-  height: @largeHeight;
-  width: @menuWidth;
+  @media @bigScreen {
+    height: @containerHeight * @bigScreenMultiplier;
+    width: @menuWidth * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    height: @containerHeight * @smallScreenMultiplier;
+    width: @menuWidth * @smallScreenMultiplier;
+  }
   float: left;
   background-color: #f5f5f5;
 }
 
+@gameWidth: 300px;
+
 .nGame {
-  height: @largeHeight;
-  width: @gameWidth;
+  @media @bigScreen {
+    height: @containerHeight * @bigScreenMultiplier;
+    width: @gameWidth * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    height: @containerHeight * @smallScreenMultiplier;
+    width: @gameWidth * @smallScreenMultiplier;
+  }
   float: right;
 }
 
-@canvasHeight: 600px;
-@canvasWidth: 600px;
+@canvasHeight: 300px;
+@canvasWidth: 300px;
 
 .nCanvas {
-  height: @canvasHeight;
-  width: @canvasWidth;
+  @media @bigScreen {
+    height: @canvasHeight * @bigScreenMultiplier;
+    width: @canvasWidth * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    height: @canvasHeight * @smallScreenMultiplier;
+    width: @canvasWidth * @smallScreenMultiplier;
+  }
   border: 1px solid #aaaaaa;
 }
 
 .nNewGamePromo {
-  @explanationWidth: 400px;
-  @explanationHeight: 400px;
-  width: @explanationWidth;
-  height: @explanationHeight;
+  @explanationWidth: 200px;
+  @explanationHeight: 200px;
+  @media @bigScreen {
+    .centeredBlock(@explanationWidth * @bigScreenMultiplier,
+         @explanationHeight * @bigScreenMultiplier)
+  }
+  @media @smallScreen {
+    .centeredBlock(@explanationWidth * @smallScreenMultiplier,
+         @explanationHeight * @smallScreenMultiplier)
+  }
   position: relative;
-  top: 50%;
-  left: 50%;
-  margin-top: -(@explanationHeight/2);
-  margin-left: -(@explanationWidth/2);
 }
 
 .nButtonContainer {
-  margin-top: 100px;
+  @media @bigScreen {
+    margin-top: 50px * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    margin-top: 50px * @smallScreenMultiplier;
+  }
   text-align: center;
 }
 
 .nGameDescription {
   // I always find that left-aligned text blocks need to be nudged to the right
   // a bit to make them not look off-center.
-  margin-left: 25px;
+  @media @bigScreen {
+    margin-left: 12px * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    margin-left: 12px * @smallScreenMultiplier;
+  }
 }
 
 .nMenuButton {
+  @media @bigScreen {
+    width: 200px * @bigScreenMultiplier;
+    height: 45px * @bigScreenMultiplier;
+    font-size: @defaultFontSize * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    width: 200px * @smallScreenMultiplier;
+    height: 45px * @smallScreenMultiplier;
+    font-size: @defaultFontSize * @smallScreenMultiplier;
+  }
   background-image: none;
   border-radius: 0;
   border-color: #aaaaaa;
-  width: 400px;
-  height: 90px;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-  font-size: 26px;
 }
 
 .nMenuIcon {
-  margin-right: 20px;
-  font-size: 32px;
+  @media @bigScreen {
+    margin-right: 10px * @bigScreenMultiplier;
+    font-size: 16px * @bigScreenMultiplier;
+  }
+  @media @smallScreen {
+    margin-right: 10px * @smallScreenMultiplier;
+    font-size: 16px * @smallScreenMultiplier;
+  }
 }

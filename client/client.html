@@ -9,6 +9,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+   <meta name="viewport" content="width=device-width">
   <title>Project Riemann</title>
 </head>
 
@@ -21,7 +22,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
     <div class="nMenu">
     </div>
     <div class="nGame">
-      <img src="/images/logo300.png" />
+      {{#if bigScreen}}
+        <img src="/images/logo300.png" />
+      {{else}}
+        <img src="/images/logo150.png" />
+      {{/if}}
       <div class="nCanvas">
         <div class="nNewGamePromo">
           <div class="nGameDescription">
