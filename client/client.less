@@ -6,46 +6,177 @@ received a copy of the CC0 Public Domain Dedication along with this software.
 If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
-#noughtsAppContainer {
-  width: 384px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 25px;
-}
+// #noughtsAppContainer {
+//   width: 384px;
+//   margin-left: auto;
+//   margin-right: auto;
+//   margin-top: 25px;
+// }
 
-.appTitle {
-  text-align: center;
-}
+// .appTitle {
+//   text-align: center;
+// }
 
-.noughtsNewGame {
-  position: relative;
-  top: 320px;
-  left: 130px;
-  visibility: hidden;
-}
+// .noughtsNewGame {
+//   position: relative;
+//   top: 320px;
+//   left: 130px;
+//   visibility: hidden;
+// }
 
-.notice {
-  font-size: x-large;
-  font-weight: bold;
-}
+// .notice {
+//   font-size: x-large;
+//   font-weight: bold;
+// }
 
-@defaultFontSize: 13px;
+// @defaultFontSize: 13px;
 
-@bigScreen: ~"(min-width: 1200px)";
-@smallScreen: ~"(max-width: 1199px)";
-@bigScreenMultiplier: 2;
-@smallScreenMultiplier: 1;
+// @bigScreen: ~"(min-width: 1200px)";
+// @smallScreen: ~"(max-width: 1199px)";
+// @bigScreenMultiplier: 2;
+// @smallScreenMultiplier: 1;
 
-body {
-  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-  line-height: 1.1;
-  @media @bigScreen {
-    font-size: @defaultFontSize * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    font-size: @defaultFontSize * @smallScreenMultiplier;
-  }
-}
+// body {
+//   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+//   line-height: 1.1;
+//   @media @bigScreen {
+//     font-size: @defaultFontSize * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     font-size: @defaultFontSize * @smallScreenMultiplier;
+//   }
+// }
+
+// .centeredBlock (@width, @height) {
+//   height: @height;
+//   width: @width;
+//   margin-top: -(@height/2);
+//   margin-left: -(@width/2);
+//   top: 50%;
+//   left: 50%;
+// }
+
+// @containerHeight: 384px;
+// @containerWidth: 512px;
+
+// .nContainer {
+//   @media @bigScreen {
+//     .centeredBlock(@containerWidth * @bigScreenMultiplier,
+//          @containerHeight * @bigScreenMultiplier)
+//   }
+//   @media @smallScreen {
+//     .centeredBlock(@containerWidth * @smallScreenMultiplier,
+//          @containerHeight * @smallScreenMultiplier)
+//   }
+//   position: fixed;
+// }
+
+// @menuWidth: 200px;
+
+// .nMenu {
+//   @media @bigScreen {
+//     height: @containerHeight * @bigScreenMultiplier;
+//     width: @menuWidth * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     height: @containerHeight * @smallScreenMultiplier;
+//     width: @menuWidth * @smallScreenMultiplier;
+//   }
+//   float: left;
+//   background-color: #f5f5f5;
+// }
+
+// @gameWidth: 300px;
+
+// .nGame {
+//   @media @bigScreen {
+//     height: @containerHeight * @bigScreenMultiplier;
+//     width: @gameWidth * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     height: @containerHeight * @smallScreenMultiplier;
+//     width: @gameWidth * @smallScreenMultiplier;
+//   }
+//   float: right;
+// }
+
+// @canvasHeight: 300px;
+// @canvasWidth: 300px;
+
+// .nCanvas {
+//   @media @bigScreen {
+//     height: @canvasHeight * @bigScreenMultiplier;
+//     width: @canvasWidth * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     height: @canvasHeight * @smallScreenMultiplier;
+//     width: @canvasWidth * @smallScreenMultiplier;
+//   }
+//   border: 1px solid #aaaaaa;
+// }
+
+// .nNewGamePromo {
+//   @explanationWidth: 200px;
+//   @explanationHeight: 200px;
+//   @media @bigScreen {
+//     .centeredBlock(@explanationWidth * @bigScreenMultiplier,
+//          @explanationHeight * @bigScreenMultiplier)
+//   }
+//   @media @smallScreen {
+//     .centeredBlock(@explanationWidth * @smallScreenMultiplier,
+//          @explanationHeight * @smallScreenMultiplier)
+//   }
+//   position: relative;
+// }
+
+// .nButtonContainer {
+//   @media @bigScreen {
+//     margin-top: 50px * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     margin-top: 50px * @smallScreenMultiplier;
+//   }
+//   text-align: center;
+// }
+
+// .nGameDescription {
+//   // I always find that left-aligned text blocks need to be nudged to the right
+//   // a bit to make them not look off-center.
+//   @media @bigScreen {
+//     margin-left: 12px * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     margin-left: 12px * @smallScreenMultiplier;
+//   }
+// }
+
+// .nMenuButton {
+//   @media @bigScreen {
+//     width: 200px * @bigScreenMultiplier;
+//     height: 45px * @bigScreenMultiplier;
+//     font-size: @defaultFontSize * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     width: 200px * @smallScreenMultiplier;
+//     height: 45px * @smallScreenMultiplier;
+//     font-size: @defaultFontSize * @smallScreenMultiplier;
+//   }
+//   background-image: none;
+//   border-radius: 0;
+//   border-color: #aaaaaa;
+//   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+// }
+
+// .nMenuIcon {
+//   @media @bigScreen {
+//     margin-right: 10px * @bigScreenMultiplier;
+//     font-size: 16px * @bigScreenMultiplier;
+//   }
+//   @media @smallScreen {
+//     margin-right: 10px * @smallScreenMultiplier;
+//     font-size: 16px * @smallScreenMultiplier;
+//   }
+// }
 
 .centeredBlock (@width, @height) {
   height: @height;
@@ -56,124 +187,58 @@ body {
   left: 50%;
 }
 
-@containerHeight: 384px;
-@containerWidth: 512px;
-
 .nContainer {
-  @media @bigScreen {
-    .centeredBlock(@containerWidth * @bigScreenMultiplier,
-         @containerHeight * @bigScreenMultiplier)
-  }
-  @media @smallScreen {
-    .centeredBlock(@containerWidth * @smallScreenMultiplier,
-         @containerHeight * @smallScreenMultiplier)
-  }
+  .centeredBlock(520px, 384px);
   position: fixed;
 }
 
-@menuWidth: 200px;
-
-.nMenu {
-  @media @bigScreen {
-    height: @containerHeight * @bigScreenMultiplier;
-    width: @menuWidth * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    height: @containerHeight * @smallScreenMultiplier;
-    width: @menuWidth * @smallScreenMultiplier;
-  }
-  float: left;
-  background-color: #f5f5f5;
-}
-
-@gameWidth: 300px;
-
-.nGame {
-  @media @bigScreen {
-    height: @containerHeight * @bigScreenMultiplier;
-    width: @gameWidth * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    height: @containerHeight * @smallScreenMultiplier;
-    width: @gameWidth * @smallScreenMultiplier;
-  }
-  float: right;
-}
-
-@canvasHeight: 300px;
-@canvasWidth: 300px;
-
 .nCanvas {
-  @media @bigScreen {
-    height: @canvasHeight * @bigScreenMultiplier;
-    width: @canvasWidth * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    height: @canvasHeight * @smallScreenMultiplier;
-    width: @canvasWidth * @smallScreenMultiplier;
-  }
+  .centeredBlock(300px, 300px);
+  position: relative;
   border: 1px solid #aaaaaa;
 }
 
-.nNewGamePromo {
-  @explanationWidth: 200px;
-  @explanationHeight: 200px;
-  @media @bigScreen {
-    .centeredBlock(@explanationWidth * @bigScreenMultiplier,
-         @explanationHeight * @bigScreenMultiplier)
-  }
-  @media @smallScreen {
-    .centeredBlock(@explanationWidth * @smallScreenMultiplier,
-         @explanationHeight * @smallScreenMultiplier)
-  }
-  position: relative;
+.menu.collapse
+{
+    float:left;
+    height:100% !important;
+    width:auto
 }
 
-.nButtonContainer {
-  @media @bigScreen {
-    margin-top: 50px * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    margin-top: 50px * @smallScreenMultiplier;
-  }
-  text-align: center;
+.menu.collapse.width
+{
+    position:relative;
+    width:0;
+    overflow:hidden;
+    -webkit-transition:width .35s ease;
+    -moz-transition:width .35s ease;
+    -o-transition:width .35s ease;
+    transition:width .35s ease
 }
 
-.nGameDescription {
-  // I always find that left-aligned text blocks need to be nudged to the right
-  // a bit to make them not look off-center.
-  @media @bigScreen {
-    margin-left: 12px * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    margin-left: 12px * @smallScreenMultiplier;
-  }
+.menu.collapse.in.width
+{
+    width:auto
 }
 
-.nMenuButton {
-  @media @bigScreen {
-    width: 200px * @bigScreenMultiplier;
-    height: 45px * @bigScreenMultiplier;
-    font-size: @defaultFontSize * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    width: 200px * @smallScreenMultiplier;
-    height: 45px * @smallScreenMultiplier;
-    font-size: @defaultFontSize * @smallScreenMultiplier;
-  }
-  background-image: none;
-  border-radius: 0;
-  border-color: #aaaaaa;
-  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+.menu .collapse-inner
+{
+    position:relative;
+    width:200px;
+    height: 384px;
+    background-color: #f5f5f5;
 }
 
-.nMenuIcon {
-  @media @bigScreen {
-    margin-right: 10px * @bigScreenMultiplier;
-    font-size: 16px * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    margin-right: 10px * @smallScreenMultiplier;
-    font-size: 16px * @smallScreenMultiplier;
-  }
+.view
+{
+  width: 320px;
+  height: 384px;
+  overflow:hidden;
+}
+
+// Override styles set by bootstrap-responsive
+#menu {
+  height: 100% !important;
+  overflow: hidden !important;
+  width: auto;
 }

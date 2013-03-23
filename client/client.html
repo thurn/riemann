@@ -14,48 +14,66 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </head>
 
 <body>
-  {{> page}}
+<div class="nContainer">
+  <div id="menu" class="menu nav-collapse width in collapse">
+    <div class="collapse-inner">
+      Menu
+      <ul>
+        <li><a>Futurama</a></li>
+        <li><a>Star Wars</a></li>
+        <li><a>Doctor Who</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="view">
+      <button type="button" class="btn" data-toggle="collapse" data-target="#menu">
+        Collapse
+      </button>
+      <div class="nCanvas">
+      </div>
+  </div>
+</div>
 </body>
 
-<template name="page">
-  <div class="nContainer">
-    <div class="nMenu">
-    </div>
-    <div class="nGame">
-      {{#if bigScreen}}
-        <img src="/images/logo300.png" />
-      {{else}}
-        <img src="/images/logo150.png" />
-      {{/if}}
-      <div class="nCanvas">
-        <div class="nNewGamePromo">
-          <div class="nGameDescription">
-            "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
-             a game for two players.
-          </div>
-          <div class="nButtonContainer">
-            <button type="button" class="btn nMenuButton">
-             <i class="icon-play icon-large nMenuIcon"></i>New Game
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
+<!-- <template name="page2"> -->
+<!--   <div class="nContainer"> -->
+<!--     <div class="nMenu"> -->
+<!--     </div> -->
+<!--     <div class="nGame"> -->
+<!--       {{#if bigScreen}} -->
+<!--         <img src="/images/logo300.png" /> -->
+<!--       {{else}} -->
+<!--         <img src="/images/logo150.png" /> -->
+<!--       {{/if}} -->
+<!--       <div class="nCanvas"> -->
+<!--         <div class="nNewGamePromo"> -->
+<!--           <div class="nGameDescription"> -->
+<!--             "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is -->
+<!--              a game for two players. -->
+<!--           </div> -->
+<!--           <div class="nButtonContainer"> -->
+<!--             <button type="button" class="btn nMenuButton"> -->
+<!--              <i class="icon-play icon-large nMenuIcon"></i>New Game -->
+<!--             </button> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!-- </template> -->
 
-<template name="oldPage">
-  {{> facebook}}
-  <div id="noughtsAppContainer">
-    <div id="jsapp">
-      <button class="btn btn-large noughtsNewGame">New Game</button>
-    </div>
-    <div class="notice"></div>
-  </div>
-</template>
+<!-- <template name="oldPage"> -->
+<!--   {{> facebook}} -->
+<!--   <div id="noughtsAppContainer"> -->
+<!--     <div id="jsapp"> -->
+<!--       <button class="btn btn-large noughtsNewGame">New Game</button> -->
+<!--     </div> -->
+<!--     <div class="notice"></div> -->
+<!--   </div> -->
+<!-- </template> -->
 
-<template name="facebook">
-  {{#constant}}
-    <div id="fb-root"></div>
-  {{/constant}}
-</template>
+<!-- <template name="facebook"> -->
+<!--   {{#constant}} -->
+<!--     <div id="fb-root"></div> -->
+<!--   {{/constant}} -->
+<!-- </template> -->
