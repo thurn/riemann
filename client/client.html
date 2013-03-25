@@ -7,32 +7,67 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 -->
 
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-   <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width">
   <title>Project Riemann</title>
 </head>
 
 <body>
-<div class="nContainer">
-  <div id="menu" class="menu nav-collapse width in collapse">
-    <div class="collapse-inner">
-      Menu
-      <ul>
-        <li><a>Futurama</a></li>
-        <li><a>Star Wars</a></li>
-        <li><a>Doctor Who</a></li>
-      </ul>
+<div id="outer-wrap">
+<div id="inner-wrap">
+
+    <header id="top" role="banner">
+        <div class="block">
+            <h1 class="block-title">Book Title</h1>
+            <a class="nav-btn" id="nav-open-btn" href="#nav">Book Navigation</a>
+        </div>
+    </header>
+
+    <nav id="nav" role="navigation">
+        <div class="block">
+            <h2 class="block-title">Chapters</h2>
+            <ul>
+                <li class="is-active">
+                    <a href="#">Chapter 1</a>
+                </li><!--
+             --><li>
+                    <a href="#">Chapter 2</a>
+                </li><!--
+             --><li>
+                    <a href="#">Chapter 3</a>
+                </li><!--
+             --><li>
+                    <a href="#">Chapter 4</a>
+                </li><!--
+             --><li>
+                    <a href="#">Chapter 5</a>
+                </li>
+            </ul>
+            <a class="close-btn" id="nav-close-btn" href="#top">Return to Content</a>
+        </div>
+    </nav>
+
+    <div id="main" role="main">
+        <article class="block prose">
+            <p><a name="id380362"><!--anchor--></a>SQUIRE TRELAWNEY, Dr. Livesey, and the rest of these gentlemen having
+            asked me to write down the whole particulars about Treasure Island, from
+            the beginning to the end, keeping nothing back but the bearings of the
+            island, and that only because there is still treasure not yet lifted, I
+            take up my pen in the year of grace 17__ and go back to the time when
+            my father kept the Admiral Benbow inn and the brown old seaman with the
+            sabre cut first took up his lodging under our roof.</p>
+        </article>
     </div>
-  </div>
-  <div class="view">
-      <button type="button" class="btn" data-toggle="collapse" data-target="#menu">
-        Collapse
-      </button>
-      <div class="nCanvas">
-      </div>
-  </div>
 </div>
+<!--/#inner-wrap-->
+</div>
+<!--/#outer-wrap-->
+
 </body>
 
 <!-- <template name="page2"> -->
