@@ -66,7 +66,7 @@
     window.App = (function()
     {
 
-        var _init = false, app = { };
+        var _init = false, app = { },
 
             nav_open = false,
 
@@ -129,9 +129,6 @@
 
             // open nav with main "nav" button
             document.getElementById('nav-open-btn').addEventListener('click', app.toggleNav, false);
-
-            // close nav with main "close" button
-            document.getElementById('nav-close-btn').addEventListener('click', app.toggleNav, false);
 
             // close nav by touching the partial off-screen content
             document.addEventListener('click', function(e)
