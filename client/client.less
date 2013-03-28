@@ -6,6 +6,147 @@ received a copy of the CC0 Public Domain Dedication along with this software.
 If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
+@charset "UTF-8";
+@-ms-viewport {
+  width: device-width;
+}
+
+@viewport {
+  width: device-width;
+}
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+  line-height: 1.1;
+  position: relative;
+  width: 100%;
+  min-width: 20em;
+}
+
+.nTopHeader {
+  height: 45px;
+}
+
+.nOuterWrap {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.nNavigation {
+  z-index: 200;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  color: #000;
+  background-color: #f5f5f5;
+}
+
+.nTopHeader {
+  z-index: 100;
+  position: relative;
+  color: #000;
+  background: #f5f5f5;
+}
+
+.nMain {
+  background: #fff;
+}
+
+.nMenuToggleButton {
+  font-size: 26px;
+  cursor: pointer;
+  position: relative;
+  top: 10px;
+  left: 10px;
+}
+
+@media screen and (min-width: 1200px) {
+  font-size: 26px;
+}
+
+@media screen and (min-width: 601px) and (max-width: 1199px) {
+  font-size: 13px;
+}
+
+@media screen and (min-width: 601px) {
+  .nNavigation {
+    width: 200px;
+    height: 384px;
+    float: left;
+  }
+
+  .nTopHeader {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .nNavigation {
+    position: absolute;
+    top: 0;
+    padding-top: 5.25em;
+  }
+
+  .nNavigation:not(:target) {
+    z-index: 1;
+    height: 0;
+  }
+
+  .nInnerWrap .nNavigation {
+    height: 100%;
+    width: 70%;
+    background: #f5f5f5;
+    -webkit-box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
+    -moz-box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
+    box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
+    left: -70%;
+  }
+  .nInnerWrap {
+    left: 70%;
+  }
+
+  .csstransforms3d.csstransitions.nInnerWrap .nNavigation {
+    left: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    -moz-transform: translate3d(-100%, 0, 0);
+    -ms-transform: translate3d(-100%, 0, 0);
+    -o-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    -o-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .csstransforms3d.csstransitions .nInnerWrap {
+    left: 0 !important;
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    -o-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-transition: -webkit-transform 500ms ease;
+    -moz-transition: -moz-transform 500ms ease;
+    -o-transition: -o-transform 500ms ease;
+    transition: transform 500ms ease;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    -o-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .csstransforms3d.csstransitions.nav-open .nInnerWrap {
+    -webkit-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
+    -moz-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
+    -ms-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
+    -o-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
+    transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
+  }
+}
+
+
 // #noughtsAppContainer {
 //   width: 384px;
 //   margin-left: auto;
@@ -28,27 +169,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //   font-size: x-large;
 //   font-weight: bold;
 // }
-
-@defaultFontSize: 13px;
-
-@bigScreen: ~"screen and (min-width: 1200px)";
-@smallScreen: ~"screen and (max-width: 1199px)";
-@bigScreenMultiplier: 2;
-@smallScreenMultiplier: 1;
-
-body {
-  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-  line-height: 1.1;
-  @media @bigScreen {
-    font-size: @defaultFontSize * @bigScreenMultiplier;
-  }
-  @media @smallScreen {
-    font-size: @defaultFontSize * @smallScreenMultiplier;
-  }
-  position: relative;
-  width: 100%;
-  min-width: 20em;
-}
 
 .centeredBlock (@width, @height) {
   height: @height;
@@ -74,7 +194,7 @@ body {
 //   position: fixed;
 // }
 
-#inner-wrap {
+.nInnerWrap {
   width: 100%;
 
   @media screen and (min-width: 601px) {
@@ -83,7 +203,7 @@ body {
   }
 }
 
-#main {
+.nMain {
   @media screen and (min-width: 601px) {
     width: 300px;
     height: @containerHeight;
@@ -92,7 +212,7 @@ body {
 }
 
 @media screen and (max-width: 600px) {
-  html, body, #outer-wrap, #inner-wrap, #main {
+  html, body, .nOuterWrap, .nInnerWrap, .nMain {
     height: 100%;
   }
 }
