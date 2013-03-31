@@ -16,68 +16,49 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </head>
 
 <body>
-<div class="nOuterWrap">
-<div class="nInnerWrap">
-
-    <header class="nTopHeader" role="banner">
-      <span class="nMenuToggleButton">
-        <i class="icon-chevron-left"></i>
-        <i class="icon-reorder"></i>
-      </span>
-    </header>
-
-    <nav class="nNavigation" role="navigation">
-      <div>Navigation</div>
-    </nav>
-
-    <div class="nMain" role="main">
-      <div class="nGame"></div>
-    </div>
-</div>
-<!--/#nInnerWrap-->
-</div>
-<!--/#nOuterWrap-->
+  {{> page}}
 </body>
 
-<!-- <template name="page2"> -->
-<!--   <div class="nContainer"> -->
-<!--     <div class="nMenu"> -->
-<!--     </div> -->
-<!--     <div class="nGame"> -->
-<!--       {{#if bigScreen}} -->
-<!--         <img src="/images/logo300.png" /> -->
-<!--       {{else}} -->
-<!--         <img src="/images/logo150.png" /> -->
-<!--       {{/if}} -->
-<!--       <div class="nCanvas"> -->
-<!--         <div class="nNewGamePromo"> -->
-<!--           <div class="nGameDescription"> -->
-<!--             "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is -->
-<!--              a game for two players. -->
-<!--           </div> -->
-<!--           <div class="nButtonContainer"> -->
-<!--             <button type="button" class="btn nMenuButton"> -->
-<!--              <i class="icon-play icon-large nMenuIcon"></i>New Game -->
-<!--             </button> -->
-<!--           </div> -->
-<!--         </div> -->
-<!--       </div> -->
-<!--     </div> -->
-<!--   </div> -->
-<!-- </template> -->
+<template name="page">
+  {{> facebook}}
+  <div class="nWrapper">
+  <div class="nContainer">
 
-<!-- <template name="oldPage"> -->
-<!--   {{> facebook}} -->
-<!--   <div id="noughtsAppContainer"> -->
-<!--     <div id="jsapp"> -->
-<!--       <button class="btn btn-large noughtsNewGame">New Game</button> -->
-<!--     </div> -->
-<!--     <div class="notice"></div> -->
-<!--   </div> -->
-<!-- </template> -->
+      <header class="nTopHeader" role="banner">
+        <span class="nMenuToggleButton">
+          <i class="icon-chevron-left"></i>
+          <i class="icon-reorder"></i>
+        </span>
+      </header>
 
-<!-- <template name="facebook"> -->
-<!--   {{#constant}} -->
-<!--     <div id="fb-root"></div> -->
-<!--   {{/constant}} -->
-<!-- </template> -->
+      <nav class="nNavigation" role="navigation">
+      </nav>
+
+      <div class="nMain" role="main">
+        <div class="nLogo" />
+        <div class="nGame">
+          <div class="nNewGamePromo">
+            <div class="nGameDescription">
+              "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
+               a game for two players.
+            </div>
+            <div class="nPromoButtonContainer">
+              <button type="button" class="btn nMenuButton">
+                  <i class="icon-play icon-large"></i>
+                  <span class="nMenuButtonText">New Game</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+  <!--/#nContainer-->
+  </div>
+  <!--/#nWrapper-->
+</template>
+
+<template name="facebook">
+  {{#constant}}
+    <div id="fb-root"></div>
+  {{/constant}}
+</template>

@@ -6,6 +6,27 @@ received a copy of the CC0 Public Domain Dedication along with this software.
 If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
+// -------------------- CONSTANTS -------------------- //
+@defaultFontSize: 13px;
+@containerHeight: 384px;
+@containerWidth: 512px;
+@mainWidth: 300px;
+@gameWidth: 300px;
+@gameHeight: 300px;
+@headerSize: 45px;
+@navigationWidth: 200px;
+@navigationHeight: @containerHeight;
+@newGamePromoWidth: 200px;
+@newGamePromoHeight: 200px;
+@gameDescriptionLeftMargin: 12px;
+@menuButtonHeight: 45px;
+@largerFontSize: 16px;
+@menuIconRightMargin: 10px;
+@promoButtonContainerTopMargin: 50px;
+@menuButtonTextLeftMargin: 5px;
+
+// -------------------- COMMON STYLE -------------------- //
+
 @charset "UTF-8";
 @-ms-viewport {
   width: device-width;
@@ -15,19 +36,37 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   width: device-width;
 }
 
-body {
+.defaultFont (@multiplier) {
+  font-size: @defaultFontSize * @multiplier;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
+}
+
+body {
   position: relative;
   width: 100%;
-  min-width: 20em;
+  .defaultFont(1);
+  padding: 0; // bootstrap-responsive very annoyingly adds padding to body
+}
+
+.centeredBlock (@width, @height) {
+  height: @height;
+  width: @width;
+  margin-top: -(@height/2);
+  margin-left: -(@width/2);
+  top: 50%;
+  left: 50%;
+}
+
+.nContainer {
+  width: 100%;
 }
 
 .nTopHeader {
   height: 45px;
 }
 
-.nOuterWrap {
+.nWrapper {
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -40,6 +79,8 @@ body {
   width: 100%;
   color: #000;
   background-color: #f5f5f5;
+  width: @navigationWidth;
+  height: @navigationHeight;
 }
 
 .nTopHeader {
@@ -61,27 +102,83 @@ body {
   left: 10px;
 }
 
-@media screen and (min-width: 1200px) {
-  font-size: 26px;
+.nGame {
+  top: 50%;
+  left: 50%;
+  position: relative;
+  border: solid 1px #aaa;
 }
 
-@media screen and (min-width: 601px) and (max-width: 1199px) {
-  font-size: 13px;
+.nLogo {
+  float: left;
+  background-image: url("/images/logo150.png");
+  width: 146px;
+  height: 37px;
 }
+
+.nNewGamePromo {
+  .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
+  position: relative;
+}
+
+.nGameDescription {
+  // I always find that left-aligned text blocks need to be nudged to the right
+  // a bit to make them not look off-center.
+  margin-left: @gameDescriptionLeftMargin;
+}
+
+.nPromoButtonContainer {
+  margin-top: @promoButtonContainerTopMargin;
+  text-align: center;
+}
+
+.nMenuButton {
+  width: @navigationWidth;
+  height: @menuButtonHeight;
+  background-image: none;
+  border-radius: 0;
+  border-color: #aaaaaa;
+  .defaultFont(1);
+}
+
+.nMenuButtonText {
+  margin-left: @menuButtonTextLeftMargin;
+}
+
+// -------------------- DESKTOP-ONLY STYLE -------------------- //
 
 @media screen and (min-width: 601px) {
   .nNavigation {
-    width: 200px;
-    height: 384px;
     float: left;
   }
 
   .nTopHeader {
     display: none;
   }
+
+  .nContainer {
+    .centeredBlock(@containerWidth, @containerHeight);
+    position: fixed;
+  }
+
+  .nGame {
+    .centeredBlock(@gameWidth, @gameHeight);
+  }
+
+  .nMain {
+    width: @mainWidth;
+    height: @containerHeight;
+    float: right;
+  }
 }
 
+// -------------------- MOBILE-ONLY STYLE -------------------- //
+
 @media screen and (max-width: 600px) {
+  html, body, .nWrapper, .nContainer, .nMain {
+    height: 100%;
+  }
+
   .nNavigation {
     position: absolute;
     top: 0;
@@ -94,8 +191,16 @@ body {
     box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
     left: -70%;
   }
-  .nInnerWrap {
+
+  .nContainer {
     left: 70%;
+  }
+
+  .nGame {
+    width: @gameWidth;
+    height: @gameHeight;
+    margin-left: -(@gameWidth / 2);
+    margin-top: -(@gameHeight / 2 + @headerSize / 2);
   }
 
   .csstransforms3d.csstransitions .nNavigation {
@@ -111,7 +216,7 @@ body {
     -o-backface-visibility: hidden;
     backface-visibility: hidden;
   }
-  .csstransforms3d.csstransitions .nInnerWrap {
+  .csstransforms3d.csstransitions .nContainer {
     left: 0 !important;
     -webkit-transform: translate3d(0, 0, 0);
     -moz-transform: translate3d(0, 0, 0);
@@ -129,7 +234,7 @@ body {
     backface-visibility: hidden;
   }
 
-  .csstransforms3d.csstransitions.nNavOpen .nInnerWrap {
+  .csstransforms3d.csstransitions.nNavOpen .nContainer {
     -webkit-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
     -moz-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
     -ms-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
@@ -138,181 +243,57 @@ body {
   }
 }
 
+// -------------------- BIG-SCREEN DESKTOP STYLE -------------------- //
 
-// #noughtsAppContainer {
-//   width: 384px;
-//   margin-left: auto;
-//   margin-right: auto;
-//   margin-top: 25px;
-// }
-
-// .appTitle {
-//   text-align: center;
-// }
-
-// .noughtsNewGame {
-//   position: relative;
-//   top: 320px;
-//   left: 130px;
-//   visibility: hidden;
-// }
-
-// .notice {
-//   font-size: x-large;
-//   font-weight: bold;
-// }
-
-.centeredBlock (@width, @height) {
-  height: @height;
-  width: @width;
-  margin-top: -(@height/2);
-  margin-left: -(@width/2);
-  top: 50%;
-  left: 50%;
-}
-
-@containerHeight: 384px;
-@containerWidth: 512px;
-
-// .nContainer {
-//   @media @bigScreen {
-//     .centeredBlock(@containerWidth * @bigScreenMultiplier,
-//          @containerHeight * @bigScreenMultiplier)
-//   }
-//   @media @smallScreen {
-//     .centeredBlock(@containerWidth * @smallScreenMultiplier,
-//          @containerHeight * @smallScreenMultiplier)
-//   }
-//   position: fixed;
-// }
-
-.nInnerWrap {
-  width: 100%;
-
-  @media screen and (min-width: 601px) {
-    .centeredBlock(@containerWidth, @containerHeight);
-    position: fixed;
+@media screen and (min-width: 1200px) and (min-height: 800px) {
+  body {
+    .defaultFont(2);
   }
-}
 
-.nMain {
-  @media screen and (min-width: 601px) {
+  .nGame {
+    .centeredBlock(@gameWidth * 2, @gameHeight * 2);
+  }
+
+  .nNavigation {
+    width: @navigationWidth * 2;
+    height: @navigationHeight * 2;
+  }
+
+  .nContainer {
+    .centeredBlock(@containerWidth * 2, @containerHeight * 2);
+  }
+
+  .nMain {
+    width: @mainWidth * 2;
+    height: @containerHeight * 2;
+  }
+
+  .nNewGamePromo {
+    .centeredBlock(@newGamePromoWidth * 2, @newGamePromoHeight * 2);
+  }
+
+  .nGameDescription {
+    margin-left: @gameDescriptionLeftMargin * 2;
+  }
+
+  .nPromoButtonContainer {
+    margin-top: @promoButtonContainerTopMargin * 2;
+  }
+
+  .nMenuButton {
+    width: @navigationWidth * 2;
+    height: @menuButtonHeight * 2;
+    .defaultFont(2);
+  }
+
+  .nMenuButtonText {
+    margin-left: @menuButtonTextLeftMargin * 2;
+  }
+
+  .nLogo {
+    float: left;
+    background-image: url("/images/logo300.png");
     width: 300px;
-    height: @containerHeight;
-    float: right;
+    height: 76px;
   }
 }
-
-@media screen and (max-width: 600px) {
-  html, body, .nOuterWrap, .nInnerWrap, .nMain {
-    height: 100%;
-  }
-}
-
-// @menuWidth: 200px;
-
-// .nMenu {
-//   @media @bigScreen {
-//     height: @containerHeight * @bigScreenMultiplier;
-//     width: @menuWidth * @bigScreenMultiplier;
-//   }
-//   @media @smallScreen {
-//     height: @containerHeight * @smallScreenMultiplier;
-//     width: @menuWidth * @smallScreenMultiplier;
-//   }
-//   float: left;
-//   background-color: #f5f5f5;
-// }
-
-@gameWidth: 300px;
-@headerSize: 45px;
-
-.nGame {
-  @size: 300px;
-  background-color: #c00;
-  width: @size;
-  height: @size;
-  top: 50%;
-  left: 50%;
-  margin-left: -(@size / 2);
-  margin-top: -(@size / 2 + @headerSize / 2);
-  position: relative;
-}
-
-// @canvasHeight: 300px;
-// @canvasWidth: 300px;
-
-// .nCanvas {
-//   @media @bigScreen {
-//     height: @canvasHeight * @bigScreenMultiplier;
-//     width: @canvasWidth * @bigScreenMultiplier;
-//   }
-//   @media @smallScreen {
-//     height: @canvasHeight * @smallScreenMultiplier;
-//     width: @canvasWidth * @smallScreenMultiplier;
-//   }
-//   border: 1px solid #aaaaaa;
-// }
-
-// .nNewGamePromo {
-//   @explanationWidth: 200px;
-//   @explanationHeight: 200px;
-//   @media @bigScreen {
-//     .centeredBlock(@explanationWidth * @bigScreenMultiplier,
-//          @explanationHeight * @bigScreenMultiplier)
-//   }
-//   @media @smallScreen {
-//     .centeredBlock(@explanationWidth * @smallScreenMultiplier,
-//          @explanationHeight * @smallScreenMultiplier)
-//   }
-//   position: relative;
-// }
-
-// .nButtonContainer {
-//   @media @bigScreen {
-//     margin-top: 50px * @bigScreenMultiplier;
-//   }
-//   @media @smallScreen {
-//     margin-top: 50px * @smallScreenMultiplier;
-//   }
-//   text-align: center;
-// }
-
-// .nGameDescription {
-//   // I always find that left-aligned text blocks need to be nudged to the right
-//   // a bit to make them not look off-center.
-//   @media @bigScreen {
-//     margin-left: 12px * @bigScreenMultiplier;
-//   }
-//   @media @smallScreen {
-//     margin-left: 12px * @smallScreenMultiplier;
-//   }
-// }
-
-// .nMenuButton {
-//   @media @bigScreen {
-//     width: 200px * @bigScreenMultiplier;
-//     height: 45px * @bigScreenMultiplier;
-//     font-size: @defaultFontSize * @bigScreenMultiplier;
-//   }
-//   @media @smallScreen {
-//     width: 200px * @smallScreenMultiplier;
-//     height: 45px * @smallScreenMultiplier;
-//     font-size: @defaultFontSize * @smallScreenMultiplier;
-//   }
-//   background-image: none;
-//   border-radius: 0;
-//   border-color: #aaaaaa;
-//   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-// }
-
-// .nMenuIcon {
-//   @media @bigScreen {
-//     margin-right: 10px * @bigScreenMultiplier;
-//     font-size: 16px * @bigScreenMultiplier;
-//   }
-//   @media @smallScreen {
-//     margin-right: 10px * @smallScreenMultiplier;
-//     font-size: 16px * @smallScreenMultiplier;
-//   }
-// }

@@ -1,9 +1,9 @@
 ###
-To the extent possible under law, the author(s) have dedicated all copyright
-and related and neighboring rights to this software to the public domain
-worldwide. This software is distributed without any warranty. You should have
-received a copy of the CC0 Public Domain Dedication along with this software.
-If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+# To the extent possible under law, the author(s) have dedicated all copyright
+# and related and neighboring rights to this software to the public domain
+# worldwide. This software is distributed without any warranty. You should have
+# received a copy of the CC0 Public Domain Dedication along with this software.
+# If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
 # Project Riemann client interface
@@ -16,10 +16,7 @@ gameResources = [
   {name: "tilemap", type: "tmx", src: "/tilemaps/tilemap.tmx"}
 ]
 
-# Tile square size in pixels
 SPRITE_Z_INDEX = 2
-
-Template.page.bigScreen = document.documentElement.clientWidth > 1200
 
 showInviteDialog = (inviteCallback) -> FB.ui
   method: "apprequests",
@@ -111,7 +108,7 @@ onload = ->
   me.loader.preload(gameResources)
 
 Meteor.startup ->
-  window.onReady -> onload()
+  #window.onReady -> onload()
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
