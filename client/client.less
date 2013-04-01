@@ -12,7 +12,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @containerWidth: 512px;
 @mainWidth: 300px;
 @gameWidth: 300px;
-@gameHeight: 300px;
+@gameHeight: @gameWidth;
 @headerSize: 45px;
 @navigationWidth: 200px;
 @navigationHeight: @containerHeight;
@@ -46,7 +46,6 @@ body {
   position: relative;
   width: 100%;
   .defaultFont(1);
-  padding: 0; // bootstrap-responsive very annoyingly adds padding to body
 }
 
 .centeredBlock (@width, @height) {

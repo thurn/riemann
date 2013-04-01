@@ -17,3 +17,12 @@ openNav = (event) ->
 
 Meteor.startup ->
   $(".nMenuToggleButton").on("click", openNav)
+
+ua = navigator.userAgent
+iphone = ~ua.indexOf('iPhone') || ~ua.indexOf('iPod')
+
+Meteor.startup ->
+  if iphone
+    height = document.documentElement.clientHeight + 60
+    $("body").css(height: height + 'px')
+    setTimeout((-> window.scrollTo(0, 0)), 1)

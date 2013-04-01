@@ -9,7 +9,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1 user-scalable=0"/>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <title>Project Riemann</title>
@@ -20,10 +20,9 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </body>
 
 <template name="page">
-  {{> facebook}}
   <div class="nWrapper">
-  <div class="nContainer">
-
+  {{> facebook}}
+    <div class="nContainer">
       <header class="nTopHeader" role="banner">
         <span class="nMenuToggleButton">
           <i class="icon-chevron-left"></i>
@@ -51,7 +50,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
           </div>
         </div>
       </div>
-  </div>
+    </div>
   <!--/#nContainer-->
   </div>
   <!--/#nWrapper-->
