@@ -98,7 +98,7 @@ TitleScreen = me.ScreenObject.extend
     $(".noughtsNewGame").css("visibility", "visible")
     context.drawImage(@title_, 0, 0)
 
-onload = ->
+initialize = ->
   initialized = me.video.init("jsapp", 384, 384)
   if not initialized
     alert("Sorry, your browser doesn't support HTML 5 canvas!")
@@ -107,8 +107,8 @@ onload = ->
     noughts.maybeInitialize()
   me.loader.preload(gameResources)
 
-Meteor.startup ->
-  #window.onReady -> onload()
+#Meteor.startup ->
+  #window.onReady -> initialize()
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
