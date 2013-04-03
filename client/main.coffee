@@ -21,8 +21,12 @@ Meteor.startup ->
 ua = navigator.userAgent
 iphone = ~ua.indexOf('iPhone') || ~ua.indexOf('iPod')
 
-Meteor.startup ->
+hideNavbar = ->
   if iphone
     height = document.documentElement.clientHeight + 60
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
+
+Meteor.startup ->
+  hideNavbar()
+  window.onorientationchange = hideNavbar
