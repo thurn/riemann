@@ -27,6 +27,15 @@ hideNavbar = ->
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
 
+rotateBody = ->
+  if iphone
+    rotate = -1 * window.orientation
+    $("body").css("-webkit-transform", "rotate(#{rotate}deg)")
+    $("body").css("transform", "rotate(#{rotate}deg)")
+
 Meteor.startup ->
   hideNavbar()
-  window.onorientationchange = hideNavbar
+  rotateBody()
+  $("body").on "orientationchange", ->
+    hideNavbar()
+    rotateBody()

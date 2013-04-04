@@ -9,8 +9,9 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 // -------------------- CONSTANTS -------------------- //
 @defaultFontSize: 13px;
 @containerHeight: 384px;
-@containerWidth: 512px;
-@mainWidth: 300px;
+@containerWidth: 532px;
+@mainWidth: 320px;
+@mainHeight: 370px;
 @gameWidth: 300px;
 @gameHeight: @gameWidth;
 @headerSize: 45px;
@@ -61,10 +62,6 @@ body {
   width: 100%;
 }
 
-.nTopHeader {
-  height: 45px;
-}
-
 .nWrapper {
   position: relative;
   overflow: hidden;
@@ -83,6 +80,7 @@ body {
 }
 
 .nTopHeader {
+  height: 45px;
   z-index: 100;
   position: relative;
   color: #000;
@@ -113,6 +111,7 @@ body {
   background-image: url("/images/logo150.png");
   width: 146px;
   height: 37px;
+  margin: -5px 0 0 12px;
 }
 
 .nNewGamePromo {
@@ -166,7 +165,7 @@ body {
 
   .nMain {
     width: @mainWidth;
-    height: @containerHeight;
+    height: @mainHeight;
     float: right;
   }
 }
