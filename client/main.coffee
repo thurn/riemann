@@ -21,21 +21,13 @@ Meteor.startup ->
 ua = navigator.userAgent
 iphone = ~ua.indexOf('iPhone') || ~ua.indexOf('iPod')
 
-hideNavbar = ->
+iPhoneHideNavbar = ->
   if iphone
     height = document.documentElement.clientHeight + 60
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
 
-rotateBody = ->
-  if iphone
-    rotate = -1 * window.orientation
-    $("body").css("-webkit-transform", "rotate(#{rotate}deg)")
-    $("body").css("transform", "rotate(#{rotate}deg)")
-
 Meteor.startup ->
-  hideNavbar()
-  rotateBody()
+  iPhoneHideNavbar()
   $("body").on "orientationchange", ->
-    hideNavbar()
-    rotateBody()
+    iPhoneHideNavbar()
