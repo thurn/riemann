@@ -175,10 +175,11 @@ body {
 @media screen and (max-width: 600px) {
   html, body, .nWrapper, .nContainer, .nMain {
     height: 100%;
+    width: 100%;
   }
 
   .nNavigation {
-    position: absolute;
+    position: fixed;
     top: 0;
     padding-top: 5.25em;
     height: 100%;
@@ -194,11 +195,21 @@ body {
     left: 70%;
   }
 
+  .nMain {
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
   .nGame {
     width: @gameWidth;
     height: @gameHeight;
     margin-left: -(@gameWidth / 2);
-    margin-top: -(@gameHeight / 2 + @headerSize / 2);
+    margin-top: -(@gameHeight / 2 - @headerSize / 2);
+  }
+
+  .nLogo {
+    display: none;
   }
 
   .csstransforms3d.csstransitions .nNavigation {
@@ -239,6 +250,18 @@ body {
     -o-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
     transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
   }
+}
+
+// -------------------- MOBILE LANDSCAPE STYLE -------------------- //
+@media screen and (max-height: 320px) and (min-width: 480px) {
+  // .nTopHeader {
+  //   display: none;
+  // }
+
+  // .nMain {
+  //   -webkit-transform: scale(0.8375);
+  //   transform: scale(0.8375);
+  // }
 }
 
 // -------------------- BIG-SCREEN DESKTOP STYLE -------------------- //
