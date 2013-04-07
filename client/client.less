@@ -80,11 +80,7 @@ body {
 }
 
 .nTopHeader {
-  height: 45px;
-  z-index: 100;
-  position: relative;
-  color: #000;
-  background: #f5f5f5;
+  display: none;
 }
 
 .nMain {
@@ -145,13 +141,9 @@ body {
 
 // -------------------- DESKTOP-ONLY STYLE -------------------- //
 
-@media screen and (min-width: 601px) {
+@media screen and (min-width: 600px) and (min-height: 400px) {
   .nNavigation {
     float: left;
-  }
-
-  .nTopHeader {
-    display: none;
   }
 
   .nContainer {
@@ -172,7 +164,8 @@ body {
 
 // -------------------- MOBILE-ONLY STYLE -------------------- //
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 599px),
+       screen and (max-height: 399px) {
   html, body, .nWrapper, .nContainer, .nMain {
     height: 100%;
     width: 100%;
@@ -206,6 +199,15 @@ body {
     height: @gameHeight;
     margin-left: -(@gameWidth / 2);
     margin-top: -(@gameHeight / 2 - @headerSize / 2);
+  }
+
+  .nTopHeader {
+    display: block;
+    height: 45px;
+    z-index: 100;
+    color: #000;
+    background: #f5f5f5;
+    position: relative;
   }
 
   .nLogo {
@@ -254,14 +256,33 @@ body {
 
 // -------------------- MOBILE LANDSCAPE STYLE -------------------- //
 @media screen and (max-height: 320px) and (min-width: 480px) {
-  // .nTopHeader {
-  //   display: none;
-  // }
+  // 320px is the width of the iPhone in portrait mode. 268px is the *height*
+  // of the iPhone in landscape mode. We scale down the game content by this
+  // ratio to make normal portrait-mode content fit in the landscape view.
+  @landscapeScaleFactor: 268/320;
 
-  // .nMain {
-  //   -webkit-transform: scale(0.8375);
-  //   transform: scale(0.8375);
-  // }
+  .nTopHeader {
+    height: 100%;
+    width: @headerSize;
+  }
+
+  .nMain {
+    -webkit-transform: scale(@landscapeScaleFactor);
+    transform: scale(@landscapeScaleFactor);
+  }
+
+  .nGame {
+    width: @gameWidth;
+    height: @gameHeight;
+    margin-left: -(@gameWidth / 2 - @headerSize /2);
+    margin-top: -(@gameHeight / 2);
+  }
+
+  .nMenuToggleButton {
+    font-size: 16px;
+    top: 5px;
+    left: 5px;
+  }
 }
 
 // -------------------- BIG-SCREEN DESKTOP STYLE -------------------- //

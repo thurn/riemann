@@ -23,7 +23,7 @@ iphone = ~ua.indexOf('iPhone') || ~ua.indexOf('iPod')
 
 iPhoneHideNavbar = ->
   if iphone
-    height = document.documentElement.clientHeight + 64
+    height = document.documentElement.clientHeight + 60
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
 
