@@ -6,6 +6,8 @@ received a copy of the CC0 Public Domain Dedication along with this software.
 If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
+@import "lib/elements.less";
+
 // -------------------- CONSTANTS -------------------- //
 @defaultFontSize: 13px;
 @containerHeight: 384px;
@@ -178,9 +180,7 @@ body {
     height: 100%;
     width: 70%;
     background: #f5f5f5;
-    -webkit-box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
-    -moz-box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
-    box-shadow: inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25);
+    .box-shadow(inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25));
     left: -70%;
   }
 
@@ -216,41 +216,16 @@ body {
 
   .csstransforms3d.csstransitions .nNavigation {
     left: 0;
-    -webkit-transform: translate3d(-100%, 0, 0);
-    -moz-transform: translate3d(-100%, 0, 0);
-    -ms-transform: translate3d(-100%, 0, 0);
-    -o-transform: translate3d(-100%, 0, 0);
-    transform: translate3d(-100%, 0, 0);
-    -webkit-backface-visibility: hidden;
-    -moz-backface-visibility: hidden;
-    -ms-backface-visibility: hidden;
-    -o-backface-visibility: hidden;
-    backface-visibility: hidden;
+    .transform(translate3d(-100%, 0, 0));
   }
   .csstransforms3d.csstransitions .nContainer {
     left: 0 !important;
-    -webkit-transform: translate3d(0, 0, 0);
-    -moz-transform: translate3d(0, 0, 0);
-    -ms-transform: translate3d(0, 0, 0);
-    -o-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-    -webkit-transition: -webkit-transform 500ms ease;
-    -moz-transition: -moz-transform 500ms ease;
-    -o-transition: -o-transform 500ms ease;
-    transition: transform 500ms ease;
-    -webkit-backface-visibility: hidden;
-    -moz-backface-visibility: hidden;
-    -ms-backface-visibility: hidden;
-    -o-backface-visibility: hidden;
-    backface-visibility: hidden;
+    .transform(translate3d(0, 0, 0));
+    .transition(500ms, ease);
   }
 
   .csstransforms3d.csstransitions.nNavOpen .nContainer {
-    -webkit-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
-    -moz-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
-    -ms-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
-    -o-transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
-    transform: translate3d(70%, 0, 0) scale3d(1, 1, 1);
+    .transform(translate3d(70%, 0, 0), scale3d(1, 1, 1));
   }
 }
 
@@ -267,8 +242,7 @@ body {
   }
 
   .nMain {
-    -webkit-transform: scale(@landscapeScaleFactor);
-    transform: scale(@landscapeScaleFactor);
+    .transform(scale(@landscapeScaleFactor));
   }
 
   .nGame {
