@@ -27,7 +27,18 @@ iPhoneHideNavbar = ->
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
 
+zoom = ->
+  width = $(window).width()
+  height = $(window).height()
+  if width - 1200 > height - 800
+    scaleFactor = height / 800
+  else
+    scaleFactor = width / 1200
+  $(".nContainer").css("transform", "scale(#{scaleFactor})")
+
 Meteor.startup ->
   iPhoneHideNavbar()
   $("body").on "orientationchange", ->
     iPhoneHideNavbar()
+  zoom()
+  $(window).resize(zoom)
