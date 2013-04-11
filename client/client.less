@@ -9,24 +9,24 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @import "lib/elements.less";
 
 // -------------------- CONSTANTS -------------------- //
-@defaultFontSize: 13px;
-@containerHeight: 384px;
-@containerWidth: 532px;
-@mainWidth: 320px;
-@mainHeight: 370px;
-@gameWidth: 300px;
+@defaultFontSize: 26px;
+@containerHeight: 768px;
+@containerWidth: 1064px;
+@mainWidth: 640px;
+@mainHeight: 740px;
+@gameWidth: 600px;
 @gameHeight: @gameWidth;
 @headerSize: 45px;
-@navigationWidth: 200px;
+@navigationWidth: 400px;
 @navigationHeight: @containerHeight;
-@newGamePromoWidth: 200px;
-@newGamePromoHeight: 200px;
-@gameDescriptionLeftMargin: 12px;
-@menuButtonHeight: 45px;
-@largerFontSize: 16px;
-@menuIconRightMargin: 10px;
-@promoButtonContainerTopMargin: 50px;
-@menuButtonTextLeftMargin: 5px;
+@newGamePromoWidth: 400px;
+@newGamePromoHeight: 400px;
+@gameDescriptionLeftMargin: 24px;
+@menuButtonHeight: 90px;
+@largerFontSize: 32px;
+@menuIconRightMargin: 20px;
+@promoButtonContainerTopMargin: 100px;
+@menuButtonTextLeftMargin: 10px;
 
 // -------------------- COMMON STYLE -------------------- //
 
@@ -106,9 +106,9 @@ body {
 
 .nLogo {
   float: left;
-  background-image: url("/images/logo150.png");
-  width: 146px;
-  height: 37px;
+  background-image: url("/images/logo300.png");
+  width: 300px;
+  height: 76px;
   margin: -5px 0 0 12px;
 }
 
@@ -256,60 +256,5 @@ body {
     font-size: 16px;
     top: 5px;
     left: 5px;
-  }
-}
-
-// -------------------- BIG-SCREEN DESKTOP STYLE -------------------- //
-
-@media screen and (min-width: 120px) and (min-height: 80px) {
-  body {
-    .defaultFont(2);
-  }
-
-  .nGame {
-    .centeredBlock(@gameWidth * 2, @gameHeight * 2);
-  }
-
-  .nNavigation {
-    width: @navigationWidth * 2;
-    height: @navigationHeight * 2;
-  }
-
-  .nContainer {
-    .centeredBlock(@containerWidth * 2, @containerHeight * 2);
-  }
-
-  .nMain {
-    width: @mainWidth * 2;
-    height: @containerHeight * 2;
-  }
-
-  .nNewGamePromo {
-    .centeredBlock(@newGamePromoWidth * 2, @newGamePromoHeight * 2);
-  }
-
-  .nGameDescription {
-    margin-left: @gameDescriptionLeftMargin * 2;
-  }
-
-  .nPromoButtonContainer {
-    margin-top: @promoButtonContainerTopMargin * 2;
-  }
-
-  .nMenuButton {
-    width: @navigationWidth * 2;
-    height: @menuButtonHeight * 2;
-    .defaultFont(2);
-  }
-
-  .nMenuButtonText {
-    margin-left: @menuButtonTextLeftMargin * 2;
-  }
-
-  .nLogo {
-    float: left;
-    background-image: url("/images/logo300.png");
-    width: 300px;
-    height: 76px;
   }
 }
