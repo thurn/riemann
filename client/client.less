@@ -9,6 +9,10 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @import "lib/elements.less";
 
 // -------------------- CONSTANTS -------------------- //
+@DESKTOP: 1;
+@MOBILE: 0.5;
+@MOBILE_LANDSCAPE: 0.4;
+
 @defaultFontSize: 26px;
 @containerHeight: 768px;
 @containerWidth: 1064px;
@@ -16,7 +20,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @mainHeight: 740px;
 @gameWidth: 600px;
 @gameHeight: @gameWidth;
-@headerSize: 45px;
 @navigationWidth: 400px;
 @navigationHeight: @containerHeight;
 @newGamePromoWidth: 400px;
@@ -27,6 +30,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @menuIconRightMargin: 20px;
 @promoButtonContainerTopMargin: 100px;
 @menuButtonTextLeftMargin: 10px;
+
+@mobileHeaderSize: 45px;
+@mobileGameWidth: 300px;
+@mobileGameHeight: @mobileGameWidth;
+@mobileLandscapeGameWidth: 250px;
+@mobileLandscapeGameHeight: @mobileLandscapeGameWidth;
+
 
 // -------------------- COMMON STYLE -------------------- //
 
@@ -77,8 +87,6 @@ body {
   width: 100%;
   color: #000;
   background-color: #f5f5f5;
-  width: @navigationWidth;
-  height: @navigationHeight;
 }
 
 .nTopHeader {
@@ -112,40 +120,43 @@ body {
   margin: -5px 0 0 12px;
 }
 
-.nNewGamePromo {
-  .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
+.nNewGamePromo (@scale) {
   position: relative;
+  .centeredBlock(@newGamePromoWidth * @scale , @newGamePromoHeight * @scale);
 }
 
-.nGameDescription {
-  // I always find that left-aligned text blocks need to be nudged to the right
-  // a bit to make them not look off-center.
-  margin-left: @gameDescriptionLeftMargin;
-}
-
-.nPromoButtonContainer {
-  margin-top: @promoButtonContainerTopMargin;
+.nPromoButtonContainer (@scale) {
   text-align: center;
+  margin-top: @promoButtonContainerTopMargin * @scale;
 }
 
-.nMenuButton {
-  width: @navigationWidth;
-  height: @menuButtonHeight;
+.nMenuButton (@scale) {
   background-image: none;
   border-radius: 0;
   border-color: #aaaaaa;
-  .defaultFont(1);
+  .defaultFont(@scale);
+  width: @navigationWidth * @scale;
+  height: @menuButtonHeight * @scale;
 }
 
-.nMenuButtonText {
-  margin-left: @menuButtonTextLeftMargin;
+.nMenuButtonText (@scale) {
+  margin-left: @menuButtonTextLeftMargin * @scale;
 }
+
+.nGameDescription (@scale) {
+  // I always find that left-aligned text blocks need to be nudged to the right
+  // a bit to make them not look off-center.
+  margin-left: @gameDescriptionLeftMargin * @scale;
+}
+
 
 // -------------------- DESKTOP-ONLY STYLE -------------------- //
 
 @media screen and (min-width: 600px) and (min-height: 400px) {
   .nNavigation {
     float: left;
+    width: @navigationWidth;
+    height: @navigationHeight;
   }
 
   .nContainer {
@@ -162,6 +173,27 @@ body {
     height: @mainHeight;
     float: right;
   }
+
+  .nNewGamePromo {
+    .nNewGamePromo(@DESKTOP);
+  }
+
+  .nPromoButtonContainer {
+    .nPromoButtonContainer(@DESKTOP);
+  }
+
+  .nGameDescription {
+    .nGameDescription(@DESKTOP);
+  }
+
+  .nMenuButtonText {
+    .nMenuButtonText(@DESKTOP);
+  }
+
+  .nMenuButton {
+    .nMenuButton(@DESKTOP);
+  }
+
 }
 
 // -------------------- MOBILE-ONLY STYLE -------------------- //
@@ -171,6 +203,10 @@ body {
   html, body, .nWrapper, .nContainer, .nMain {
     height: 100%;
     width: 100%;
+  }
+
+  body {
+    .defaultFont(0.5);
   }
 
   .nNavigation {
@@ -195,10 +231,10 @@ body {
   }
 
   .nGame {
-    width: @gameWidth;
-    height: @gameHeight;
-    margin-left: -(@gameWidth / 2);
-    margin-top: -(@gameHeight / 2 - @headerSize / 2);
+    width: @mobileGameWidth;
+    height: @mobileGameHeight;
+    margin-left: -(@mobileGameWidth / 2);
+    margin-top: -(@mobileGameHeight / 2 - @mobileHeaderSize / 2);
   }
 
   .nTopHeader {
@@ -212,6 +248,26 @@ body {
 
   .nLogo {
     display: none;
+  }
+
+  .nNewGamePromo {
+    .nNewGamePromo(@MOBILE);
+  }
+
+  .nPromoButtonContainer {
+    .nPromoButtonContainer(@MOBILE);
+  }
+
+  .nMenuButton {
+    .nMenuButton(@MOBILE);
+  }
+
+  .nMenuButtonText {
+    .nMenuButtonText(@MOBILE);
+  }
+
+  .nGameDescription {
+    .nGameDescription(@MOBILE);
   }
 
   .csstransforms3d.csstransitions .nNavigation {
@@ -230,31 +286,42 @@ body {
 }
 
 // -------------------- MOBILE LANDSCAPE STYLE -------------------- //
-@media screen and (max-height: 320px) and (min-width: 480px) {
-  // 320px is the width of the iPhone in portrait mode. 268px is the *height*
-  // of the iPhone in landscape mode. We scale down the game content by this
-  // ratio to make normal portrait-mode content fit in the landscape view.
-  @landscapeScaleFactor: 268/320;
-
+@media screen and (max-height: 355px) and (min-width: 480px) {
   .nTopHeader {
     height: 100%;
-    width: @headerSize;
-  }
-
-  .nMain {
-    .transform(scale(@landscapeScaleFactor));
+    width: @mobileHeaderSize;
   }
 
   .nGame {
-    width: @gameWidth;
-    height: @gameHeight;
-    margin-left: -(@gameWidth / 2 - @headerSize /2);
-    margin-top: -(@gameHeight / 2);
+    width: @mobileLandscapeGameWidth;
+    height: @mobileLandscapeGameHeight;
+    margin-left: -(@mobileLandscapeGameWidth / 2 - @mobileHeaderSize /2);
+    margin-top: -(@mobileLandscapeGameHeight / 2);
   }
 
   .nMenuToggleButton {
     font-size: 16px;
     top: 5px;
     left: 5px;
+  }
+
+  .nNewGamePromo {
+    .nNewGamePromo(@MOBILE_LANDSCAPE);
+  }
+
+  .nPromoButtonContainer {
+    .nPromoButtonContainer(@MOBILE_LANDSCAPE);
+  }
+
+  .nMenuButton {
+    .nMenuButton(@MOBILE_LANDSCAPE);
+  }
+
+  .nMenuButtonText {
+    .nMenuButtonText(@MOBILE_LANDSCAPE);
+  }
+
+  .nGameDescription {
+    .nGameDescription(@MOBILE_LANDSCAPE);
   }
 }

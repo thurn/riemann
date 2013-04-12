@@ -29,13 +29,13 @@ Template.facebook.created = ->
     FB.getLoginStatus (response) ->
       if response.status != 'connected'
         requestIds = $.url().param("request_ids")
-        #top.location.href = getOathUrl(requestIds)
+        top.location.href = getOathUrl(requestIds)
       else
         accessToken = response.authResponse.accessToken
         userId = response.authResponse.userID
         Meteor.call "authenticate", userId, accessToken, (err) ->
           if err then throw err
-          #noughts.maybeInitialize()
+          noughts.maybeInitialize()
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')
