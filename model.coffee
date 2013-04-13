@@ -1,9 +1,9 @@
 ###
-To the extent possible under law, the author(s) have dedicated all copyright
-and related and neighboring rights to this software to the public domain
-worldwide. This software is distributed without any warranty. You should have
-received a copy of the CC0 Public Domain Dedication along with this software.
-If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+# To the extent possible under law, the author(s) have dedicated all copyright
+# and related and neighboring rights to this software to the public domain
+# worldwide. This software is distributed without any warranty. You should have
+# received a copy of the CC0 Public Domain Dedication along with this software.
+# If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
 # Project Riemann data model
@@ -35,6 +35,7 @@ noughts.BadRequestError.constructor = noughts.BadRequestError
 
 # Translates a message into a BadRequestError
 die = (msg) ->
+  console.log("ERORR: " + msg)
   throw new noughts.BadRequestError(msg)
 
 # Ensures that the provided userId is the ID of the current user
@@ -113,4 +114,3 @@ noughts.checkForVictory = (game) ->
 
 # Returns true if this game is a draw, otherwise false.
 noughts.isDraw = (game) -> game.moves.length == 9
-

@@ -19,8 +19,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </body>
 
 <template name="page">
-  <div class="nWrapper">
   {{> facebook}}
+  <div class="nWrapper">
     <div class="nContainer">
       <header class="nTopHeader" role="banner">
         <span class="nMenuToggleButton">
@@ -34,14 +34,14 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
       <div class="nMain" role="main">
         <div class="nLogo" />
-        <div class="nGame">
+        <div class="nGame" id="nGame">
           <div class="nNewGamePromo">
             <div class="nGameDescription">
               "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
                a game for two players.
             </div>
             <div class="nPromoButtonContainer">
-              <button type="button" class="btn nMenuButton">
+              <button type="button" class="btn nMenuButton nNewGameButton">
                   <i class="icon-play icon-large"></i>
                   <span class="nMenuButtonText">New Game</span>
               </button>

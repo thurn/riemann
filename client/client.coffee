@@ -88,18 +88,8 @@ handleNewGameClick = ->
         Session.set("gameId", gameId)
         me.state.change(me.state.PLAY)
 
-TitleScreen = me.ScreenObject.extend
-  init: ->
-    @parent(true)
-    @title_ = me.loader.getImage("title")
-    $(".noughtsNewGame").on("click", handleNewGameClick)
-
-  draw: (context) ->
-    $(".noughtsNewGame").css("visibility", "visible")
-    context.drawImage(@title_, 0, 0)
-
 initialize = ->
-  initialized = me.video.init("jsapp", 384, 384)
+  initialized = me.video.init("nGame", 600, 600)
   if not initialized
     alert("Sorry, your browser doesn't support HTML 5 canvas!")
     return
@@ -107,19 +97,19 @@ initialize = ->
     noughts.maybeInitialize()
   me.loader.preload(gameResources)
 
-#Meteor.startup ->
-  #window.onReady -> initialize()
+Meteor.startup ->
+  $(".nNewGameButton").on("click", handleNewGameClick)
+  window.onReady -> initialize()
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
 noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
-  me.state.set(me.state.MENU, new TitleScreen())
   requestIds = $.url().param("request_ids")?.split(",")
 
   Meteor.subscribe "myGames", ->
     if not requestIds
-      return me.state.change(me.state.MENU)
+      return
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
       game = noughts.Games.findOne {requestId: requestId}
@@ -129,4 +119,4 @@ noughts.maybeInitialize = _.after 2, ->
     if not game
       throw new Error("Game not found for requestIds: " + requestIds)
     Session.set("gameId", game._id)
-    return me.state.change(me.state.PLAY)
+    me.state.change(me.state.PLAY)
