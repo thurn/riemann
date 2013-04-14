@@ -17,7 +17,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @containerHeight: 768px;
 @containerWidth: 1064px;
 @mainWidth: 640px;
-@mainHeight: 740px;
+@mainHeight: @containerHeight;
 @gameWidth: 600px;
 @gameHeight: @gameWidth;
 @navigationWidth: 400px;
@@ -110,6 +110,7 @@ body {
   left: 50%;
   position: relative;
   border: solid 1px #aaa;
+  display: block;
 }
 
 .nLogo {
@@ -118,6 +119,7 @@ body {
   width: 300px;
   height: 76px;
   margin: -5px 0 0 12px;
+  position: absolute;
 }
 
 .nNewGamePromo (@scale) {

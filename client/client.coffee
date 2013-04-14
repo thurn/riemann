@@ -79,6 +79,8 @@ PlayScreen = me.ScreenObject.extend
 handleNewGameClick = ->
   Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
     if err then throw err
+    $(".nIdNewGame").remove()
+    $(".nMain canvas").css({display: "block"})
     showInviteDialog (inviteResponse) ->
       return if not inviteResponse
       invitedUser = inviteResponse.to[0]
@@ -89,7 +91,9 @@ handleNewGameClick = ->
         me.state.change(me.state.PLAY)
 
 initialize = ->
-  initialized = me.video.init("nGame", 600, 600)
+  initialized = me.video.init("nMain", 600, 600)
+  $(".nMain canvas").css({display: "none"})
+  $(".nMain canvas").addClass("nGame")
   if not initialized
     alert("Sorry, your browser doesn't support HTML 5 canvas!")
     return
