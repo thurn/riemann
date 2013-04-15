@@ -8244,6 +8244,7 @@ var me = me || {};
 					// cache the x/y coordinates
 					var x = obj.touches[t].x;
 					var y = obj.touches[t].y;
+          console.log("(" + x + ", " + y + ")");
 					for (var i = handlers.length, handler; i--, handler = handlers[i];) {
 						// adjust to world coordinates if not a floating object
 						if (handler.floating===false) {

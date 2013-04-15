@@ -9,11 +9,10 @@
 # Project Riemann client interface
 
 gameResources = [
-  {name: "tileset", type: "image", src: "/tilemaps/tileset.jpg"},
+  {name: "square", type: "image", src: "/tilemaps/square.jpg"},
   {name: "x", type: "image", src: "/images/x.png"},
   {name: "o", type: "image", src: "/images/o.png"},
-  {name: "title", type: "image", src: "/images/title.png"},
-  {name: "tilemap", type: "tmx", src: "/tilemaps/tilemap.tmx"}
+  {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
 ]
 
 SPRITE_Z_INDEX = 2
@@ -27,6 +26,12 @@ showInviteDialog = (inviteCallback) -> FB.ui
 
 displayNotice = (msg) -> $(".notice").text(msg)
 
+registerScaledMouseEvent = (name, rect, fn) ->
+  scale = Session.get("scaleFactor")
+  position = new me.Vector2d(rect.pos.x * scale, rect.pos.y * scale)
+  scaledRect = new me.Rect(position, rect.width * scale, rect.height * scale)
+  me.input.registerMouseEvent(name, scaledRect, fn)
+
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
     Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
@@ -36,17 +41,19 @@ PlayScreen = me.ScreenObject.extend
     @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
 
   onResetEvent: () ->
-    $(".noughtsNewGame").css("visibility", "hidden")
+    $(".nIdNewGame").remove()
+    $(".nMain canvas").css({display: "block"})
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
     this.loadMainLevel_()
 
-    # Attach click event listeners
-    for column in [0..2]
-      for row in [0..2]
-        tile = @mainLayer_.layerData[column][row]
-        me.input.registerMouseEvent("mouseup", tile,
-            _.bind(@handleClick_, this, tile))
+    Meteor.autorun =>
+      # Attach click event listeners
+      for column in [0..2]
+        for row in [0..2]
+          tile = @mainLayer_.layerData[column][row]
+          registerScaledMouseEvent("mouseup", tile,
+              _.bind(@handleClick_, this, tile))
 
     Meteor.autorun =>
       game = noughts.Games.findOne Session.get("gameId")
@@ -79,8 +86,6 @@ PlayScreen = me.ScreenObject.extend
 handleNewGameClick = ->
   Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
     if err then throw err
-    $(".nIdNewGame").remove()
-    $(".nMain canvas").css({display: "block"})
     showInviteDialog (inviteResponse) ->
       return if not inviteResponse
       invitedUser = inviteResponse.to[0]
@@ -118,7 +123,7 @@ noughts.maybeInitialize = _.after 2, ->
       fullId = "#{requestId}_#{Meteor.userId()}"
       game = noughts.Games.findOne {requestId: requestId}
       FB.api fullId, "delete", ->
-      # TODO(dthurn) do something smarter with multiple request_ids than loading
+      # TODO(dthurn): do something smarter with multiple request_ids than loading
       # the game for the last one.
     if not game
       throw new Error("Game not found for requestIds: " + requestIds)

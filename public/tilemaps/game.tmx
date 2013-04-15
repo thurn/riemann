@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" width="3" height="3" tilewidth="200" tileheight="200">
  <tileset firstgid="1" name="tileset" tilewidth="200" tileheight="200">
-  <image source="square.png" width="200" height="200"/>
+  <image source="square.jpg" width="200" height="200"/>
  </tileset>
- <layer name="Tile Layer 1" width="3" height="3">
+ <layer name="mainLayer" width="3" height="3">
   <data encoding="base64">
    AQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAA
   </data>

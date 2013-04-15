@@ -41,6 +41,7 @@ zoom = ->
       width / targetWidth
 
   if width >= 1200 and height >= 800
+    Session.set("scaleFactor", 1)
     return # Do not scale, screen is full-size
   else if width >= 600 and height >= 400 # desktop style
     scaleFactor = computeScale(1200, 800)
@@ -51,6 +52,7 @@ zoom = ->
   else # mobile landscape style
     scaleFactor = computeScale(480, 268)
     $(".nMain").css("transform", "scale(#{scaleFactor})")
+  Session.set("scaleFactor", scaleFactor)
 
 Meteor.startup ->
   iPhoneHideNavbar()
