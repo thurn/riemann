@@ -8136,6 +8136,7 @@ var me = me || {};
 		function enableMouseEvent() {
 			if (!mouseInitialized) {
 				// initialize mouse pos (0,0)
+        console.log(">>> enableMouseEvent");
 				obj.touches.push({ x: 0, y: 0 });
 				obj.mouse.pos = new me.Vector2d(0,0);
 				// get relative canvas position in the page
@@ -8240,6 +8241,10 @@ var me = me || {};
 			if (handlers) {
 				var vpos = me.game.viewport.pos;
 				var map_pos = me.game.currentLevel.pos;
+        console.log("viewport position : " + vpos.x + ", " + vpos.y);
+        console.log("map position : " + map_pos.x + ", " + map_pos.y);
+        console.log("obj.touches");
+        console.dir(obj.touches);
 				for(var t=0, l=obj.touches.length; t<l; t++) {
 					// cache the x/y coordinates
 					var x = obj.touches[t].x;
@@ -8253,6 +8258,7 @@ var me = me || {};
 							var v = {x: x, y: y};
 						}
 						// call the defined handler
+            console.log("{" + v.x + ", " + v.y + "}");
 						if ((handler.rect === null) || handler.rect.containsPoint(v)) {
 							// trigger the corresponding callback
 							if (handler.cb(e) === false) {
@@ -8276,17 +8282,25 @@ var me = me || {};
 		function updateCoordFromEvent(e) {
 
 			// reset the touch array cache
+      console.log(">>> clearing touches");
 			obj.touches.length=0;
 			// non touch event (mouse)
 			if (!e.touches) {
 				var offset = obj.mouse.offset;
+        console.log("offset");
+        console.dir(offset);
+        console.log("pageX " + e.pageX);
+        console.log("pageY " + e.pageY);
 				var x = e.pageX - offset.x;
 				var y = e.pageY - offset.y;
 				var scale = me.sys.scale;
+        console.log("scale");
+        console.dir(scale);
 				if (scale.x != 1.0 || scale.y != 1.0) {
 					x/=scale.x;
 					y/=scale.y;
 				}
+        console.log(">>> updateCoordFromEvent 1");
 				obj.touches.push({ x: x, y: y, id: 0});
 			}
 			// touch event
@@ -8301,6 +8315,7 @@ var me = me || {};
 						x/=scale.x;
 						y/=scale.y;
 					}
+          console.log(">>> updateCoordFromEvent 2");
 					obj.touches.push({ x: x, y: y, id: t.identifier });
 				}
 			}

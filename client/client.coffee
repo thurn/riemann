@@ -48,11 +48,12 @@ PlayScreen = me.ScreenObject.extend
     this.loadMainLevel_()
 
     Meteor.autorun =>
+      me.sys.scale = Session.get("scaleFactor")
       # Attach click event listeners
       for column in [0..2]
         for row in [0..2]
           tile = @mainLayer_.layerData[column][row]
-          registerScaledMouseEvent("mouseup", tile,
+          me.input.registerMouseEvent("mouseup", tile,
               _.bind(@handleClick_, this, tile))
 
     Meteor.autorun =>
