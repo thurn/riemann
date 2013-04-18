@@ -8136,7 +8136,6 @@ var me = me || {};
 		function enableMouseEvent() {
 			if (!mouseInitialized) {
 				// initialize mouse pos (0,0)
-        console.log(">>> enableMouseEvent");
 				obj.touches.push({ x: 0, y: 0 });
 				obj.mouse.pos = new me.Vector2d(0,0);
 				// get relative canvas position in the page
@@ -8241,15 +8240,10 @@ var me = me || {};
 			if (handlers) {
 				var vpos = me.game.viewport.pos;
 				var map_pos = me.game.currentLevel.pos;
-        console.log("viewport position : " + vpos.x + ", " + vpos.y);
-        console.log("map position : " + map_pos.x + ", " + map_pos.y);
-        console.log("obj.touches");
-        console.dir(obj.touches);
 				for(var t=0, l=obj.touches.length; t<l; t++) {
 					// cache the x/y coordinates
 					var x = obj.touches[t].x;
 					var y = obj.touches[t].y;
-          console.log("(" + x + ", " + y + ")");
 					for (var i = handlers.length, handler; i--, handler = handlers[i];) {
 						// adjust to world coordinates if not a floating object
 						if (handler.floating===false) {
@@ -8287,10 +8281,6 @@ var me = me || {};
 			// non touch event (mouse)
 			if (!e.touches) {
 				var offset = obj.mouse.offset;
-        console.log("offset");
-        console.dir(offset);
-        console.log("pageX " + e.pageX);
-        console.log("pageY " + e.pageY);
 				var x = e.pageX - offset.x;
 				var y = e.pageY - offset.y;
 				var scale = me.sys.scale;

@@ -28,7 +28,30 @@ iPhoneHideNavbar = ->
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
 
-zoom = ->
+transformCss = (argument) ->
+  "-webkit-transform": argument
+  "-moz-transform": argument
+  "-o-transform": argument
+  "-ms-transform": argument
+  "transform": argument
+
+centeredBlockCss = (scale, width, height, position = "relative") ->
+  "height": "#{scale * height}px"
+  "width": "#{scale * width}px"
+  "margin-top": "#{-((scale * height)/2)}px"
+  "margin-left": "#{-((scale * width)/2)}px"
+  "top": "50%"
+  "left": "50%"
+  "position": position
+
+widthHeightCss = (scale, width, height) ->
+  "width": "#{width * scale}px"
+  "height": "#{height * scale}px"
+
+useMobileStyle = ->
+  $(window).width() < 600 and $(window).height() < 400
+
+computeScaleFactor = ->
   width = $(window).width()
   height = $(window).height()
   if iPhone()
@@ -41,22 +64,35 @@ zoom = ->
       width / targetWidth
 
   if width >= 1200 and height >= 800
-    Session.set("scaleFactor", 1)
-    return # Do not scale, screen is full-size
+    return 1.0 # Full size, scaling not required
   else if width >= 600 and height >= 400 # desktop style
-    scaleFactor = computeScale(1200, 800)
-    $(".nContainer").css("transform", "scale(#{scaleFactor})")
+    return computeScale(1200, 800)
   else if height >= 356 # mobile portrait style
-    scaleFactor = computeScale(320, 356)
-    $(".nMain").css("transform", "scale(#{scaleFactor})")
+    return computeScale(320, 356)
   else # mobile landscape style
-    scaleFactor = computeScale(480, 268)
-    $(".nMain").css("transform", "scale(#{scaleFactor})")
-  Session.set("scaleFactor", scaleFactor)
+    return computeScale(480, 268)
+
+CONTAINER_HEIGHT = 768
+CONTAINER_WIDTH = 1064
+MAIN_WIDTH = 640
+MAIN_HEIGHT = CONTAINER_HEIGHT
+NAVIGATION_WIDTH = 400
+NAVIGATION_HEIGHT = CONTAINER_HEIGHT
+
+scaleInterface = ->
+  scale = computeScaleFactor()
+  scale = 0.6
+  unless useMobileStyle()
+    $(".nContainer").css(centeredBlockCss(scale, CONTAINER_WIDTH,
+        CONTAINER_HEIGHT, "fixed"))
+    $(".nMain").css(widthHeightCss(scale, MAIN_WIDTH, MAIN_HEIGHT))
+    $(".nNavigation").css(widthHeightCss(scale, NAVIGATION_WIDTH,
+        NAVIGATION_HEIGHT))
+    $(".nGame").css(transformCss("scale(#{scale})"))
+    $(".nLogo").css(transformCss("scale(#{scale})"))
 
 Meteor.startup ->
   iPhoneHideNavbar()
   $("body").on "orientationchange", ->
     iPhoneHideNavbar()
-  zoom()
-  $(window).resize(zoom)
+  scaleInterface()
