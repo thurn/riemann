@@ -86,10 +86,12 @@ scaleInterface = ->
     $(".nContainer").css(centeredBlockCss(scale, CONTAINER_WIDTH,
         CONTAINER_HEIGHT, "fixed"))
     $(".nMain").css(widthHeightCss(scale, MAIN_WIDTH, MAIN_HEIGHT))
+    mainLeft = NAVIGATION_WIDTH + (CONTAINER_WIDTH - NAVIGATION_WIDTH - MAIN_WIDTH)
+    $(".nMain").css({left: "#{mainLeft * scale}px"})
     $(".nNavigation").css(widthHeightCss(scale, NAVIGATION_WIDTH,
         NAVIGATION_HEIGHT))
     $(".nGame").css(transformCss("scale(#{scale})"))
-    $(".nLogo").css(transformCss("scale(#{scale})"))
+    $(".nLogoContainer").css(transformCss("scale(#{scale})"))
 
 Meteor.startup ->
   iPhoneHideNavbar()
