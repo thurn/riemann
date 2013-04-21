@@ -35,7 +35,7 @@ transformCss = (argument) ->
   "-ms-transform": argument
   "transform": argument
 
-centeredBlockCss = (scale, width, height, position = "relative") ->
+noughts.centeredBlockCss = (scale, width, height, position = "relative") ->
   "height": "#{scale * height}px"
   "width": "#{scale * width}px"
   "margin-top": "#{-((scale * height)/2)}px"
@@ -81,9 +81,9 @@ NAVIGATION_HEIGHT = CONTAINER_HEIGHT
 
 scaleInterface = ->
   scale = computeScaleFactor()
-  scale = 0.6
+  Session.set("scaleFactor", scale)
   unless useMobileStyle()
-    $(".nContainer").css(centeredBlockCss(scale, CONTAINER_WIDTH,
+    $(".nContainer").css(noughts.centeredBlockCss(scale, CONTAINER_WIDTH,
         CONTAINER_HEIGHT, "fixed"))
     $(".nMain").css(widthHeightCss(scale, MAIN_WIDTH, MAIN_HEIGHT))
     mainLeft = NAVIGATION_WIDTH + (CONTAINER_WIDTH - NAVIGATION_WIDTH - MAIN_WIDTH)

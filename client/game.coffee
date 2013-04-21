@@ -97,20 +97,9 @@ handleNewGameClick = ->
         me.state.change(me.state.PLAY)
 
 initialize = ->
-  console.log("Scale : " + 1/Session.get("scaleFactor"))
-  scaleFactor = 0.6
-  height = scaleFactor * 600
-  width = scaleFactor * 600
+  scaleFactor = Session.get("scaleFactor")
   initialized = me.video.init("nMain", 600, 600, true, scaleFactor)
-  $(".nMain canvas").css
-      "display": "none"
-      "height": "#{height}px"
-      "width": "#{width}px"
-      "margin-top": "#{-(height / 2)}px"
-      "margin-left":"#{ -(width / 2)}px"
-      "top": "50%"
-      "left": "50%"
-      "position": "relative"
+  $(".nMain canvas").css(noughts.centeredBlockCss(scaleFactor, 600, 600))
   if not initialized
     alert("Sorry, your browser doesn't support HTML 5 canvas!")
     return
