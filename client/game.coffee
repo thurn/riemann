@@ -24,7 +24,7 @@ showInviteDialog = (inviteCallback) -> FB.ui
   max_recipients: 1,
   message: "Want to play some Noughts?", inviteCallback
 
-displayNotice = (msg) -> $(".notice").text(msg)
+displayNotice = (msg) -> $(".nNotification").text(msg)
 
 registerScaledMouseEvent = (name, rect, fn) ->
   scale = Session.get("scaleFactor")
@@ -116,7 +116,6 @@ Meteor.startup ->
 noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
   requestIds = $.url().param("request_ids")?.split(",")
-
   Meteor.subscribe "myGames", ->
     if not requestIds
       return

@@ -92,6 +92,8 @@ scaleInterface = ->
         NAVIGATION_HEIGHT))
     $(".nGame").css(transformCss("scale(#{scale})"))
     $(".nLogoContainer").css(transformCss("scale(#{scale})"))
+    $(".nNotification").css({width: MAIN_WIDTH * scale})
+    $(".nNotification").css(transformCss("scale(#{scale})"))
 
 Meteor.startup ->
   iPhoneHideNavbar()
