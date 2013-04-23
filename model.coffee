@@ -69,6 +69,9 @@ Meteor.methods
     if _.some(game.moves, (move) -> move.column == column and move.row == row)
       # Space already taken!
       return
+    if noughts.checkForVictory(game)
+      # Game over!
+      return
     isXPlayer = game.currentPlayer == game.xPlayer
     noughts.Games.update gameId,
       $set:
