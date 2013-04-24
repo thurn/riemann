@@ -20,7 +20,9 @@ SPRITE_Z_INDEX = 2
 showInviteDialog = (inviteCallback) -> FB.ui
   method: "apprequests",
   title: "Select an opponent",
-  filters: ["app_non_users", "app_users"],
+  filters: [{name: "Dereks", user_ids: [100005316690886]},
+            "app_non_users",
+            "app_users"],
   max_recipients: 1,
   message: "Want to play some Noughts?", inviteCallback
 
@@ -117,6 +119,13 @@ noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
   requestIds = $.url().param("request_ids")?.split(",")
   Meteor.subscribe "myGames", ->
+    fql = "SELECT name,mutual_friend_count FROM user WHERE uid IN " +
+          "( SELECT uid2 FROM friend WHERE uid1=me() )"
+    console.log("making call " + Date.now())
+    FB.api {method: "fql.query", query: fql}, (result) ->
+      console.log("got data, sorting " + Date.now())
+      sorted = _.sortBy(result, (x) -> -1 * parseInt(x["mutual_friend_count"], 10))
+      console.log("done " + Date.now())
     if not requestIds
       return
     for requestId in requestIds

@@ -9,7 +9,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 getOathUrl = (requestIds) ->
   url = "https://www.facebook.com/dialog/oauth/?
       client_id=#{noughts.Config.appId}
-      &scope=email"
+      &scope=email,read_stream"
   if requestIds
     url += "&redirect_uri=#{noughts.Config.appUrl}?request_ids=#{requestIds}"
   else
