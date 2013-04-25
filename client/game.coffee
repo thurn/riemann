@@ -17,22 +17,21 @@ gameResources = [
 
 SPRITE_Z_INDEX = 2
 
+getSuggestedFriends = ->
+  return [] unless noughts.mutualFriends_ and noughts.appInstalled_
+  installed = _.filter(noughts.mutualFriends_, (x) -> noughts.appInstalled_[x.uid])
+  notInstalled = _.filter(noughts.mutualFriends_, (x) ->
+      not noughts.appInstalled_[x.uid])
+  return _.pluck(installed.concat(notInstalled), "uid")
+
 showInviteDialog = (inviteCallback) -> FB.ui
   method: "apprequests",
   title: "Select an opponent",
-  filters: [{name: "Dereks", user_ids: [100005316690886]},
-            "app_non_users",
-            "app_users"],
+  filters: [{name: "Friends", user_ids: getSuggestedFriends()}],
   max_recipients: 1,
   message: "Want to play some Noughts?", inviteCallback
 
 displayNotice = (msg) -> $(".nNotification").text(msg)
-
-registerScaledMouseEvent = (name, rect, fn) ->
-  scale = Session.get("scaleFactor")
-  position = new me.Vector2d(rect.pos.x * scale, rect.pos.y * scale)
-  scaledRect = new me.Rect(position, rect.width * scale, rect.height * scale)
-  me.input.registerMouseEvent(name, scaledRect, fn)
 
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
@@ -55,8 +54,7 @@ PlayScreen = me.ScreenObject.extend
       for column in [0..2]
         for row in [0..2]
           tile = @mainLayer_.layerData[column][row]
-          me.input.registerMouseEvent("mouseup", tile,
-              _.bind(@handleClick_, this, tile))
+          me.input.registerMouseEvent("mouseup", tile, _.bind(@handleClick_, this, tile))
 
     Meteor.autorun =>
       game = noughts.Games.findOne Session.get("gameId")
@@ -118,14 +116,16 @@ Meteor.startup ->
 noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
   requestIds = $.url().param("request_ids")?.split(",")
+  fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
+      "( SELECT uid2 FROM friend WHERE uid1=me() )"
+  FB.api {method: "fql.query", query: fql}, (result) ->
+    noughts.mutualFriends_ = _.sortBy result, (x) ->
+      -1 * parseInt(x["mutual_friend_count"], 10)
+  FB.api "/me/friends?fields=installed", (result) ->
+    installed = _.filter(result.data, (x) -> x.installed)
+    noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
+        _.pluck(installed, "installed"))
   Meteor.subscribe "myGames", ->
-    fql = "SELECT name,mutual_friend_count FROM user WHERE uid IN " +
-          "( SELECT uid2 FROM friend WHERE uid1=me() )"
-    console.log("making call " + Date.now())
-    FB.api {method: "fql.query", query: fql}, (result) ->
-      console.log("got data, sorting " + Date.now())
-      sorted = _.sortBy(result, (x) -> -1 * parseInt(x["mutual_friend_count"], 10))
-      console.log("done " + Date.now())
     if not requestIds
       return
     for requestId in requestIds
