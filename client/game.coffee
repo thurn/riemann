@@ -24,12 +24,18 @@ getSuggestedFriends = ->
       not noughts.appInstalled_[x.uid])
   return _.pluck(installed.concat(notInstalled), "uid")
 
-showInviteDialog = (inviteCallback) -> FB.ui
-  method: "apprequests",
-  title: "Select an opponent",
-  filters: [{name: "Friends", user_ids: getSuggestedFriends()}],
-  max_recipients: 1,
-  message: "Want to play some Noughts?", inviteCallback
+showInviteDialog = (inviteCallback) ->
+  suggestedFriends = getSuggestedFriends()
+  if suggestedFriends
+    filters = [{name: "Friends", user_ids: suggestedFriends}]
+  else
+    filters = ["app_non_users"]
+  FB.ui
+    method: "apprequests",
+    title: "Select an opponent",
+    filters: filters
+    max_recipients: 1,
+    message: "Want to play some Noughts?", inviteCallback
 
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
