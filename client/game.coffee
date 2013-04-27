@@ -17,6 +17,10 @@ gameResources = [
 
 SPRITE_Z_INDEX = 2
 
+displayError = (msg) ->
+  alert(msg)
+  throw new Error(msg)
+
 getSuggestedFriends = ->
   return [] unless noughts.mutualFriends_ and noughts.appInstalled_
   installed = _.filter(noughts.mutualFriends_, (x) -> noughts.appInstalled_[x.uid])
@@ -93,6 +97,7 @@ PlayScreen = me.ScreenObject.extend
 handleNewGameClick = ->
   Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
     if err then throw err
+    window.history.pushState({}, "", "?game_id=#{gameId}")
     showInviteDialog (inviteResponse) ->
       return if not inviteResponse
       invitedUser = inviteResponse.to[0]
@@ -107,7 +112,7 @@ initialize = ->
   initialized = me.video.init("nMain", 600, 600, true, scaleFactor)
   $(".nMain canvas").css(noughts.centeredBlockCss(scaleFactor, 600, 600))
   if not initialized
-    alert("Sorry, your browser doesn't support HTML 5 canvas!")
+    displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
   me.loader.onload = ->
     noughts.maybeInitialize()
@@ -117,11 +122,29 @@ Meteor.startup ->
   $(".nNewGameButton").on("click", handleNewGameClick)
   window.onReady -> initialize()
 
+onSubscribe = ->
+  gameId = $.url().param("game_id")
+  if gameId
+    game = noughts.Games.findOne(gameId)
+    displayError("Game not found for gameId: " + gameId) unless game
+    Session.set("gameId", gameId)
+    me.state.change(me.state.PLAY)
+  requestIds = $.url().param("request_ids")?.split(",")
+  if requestIds
+    for requestId in requestIds
+      fullId = "#{requestId}_#{Meteor.userId()}"
+      game = noughts.Games.findOne {requestId: requestId}
+      FB.api(fullId, "delete", ->)
+      # TODO(dthurn): do something smarter with multiple request_ids than loading
+      # the game for the last one.
+    displayError("Game not found for requestIds: " + requestIds) unless game
+    Session.set("gameId", game._id)
+    me.state.change(me.state.PLAY)
+
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
 noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
-  requestIds = $.url().param("request_ids")?.split(",")
   fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
       "( SELECT uid2 FROM friend WHERE uid1=me() )"
   FB.api {method: "fql.query", query: fql}, (result) ->
@@ -131,16 +154,4 @@ noughts.maybeInitialize = _.after 2, ->
     installed = _.filter(result.data, (x) -> x.installed)
     noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
         _.pluck(installed, "installed"))
-  Meteor.subscribe "myGames", ->
-    if not requestIds
-      return
-    for requestId in requestIds
-      fullId = "#{requestId}_#{Meteor.userId()}"
-      game = noughts.Games.findOne {requestId: requestId}
-      FB.api fullId, "delete", ->
-      # TODO(dthurn): do something smarter with multiple request_ids than loading
-      # the game for the last one.
-    if not game
-      throw new Error("Game not found for requestIds: " + requestIds)
-    Session.set("gameId", game._id)
-    me.state.change(me.state.PLAY)
+  Meteor.subscribe("myGames", onSubscribe)
