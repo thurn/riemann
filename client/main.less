@@ -133,7 +133,14 @@ body {
 
 .nNewGamePromo (@scale) {
   position: relative;
+  display: none;
   .centeredBlock(@newGamePromoWidth * @scale , @newGamePromoHeight * @scale);
+}
+
+.nLoading (@scale) {
+  position: relative;
+  .centeredBlock(@newGamePromoWidth * @scale , @newGamePromoHeight * @scale);
+  text-align: center;
 }
 
 .nPromoButtonContainer (@scale) {
@@ -179,6 +186,10 @@ body {
 
   .nNewGamePromo {
     .nNewGamePromo(@DESKTOP);
+  }
+
+  .nLoading {
+    .nLoading(@DESKTOP);
   }
 
   .nPromoButtonContainer {
@@ -258,6 +269,10 @@ body {
 
   .nNewGamePromo {
     .nNewGamePromo(@MOBILE);
+  }
+
+  .nLoading {
+    .nLoading(@MOBILE);
   }
 
   .nPromoButtonContainer {

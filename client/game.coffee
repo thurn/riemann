@@ -123,6 +123,7 @@ Meteor.startup ->
   window.onReady -> initialize()
 
 onSubscribe = ->
+  $(".nLoading").css({display: "none"})
   gameId = $.url().param("game_id")
   if gameId
     game = noughts.Games.findOne(gameId)
@@ -140,6 +141,7 @@ onSubscribe = ->
     displayError("Game not found for requestIds: " + requestIds) unless game
     Session.set("gameId", game._id)
     me.state.change(me.state.PLAY)
+  $(".nNewGamePromo").css({display: "block"})
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
