@@ -43,6 +43,14 @@ showInviteDialog = (inviteCallback) ->
 
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
+setUrl = (gameId=null) ->
+  if gameId
+    window.history.pushState({}, "",
+        "?user_id=#{Meteor.userId()}&game_id=#{gameId}")
+  else
+    window.history.pushState({}, "",
+        "?user_id=#{Meteor.userId()}")
+
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
     Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
@@ -97,7 +105,6 @@ PlayScreen = me.ScreenObject.extend
 handleNewGameClick = ->
   Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
     if err then throw err
-    window.history.pushState({}, "", "?game_id=#{gameId}")
     showInviteDialog (inviteResponse) ->
       return if not inviteResponse
       invitedUser = inviteResponse.to[0]
@@ -125,6 +132,10 @@ Meteor.startup ->
 onSubscribe = ->
   $(".nLoading").css({display: "none"})
   gameId = $.url().param("game_id")
+
+  Meteor.autorun ->
+    setUrl(Session.get("gameId"))
+
   if gameId
     game = noughts.Games.findOne(gameId)
     displayError("Game not found for gameId: " + gameId) unless game
@@ -141,7 +152,8 @@ onSubscribe = ->
     displayError("Game not found for requestIds: " + requestIds) unless game
     Session.set("gameId", game._id)
     me.state.change(me.state.PLAY)
-  $(".nNewGamePromo").css({display: "block"})
+  else
+    $(".nNewGamePromo").css({display: "block"})
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
