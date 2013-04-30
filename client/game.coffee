@@ -43,13 +43,8 @@ showInviteDialog = (inviteCallback) ->
 
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
-setUrl = (gameId=null) ->
-  if gameId
-    window.history.pushState({}, "",
-        "?user_id=#{Meteor.userId()}&game_id=#{gameId}")
-  else
-    window.history.pushState({}, "",
-        "?user_id=#{Meteor.userId()}")
+setUrl = (gameId, player) ->
+    window.history.pushState({}, "", "?game_id=#{gameId}&player=#{player}")
 
 PlayScreen = me.ScreenObject.extend
   handleClick_: (tile) ->
@@ -134,7 +129,10 @@ onSubscribe = ->
   gameId = $.url().param("game_id")
 
   Meteor.autorun ->
-    setUrl(Session.get("gameId"))
+    game = noughts.Games.findOne Session.get("gameId")
+    if game
+      isXPlayer = game.currentPlayer == game.xPlayer
+      setUrl(game._id, if isXPlayer then "x" else "o")
 
   if gameId
     game = noughts.Games.findOne(gameId)
