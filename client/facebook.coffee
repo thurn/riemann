@@ -1,9 +1,9 @@
 ###
-To the extent possible under law, the author(s) have dedicated all copyright
-and related and neighboring rights to this software to the public domain
-worldwide. This software is distributed without any warranty. You should have
-received a copy of the CC0 Public Domain Dedication along with this software.
-If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+# To the extent possible under law, the author(s) have dedicated all copyright
+# and related and neighboring rights to this software to the public domain
+# worldwide. This software is distributed without any warranty. You should have
+# received a copy of the CC0 Public Domain Dedication along with this software.
+# If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
 getOathUrl = (requestIds) ->
@@ -29,12 +29,19 @@ Template.facebook.created = ->
     FB.getLoginStatus (response) ->
       if response.status != 'connected'
         requestIds = $.url().param("request_ids")
-        top.location.href = getOathUrl(requestIds)
+        if requestIds
+          # If there's a request ID, get user to auth with facebook
+          top.location.href = getOathUrl(requestIds)
+        else
+          # Otherwise, continue in the no-facebook state
+          Session.set("useFacebook", false)
+          noughts.maybeInitialize()
       else
         accessToken = response.authResponse.accessToken
         userId = response.authResponse.userID
         Meteor.call "authenticate", userId, accessToken, (err) ->
           if err then throw err
+          Session.set("useFacebook", true)
           noughts.maybeInitialize()
 
   ref = document.getElementsByTagName('script')[0]

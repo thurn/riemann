@@ -28,7 +28,7 @@ getSuggestedFriends = ->
       not noughts.appInstalled_[x.uid])
   return _.pluck(installed.concat(notInstalled), "uid")
 
-showInviteDialog = (inviteCallback) ->
+showFacebookInviteDialog = (inviteCallback) ->
   suggestedFriends = getSuggestedFriends()
   if suggestedFriends
     filters = [{name: "Friends", user_ids: suggestedFriends}]
@@ -40,6 +40,12 @@ showInviteDialog = (inviteCallback) ->
     filters: filters
     max_recipients: 1,
     message: "Want to play some Noughts?", inviteCallback
+
+showInviteDialog = (inviteCallback) ->
+  if Session.get("useFacebook")
+    showFacebookInviteDialog(inviteCallback)
+  else
+    alert "no face"
 
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
@@ -97,17 +103,23 @@ PlayScreen = me.ScreenObject.extend
       else
         displayNotice("It's your opponent's turn.")
 
+# If the user is not logged in, make them an anonymous account
+maybeCreateAnonymousAccount = (callback) ->
+  return callback() if Meteor.userId()
+  alert "make anon account"
+
 handleNewGameClick = ->
-  Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
-    if err then throw err
-    showInviteDialog (inviteResponse) ->
-      return if not inviteResponse
-      invitedUser = inviteResponse.to[0]
-      requestId = inviteResponse.request
-      Meteor.call "inviteOpponent", gameId, invitedUser, requestId, (err) ->
-        if err then throw err
-        Session.set("gameId", gameId)
-        me.state.change(me.state.PLAY)
+  maybeCreateAnonymousAccount ->
+    Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
+      if err then throw err
+      showInviteDialog (inviteResponse) ->
+        return if not inviteResponse
+        invitedUser = inviteResponse.to[0]
+        requestId = inviteResponse.request
+        Meteor.call "inviteOpponent", gameId, invitedUser, requestId, (err) ->
+          if err then throw err
+          Session.set("gameId", gameId)
+          me.state.change(me.state.PLAY)
 
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
@@ -129,7 +141,7 @@ onSubscribe = ->
   gameId = $.url().param("game_id")
 
   Meteor.autorun ->
-    setUrl(Session.get("gameId"))
+    setUrl(Session.get("gameId")) if Session.get("gameId")
 
   if gameId
     game = noughts.Games.findOne(gameId)
@@ -138,6 +150,10 @@ onSubscribe = ->
     me.state.change(me.state.PLAY)
   requestIds = $.url().param("request_ids")?.split(",")
   if requestIds
+    unless Session.get("useFacebook")
+      # This shouldn't happen because we check for Facebook and redirect when
+      # there's a request_id.
+      displayError("Request ID specified without Facebook authentication")
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
       game = noughts.Games.findOne {requestId: requestId}
@@ -154,13 +170,16 @@ onSubscribe = ->
 # are loaded
 noughts.maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
-  fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
-      "( SELECT uid2 FROM friend WHERE uid1=me() )"
-  FB.api {method: "fql.query", query: fql}, (result) ->
-    noughts.mutualFriends_ = _.sortBy result, (x) ->
-      -1 * parseInt(x["mutual_friend_count"], 10)
-  FB.api "/me/friends?fields=installed", (result) ->
-    installed = _.filter(result.data, (x) -> x.installed)
-    noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
-        _.pluck(installed, "installed"))
+  if Session.get("useFacebook")
+    # Kick off some fetches now for friend ranking data to use later in the
+    # invite dialog
+    fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
+        "( SELECT uid2 FROM friend WHERE uid1=me() )"
+    FB.api {method: "fql.query", query: fql}, (result) ->
+      noughts.mutualFriends_ = _.sortBy result, (x) ->
+        -1 * parseInt(x["mutual_friend_count"], 10)
+    FB.api "/me/friends?fields=installed", (result) ->
+      installed = _.filter(result.data, (x) -> x.installed)
+      noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
+          _.pluck(installed, "installed"))
   Meteor.subscribe("myGames", onSubscribe)
