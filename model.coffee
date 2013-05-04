@@ -49,7 +49,7 @@ getGame = (gameId) ->
 
 Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
-  authenticate: (userId, accessToken) ->
+  facebookAuthenticate: (userId, accessToken) ->
     if Meteor.isServer
       result = Meteor.http.get "https://graph.facebook.com/me",
           params: {fields: "id", access_token: accessToken}
@@ -60,6 +60,16 @@ Meteor.methods
     else
       # Don't need to check the user ID on the client
       this.setUserId(userId)
+
+  # Logs the user in based on an anonymous user ID.
+  anonymousAuthenticate: (userId) ->
+    # This is intentionally insecure. Anybody can log in as you they know your
+    # anonymous ID. The only rule is that an anonymous ID must have at least one
+    # hyphen character so we know it isn't a facebook ID.
+    if userId.match(/-/)
+      this.setUserId(userId)
+    else
+      die("Anonymous user IDs must contain a hyphen character")
 
   # Add the current player's symbol at the provided location if
   # this is a legal move

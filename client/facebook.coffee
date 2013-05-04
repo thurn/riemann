@@ -39,7 +39,7 @@ Template.facebook.created = ->
       else
         accessToken = response.authResponse.accessToken
         userId = response.authResponse.userID
-        Meteor.call "authenticate", userId, accessToken, (err) ->
+        Meteor.call "facebookAuthenticate", userId, accessToken, (err) ->
           if err then throw err
           Session.set("useFacebook", true)
           noughts.maybeInitialize()
