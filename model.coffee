@@ -62,14 +62,11 @@ Meteor.methods
       this.setUserId(userId)
 
   # Logs the user in based on an anonymous user ID.
-  anonymousAuthenticate: (userId) ->
-    # This is intentionally insecure. Anybody can log in as you they know your
-    # anonymous ID. The only rule is that an anonymous ID must have at least one
-    # hyphen character so we know it isn't a facebook ID.
-    if userId.match(/-/)
-      this.setUserId(userId)
-    else
-      die("Anonymous user IDs must contain a hyphen character")
+  anonymousAuthenticate: (uuid) ->
+    # This is intentionally somewhat insecure. Anybody can log in as you if they
+    # know your UUID. We use the SHA3 hash of this UUID as your user ID for game
+    # purposes.
+    this.setUserId(CryptoJS.SHA3(uuid, {outputLength: 256}).toString())
 
   # Add the current player's symbol at the provided location if
   # this is a legal move
