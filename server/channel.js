@@ -14,13 +14,12 @@ __meteor_bootstrap__.app
     Fiber(function () {
       if (req.url === "/fb/channel.html") {
         // Using caching headers as recommended by https://developers.facebook.com/docs/reference/javascript/#channel
-        var momentNextYear = moment().add("years", 1);
         var cacheExpire = 60*60*24*365;
         res.writeHead(200, {
           'Content-Type': 'text/html',
           'Pragma': 'public',
           'Cache-Control': 'max-age=' + cacheExpire,
-          'Expires': moment().add("seconds", cacheExpire).format('ddd, DD MMM YYYY hh:mm:ss') + " GMT"
+          'Expires': "Sat, 26 Apr 2033 04:10:30 GMT"
         });
         res.end('<script src="//connect.facebook.net/en_US/all.js"></script>');
       } else {
