@@ -106,7 +106,11 @@ PlayScreen = me.ScreenObject.extend
 # If the user is not logged in, make them an anonymous account
 maybeCreateAnonymousAccount = (callback) ->
   return callback() if Meteor.userId()
-  alert "make anon account"
+  uuid = Meteor.uuid()
+  $.cookie("noughtsUuid", uuid, {expires: 7300})
+  Meteor.call "anonymousAuthenticate", uuid, (err) ->
+    if err then throw err
+    callback()
 
 handleNewGameClick = ->
   maybeCreateAnonymousAccount ->
