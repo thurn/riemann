@@ -187,3 +187,18 @@ noughts.maybeInitialize = _.after 2, ->
       noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
           _.pluck(installed, "installed"))
   Meteor.subscribe("myGames", onSubscribe)
+
+Meteor.startup ->
+  requestedPlayer = $.url().param("player")
+  if requestedPlayer
+    # Need to rebuild the url without the "player" param
+    newUrl = "/"
+    firstIteration = true
+    for key,value of $.url().param()
+      if key == "player"
+        continue
+      separator = if firstIteration then "?" else "&"
+      firstIteration = false
+      newUrl += "#{separator}#{key}=#{value}"
+    window.history.replaceState("", {}, newUrl)
+    Session.set("requestedPlayer", requestedPlayer)
