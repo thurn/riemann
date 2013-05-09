@@ -95,12 +95,19 @@ Meteor.methods
       moves: []
 
   # Add an opponent to a partially-created game
-  inviteOpponent: (gameId, opponentId, requestId) ->
+  facebookInviteOpponent: (gameId, opponentId, requestId) ->
     game = getGame(gameId)
     ensureIsCurrentUser(game.currentPlayer)
     die("game already has opponent") if game.oPlayer
     noughts.Games.update gameId,
       $set: {oPlayer: opponentId, requestId: requestId}
+
+  # Sets the ID of a player in the provided game
+  setPlayerId: (gameId, playerId, isX) ->
+    if isX
+      noughts.Games.update(gameId, $set: {xPlayer: playerId})
+    else
+      noughts.Games.update(gameId, $set: {oPlayer: playerId})
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.

@@ -44,8 +44,6 @@ showFacebookInviteDialog = (inviteCallback) ->
 showInviteDialog = (inviteCallback) ->
   if Session.get("useFacebook")
     showFacebookInviteDialog(inviteCallback)
-  else
-    alert "no face"
 
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
@@ -103,27 +101,17 @@ PlayScreen = me.ScreenObject.extend
       else
         displayNotice("It's your opponent's turn.")
 
-# If the user is not logged in, make them an anonymous account
-maybeCreateAnonymousAccount = (callback) ->
-  return callback() if Meteor.userId()
-  uuid = Meteor.uuid()
-  $.cookie("noughtsUuid", uuid, {expires: 7300})
-  Meteor.call "anonymousAuthenticate", uuid, (err) ->
-    if err then throw err
-    callback()
-
 handleNewGameClick = ->
-  maybeCreateAnonymousAccount ->
-    Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
-      if err then throw err
-      showInviteDialog (inviteResponse) ->
-        return if not inviteResponse
-        invitedUser = inviteResponse.to[0]
-        requestId = inviteResponse.request
-        Meteor.call "inviteOpponent", gameId, invitedUser, requestId, (err) ->
-          if err then throw err
-          Session.set("gameId", gameId)
-          me.state.change(me.state.PLAY)
+  Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
+    if err then throw err
+    Session.set("gameId", gameId)
+    showInviteDialog (inviteResponse) ->
+      return if not inviteResponse
+      invitedUser = inviteResponse.to[0]
+      requestId = inviteResponse.request
+      Meteor.call "facebookInviteOpponent", gameId, invitedUser, requestId, (err) ->
+        if err then throw err
+        me.state.change(me.state.PLAY)
 
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
@@ -145,7 +133,15 @@ onSubscribe = ->
   gameId = $.url().param("game_id")
 
   Meteor.autorun ->
-    setUrl(Session.get("gameId")) if Session.get("gameId")
+    gameId = Session.get("gameId")
+    if gameId
+      setUrl(gameId)
+      requestedPlayer = Session.get("requestedPlayer")
+      if requestedPlayer
+        isX = requestedPlayer == "x"
+        Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
+          if err then throw err
+          Session.set("requestedPlayer", null)
 
   if gameId
     game = noughts.Games.findOne(gameId)
@@ -190,7 +186,11 @@ noughts.maybeInitialize = _.after 2, ->
 
 Meteor.startup ->
   requestedPlayer = $.url().param("player")
+
   if requestedPlayer
+    if requestedPlayer != "x" and requestedPlayer != "o"
+      displayError("Invalid requested player!")
+
     # Need to rebuild the url without the "player" param
     newUrl = "/"
     firstIteration = true

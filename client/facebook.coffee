@@ -36,12 +36,11 @@ Template.facebook.created = ->
           # Otherwise, continue in the no-facebook state
           Session.set("useFacebook", false)
           uuid = $.cookie("noughtsUuid")
-          if uuid
-            Meteor.call "anonymousAuthenticate", uuid, (err) ->
-              if err then throw err
-              noughts.maybeInitialize()
-          else
-            # No user ID found, one can be created by making a new game
+          unless uuid
+            uuid = Meteor.uuid()
+            $.cookie("noughtsUuid", uuid, {expires: 7300})
+          Meteor.call "anonymousAuthenticate", uuid, (err) ->
+            if err then throw err
             noughts.maybeInitialize()
       else
         accessToken = response.authResponse.accessToken
