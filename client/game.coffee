@@ -41,10 +41,6 @@ showFacebookInviteDialog = (inviteCallback) ->
     max_recipients: 1,
     message: "Want to play some Noughts?", inviteCallback
 
-showInviteDialog = (inviteCallback) ->
-  if Session.get("useFacebook")
-    showFacebookInviteDialog(inviteCallback)
-
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
 setUrl = (gameId) ->
@@ -105,13 +101,17 @@ handleNewGameClick = ->
   Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
     if err then throw err
     Session.set("gameId", gameId)
-    showInviteDialog (inviteResponse) ->
-      return if not inviteResponse
-      invitedUser = inviteResponse.to[0]
-      requestId = inviteResponse.request
-      Meteor.call "facebookInviteOpponent", gameId, invitedUser, requestId, (err) ->
-        if err then throw err
-        me.state.change(me.state.PLAY)
+    if Session.get("useFacebook")
+      showFacebookInviteDialog (inviteResponse) ->
+        return if not inviteResponse
+        invitedUser = inviteResponse.to[0]
+        requestId = inviteResponse.request
+        Meteor.call("facebookInviteOpponent", gameId, invitedUser,
+            requestId, (err) ->
+          if err then throw err
+          me.state.change(me.state.PLAY))
+    else
+      me.state.change(me.state.PLAY)
 
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
@@ -136,12 +136,15 @@ onSubscribe = ->
     gameId = Session.get("gameId")
     if gameId
       setUrl(gameId)
-      requestedPlayer = Session.get("requestedPlayer")
-      if requestedPlayer
-        isX = requestedPlayer == "x"
-        Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
-          if err then throw err
-          Session.set("requestedPlayer", null)
+
+  Meteor.autorun ->
+    requestedPlayer = Session.get("requestedPlayer")
+    if requestedPlayer and Meteor.userId()
+      isX = requestedPlayer == "x"
+      Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
+        if err then throw err
+        debugger
+        Session.set("requestedPlayer", null)
 
   if gameId
     game = noughts.Games.findOne(gameId)
@@ -186,7 +189,6 @@ noughts.maybeInitialize = _.after 2, ->
 
 Meteor.startup ->
   requestedPlayer = $.url().param("player")
-
   if requestedPlayer
     if requestedPlayer != "x" and requestedPlayer != "o"
       displayError("Invalid requested player!")
