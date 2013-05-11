@@ -111,6 +111,7 @@ handleNewGameClick = ->
           if err then throw err
           me.state.change(me.state.PLAY))
     else
+      # TODO(dthurn): Display regular invite dialog
       me.state.change(me.state.PLAY)
 
 initialize = ->
@@ -130,8 +131,6 @@ Meteor.startup ->
 
 onSubscribe = ->
   $(".nLoading").css({display: "none"})
-  gameId = $.url().param("game_id")
-
   Meteor.autorun ->
     gameId = Session.get("gameId")
     if gameId
@@ -139,18 +138,22 @@ onSubscribe = ->
 
   Meteor.autorun ->
     requestedPlayer = Session.get("requestedPlayer")
-    if requestedPlayer and Meteor.userId()
+    gameId = Session.get("gameId")
+    if requestedPlayer and Meteor.userId() and gameId
       isX = requestedPlayer == "x"
       Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
         if err then throw err
-        debugger
         Session.set("requestedPlayer", null)
 
-  if gameId
-    game = noughts.Games.findOne(gameId)
-    displayError("Game not found for gameId: " + gameId) unless game
-    Session.set("gameId", gameId)
-    me.state.change(me.state.PLAY)
+  gameIdParam = $.url().param("game_id")
+  if gameIdParam
+    Meteor.call "validateGameId", gameIdParam, (err, gameExists) ->
+      if err then throw err
+      unless gameExists
+        displayError("Game not found for gameId: " + gameIdParam)
+      Session.set("gameId", gameIdParam)
+      return me.state.change(me.state.PLAY)
+
   requestIds = $.url().param("request_ids")?.split(",")
   if requestIds
     unless Session.get("useFacebook")
@@ -165,9 +168,9 @@ onSubscribe = ->
       # the game for the last one.
     displayError("Game not found for requestIds: " + requestIds) unless game
     Session.set("gameId", game._id)
-    me.state.change(me.state.PLAY)
-  else
-    $(".nNewGamePromo").css({display: "block"})
+    return me.state.change(me.state.PLAY)
+
+  $(".nNewGamePromo").css({display: "block"})
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded

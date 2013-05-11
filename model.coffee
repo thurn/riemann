@@ -105,16 +105,14 @@ Meteor.methods
   # Sets the ID of a player in the provided game
   setPlayerId: (gameId, playerId, isX) ->
     game = getGame(gameId)
-    console.log(">>> setPlayerId")
     if isX
-      console.log(">>> updating x")
       noughts.Games.update(gameId, {$set: {xPlayer: playerId}})
-      console.log(">>> updated")
-      console.log(">>> " + noughts.Games.findOne({_id: gameId}))
     else
-      console.log(">>> updating " + gameId)
       noughts.Games.update(gameId, {$set: {oPlayer: playerId}})
-      console.log(">>> updated")
+
+  # Checks that a game exists based on its ID, allowing you to validate URL
+  # parameters without being subscribed to the game.
+  validateGameId: (gameId) -> noughts.Games.findOne(gameId)?
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
