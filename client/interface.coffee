@@ -48,8 +48,7 @@ widthHeightCss = (scale, width, height) ->
   "width": "#{width * scale}px"
   "height": "#{height * scale}px"
 
-useMobileStyle = ->
-  $(window).width() < 600 and $(window).height() < 400
+useMobileStyle = -> $(window).width() < 600
 
 computeScaleFactor = ->
   width = $(window).width()
@@ -65,12 +64,12 @@ computeScaleFactor = ->
 
   if width >= 1200 and height >= 800
     return 1.0 # Full size, scaling not required
-  else if width >= 600 and height >= 400 # desktop style
+  else if width >= 600 # desktop style
     return computeScale(1200, 800)
   else if height >= 356 # mobile portrait style
-    return computeScale(320, 356)
+    return computeScale(640, 712)
   else # mobile landscape style
-    return computeScale(480, 268)
+    return computeScale(1200, 670)
 
 CONTAINER_HEIGHT = 768
 CONTAINER_WIDTH = 1064
@@ -82,6 +81,7 @@ NAVIGATION_HEIGHT = CONTAINER_HEIGHT
 scaleInterface = ->
   scale = computeScaleFactor()
   Session.set("scaleFactor", scale)
+  $(".nGame").css(transformCss("scale(#{scale})"))
   unless useMobileStyle()
     $(".nContainer").css(noughts.centeredBlockCss(scale, CONTAINER_WIDTH,
         CONTAINER_HEIGHT, "fixed"))
@@ -90,7 +90,6 @@ scaleInterface = ->
     $(".nMain").css({left: "#{mainLeft * scale}px"})
     $(".nNavigation").css(widthHeightCss(scale, NAVIGATION_WIDTH,
         NAVIGATION_HEIGHT))
-    $(".nGame").css(transformCss("scale(#{scale})"))
     $(".nLogoContainer").css(transformCss("scale(#{scale})"))
     $(".nNotification").css({width: MAIN_WIDTH * scale})
     $(".nNotification").css(transformCss("scale(#{scale})"))

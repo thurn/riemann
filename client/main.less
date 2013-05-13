@@ -9,10 +9,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @import "lib/elements.less";
 
 // -------------------- CONSTANTS -------------------- //
-@DESKTOP: 1;
-@MOBILE: 0.5;
-@MOBILE_LANDSCAPE: 0.4;
-
 @defaultFontSize: 26px;
 @containerHeight: 768px;
 @containerWidth: 1064px;
@@ -49,8 +45,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   width: device-width;
 }
 
-.defaultFont (@multiplier) {
-  font-size: @defaultFontSize * @multiplier;
+.defaultFont () {
+  font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
 }
@@ -58,7 +54,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 body {
   position: relative;
   width: 100%;
-  .defaultFont(1);
+  .defaultFont();
 }
 
 .centeredBlock (@width, @height) {
@@ -131,50 +127,50 @@ body {
   bottom: 0;
 }
 
-.nNewGamePromo (@scale) {
+.nNewGamePromo {
   position: relative;
   display: none;
-  .centeredBlock(@newGamePromoWidth * @scale , @newGamePromoHeight * @scale);
+  .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
 }
 
-.nLoading (@scale) {
+.nLoading {
   position: relative;
-  .centeredBlock(@newGamePromoWidth * @scale , @newGamePromoHeight * @scale);
+  .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
   text-align: center;
 }
 
-.nPromoButtonContainer (@scale) {
+.nPromoButtonContainer {
   text-align: center;
-  margin-top: @promoButtonContainerTopMargin * @scale;
+  margin-top: @promoButtonContainerTopMargin;
 }
 
-.nMenuButton (@scale) {
+.nMenuButton {
   background-image: none;
   border-radius: 0;
   border-color: #aaaaaa;
-  .defaultFont(@scale);
-  width: @navigationWidth * @scale;
-  height: @menuButtonHeight * @scale;
+  .defaultFont();
+  width: @navigationWidth;
+  height: @menuButtonHeight;
 }
 
-.nMenuButtonText (@scale) {
-  margin-left: @menuButtonTextLeftMargin * @scale;
+.nMenuButtonText {
+  margin-left: @menuButtonTextLeftMargin;
 }
 
-.nGameDescription (@scale) {
+.nGameDescription {
   // I always find that left-aligned text blocks need to be nudged to the right
   // a bit to make them not look off-center.
-  margin-left: @gameDescriptionLeftMargin * @scale;
+  margin-left: @gameDescriptionLeftMargin;
+}
+
+.nGame {
+  .centeredBlock(600px, 600px);
 }
 
 
 // -------------------- DESKTOP-ONLY STYLE -------------------- //
 
-@media screen and (min-width: 600px) and (min-height: 400px) {
-  .nGame {
-    .centeredBlock(@gameWidth, @gameHeight);
-  }
-
+@media screen and (min-width: 600px) {
   .nMain {
     position: absolute;
     top: 0;
@@ -184,30 +180,6 @@ body {
     position: absolute;
   }
 
-  .nNewGamePromo {
-    .nNewGamePromo(@DESKTOP);
-  }
-
-  .nLoading {
-    .nLoading(@DESKTOP);
-  }
-
-  .nPromoButtonContainer {
-    .nPromoButtonContainer(@DESKTOP);
-  }
-
-  .nGameDescription {
-    .nGameDescription(@DESKTOP);
-  }
-
-  .nMenuButtonText {
-    .nMenuButtonText(@DESKTOP);
-  }
-
-  .nMenuButton {
-    .nMenuButton(@DESKTOP);
-  }
-
   .nLogoContainer {
     position: absolute;
   }
@@ -215,15 +187,10 @@ body {
 
 // -------------------- MOBILE-ONLY STYLE -------------------- //
 
-@media screen and (max-width: 599px),
-       screen and (max-height: 399px) {
+@media screen and (max-width: 599px) {
   html, body, .nWrapper, .nContainer, .nMain {
     height: 100%;
     width: 100%;
-  }
-
-  body {
-    .defaultFont(0.5);
   }
 
   .nNavigation {
@@ -247,13 +214,6 @@ body {
     left: 0;
   }
 
-  .nGame {
-    width: @mobileGameWidth;
-    height: @mobileGameHeight;
-    margin-left: -(@mobileGameWidth / 2);
-    margin-top: -(@mobileGameHeight / 2 - @mobileHeaderSize / 2);
-  }
-
   .nTopHeader {
     display: block;
     height: 45px;
@@ -267,41 +227,18 @@ body {
     display: none;
   }
 
-  .nNewGamePromo {
-    .nNewGamePromo(@MOBILE);
-  }
-
-  .nLoading {
-    .nLoading(@MOBILE);
-  }
-
-  .nPromoButtonContainer {
-    .nPromoButtonContainer(@MOBILE);
-  }
-
-  .nMenuButton {
-    .nMenuButton(@MOBILE);
-  }
-
-  .nMenuButtonText {
-    .nMenuButtonText(@MOBILE);
-  }
-
-  .nGameDescription {
-    .nGameDescription(@MOBILE);
-  }
-
-  .csstransforms3d.csstransitions .nNavigation {
+  .nNavigation {
     left: 0;
     .transform(translate3d(-100%, 0, 0));
   }
-  .csstransforms3d.csstransitions .nContainer {
+
+  .nContainer {
     left: 0 !important;
     .transform(translate3d(0, 0, 0));
     .transition(500ms, ease);
   }
 
-  .csstransforms3d.csstransitions.nNavOpen .nContainer {
+  .nNavOpen .nContainer {
     .transform(translate3d(70%, 0, 0), scale3d(1, 1, 1));
   }
 }
@@ -313,36 +250,9 @@ body {
     width: @mobileHeaderSize;
   }
 
-  .nGame {
-    width: @mobileLandscapeGameWidth;
-    height: @mobileLandscapeGameHeight;
-    margin-left: -(@mobileLandscapeGameWidth / 2 - @mobileHeaderSize /2);
-    margin-top: -(@mobileLandscapeGameHeight / 2);
-  }
-
   .nMenuToggleButton {
     font-size: 16px;
     top: 5px;
     left: 5px;
-  }
-
-  .nNewGamePromo {
-    .nNewGamePromo(@MOBILE_LANDSCAPE);
-  }
-
-  .nPromoButtonContainer {
-    .nPromoButtonContainer(@MOBILE_LANDSCAPE);
-  }
-
-  .nMenuButton {
-    .nMenuButton(@MOBILE_LANDSCAPE);
-  }
-
-  .nMenuButtonText {
-    .nMenuButtonText(@MOBILE_LANDSCAPE);
-  }
-
-  .nGameDescription {
-    .nGameDescription(@MOBILE_LANDSCAPE);
   }
 }
