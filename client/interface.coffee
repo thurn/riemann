@@ -48,7 +48,12 @@ widthHeightCss = (scale, width, height) ->
   "width": "#{width * scale}px"
   "height": "#{height * scale}px"
 
-useMobileStyle = -> $(window).width() < 600
+noughts.useMobileStyle = -> $(window).width() < 600 or $(window).height() < 600
+
+noughts.mobilePortrait = ->
+  width = $(window).width()
+  height = $(window).height()
+  (height > 356 and height < 599) or width < 479
 
 computeScaleFactor = ->
   width = $(window).width()
@@ -57,14 +62,13 @@ computeScaleFactor = ->
     height += 60 # Compensate for the hidden navigation bar on iPhones
 
   computeScale = (targetWidth, targetHeight) ->
-    if width - targetWidth > height - targetHeight
-      height / targetHeight
-    else
-      width / targetWidth
+    heightRatio = height / targetHeight
+    widthRatio = width / targetWidth
+    if heightRatio > widthRatio then widthRatio else heightRatio
 
   if width >= 1200 and height >= 800
     return 1.0 # Full size, scaling not required
-  else if width >= 600 # desktop style
+  else if width >= 600 and height >= 600 # desktop style
     return computeScale(1200, 800)
   else if height >= 356 # mobile portrait style
     return computeScale(640, 712)
@@ -77,12 +81,19 @@ MAIN_WIDTH = 640
 MAIN_HEIGHT = CONTAINER_HEIGHT
 NAVIGATION_WIDTH = 400
 NAVIGATION_HEIGHT = CONTAINER_HEIGHT
+MOBILE_HEADER_SIZE = 45
 
 scaleInterface = ->
   scale = computeScaleFactor()
   Session.set("scaleFactor", scale)
   $(".nGame").css(transformCss("scale(#{scale})"))
-  unless useMobileStyle()
+  if $(window).height() < 356
+    # Landscape
+    $(".nNotification").css({width: (MAIN_WIDTH/2) * scale})
+  else
+    $(".nNotification").css({width: MAIN_WIDTH * scale})
+  $(".nNotification").css(transformCss("scale(#{scale})"))
+  unless noughts.useMobileStyle()
     $(".nContainer").css(noughts.centeredBlockCss(scale, CONTAINER_WIDTH,
         CONTAINER_HEIGHT, "fixed"))
     $(".nMain").css(widthHeightCss(scale, MAIN_WIDTH, MAIN_HEIGHT))
@@ -91,8 +102,6 @@ scaleInterface = ->
     $(".nNavigation").css(widthHeightCss(scale, NAVIGATION_WIDTH,
         NAVIGATION_HEIGHT))
     $(".nLogoContainer").css(transformCss("scale(#{scale})"))
-    $(".nNotification").css({width: MAIN_WIDTH * scale})
-    $(".nNotification").css(transformCss("scale(#{scale})"))
 
 Meteor.startup ->
   iPhoneHideNavbar()

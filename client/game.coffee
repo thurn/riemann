@@ -118,6 +118,9 @@ initialize = ->
   scaleFactor = Session.get("scaleFactor")
   initialized = me.video.init("nMain", 600, 600, true, scaleFactor)
   $(".nMain canvas").css(noughts.centeredBlockCss(scaleFactor, 600, 600))
+  if noughts.mobilePortrait()
+    # Take into account header on mobile
+    $(".nMain canvas").css({"margin-top": -(scaleFactor * 600)/2 + 22.5})
   if not initialized
     displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
