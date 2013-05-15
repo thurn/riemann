@@ -55,16 +55,59 @@ noughts.mobilePortrait = ->
   height = $(window).height()
   (height > 356 and height < 599) or width < 479
 
+
+widthAndHeight = ->
+  width = $(window).width()
+  height = $(window).height()
+  height += 60 if iPhone() # Compensate for the hidden navigation bar on iPhones
+  return {width: width, height: height}
+
+# Possible UI modes
+noughts.Mode =
+  DESKTOP: "nDesktopMode"
+  PORTRAIT: "nPortraitMode"
+  LANDSCAPE: "nLandscapeMode"
+
+# Computes which of the three UI modes (Desktop, Portrait, Landscape) should be
+# used, based on the current window height and width.
+noughts.getInterfaceMode = ->
+  {width: width, height: height} = widthAndHeight()
+
+  # Desktop mode triggers for screens bigger than 900x600, otherwise the mode
+  # just depends on whether width or height is larger.
+  if width > 900 and height > 600
+    return noughts.Mode.DESKTOP
+  else if width > height
+    return noughts.Mode.LANDSCAPE
+  else
+    return noughts.Mode.PORTRAIT
+
+# Each noughts.Mode interface mode has a "target screen size" which it is
+# designed for. In order to make other screen sizes fit, we use a linear scale
+# factor to resize the interface based on whichever dimension is further from
+# the target.
+noughts.computeScaleFactor = ->
+  mode = noughts.getInterfaceMode()
+
+  # Computes the ratio of whichever of the current width and height are
+  # further from the provided targets.
+  computeScale = (targetWidth, targetHeight) ->
+    {width: width, height: height} = widthAndHeight()
+    heightRatio = height / targetHeight
+    widthRatio = width / targetWidth
+    if heightRatio > widthRatio then widthRatio else heightRatio
+
+  switch mode
+    when noughts.Mode.DESKTOP then return computeScale(1200, 800)
+    when noughts.Mode.LANDSCAPE then return computeScale(268, 234)
+    when noughts.Mode.PORTRAIT then return computeScale(320, 366)
+
 computeScaleFactor = ->
   width = $(window).width()
   height = $(window).height()
   if iPhone()
     height += 60 # Compensate for the hidden navigation bar on iPhones
 
-  computeScale = (targetWidth, targetHeight) ->
-    heightRatio = height / targetHeight
-    widthRatio = width / targetWidth
-    if heightRatio > widthRatio then widthRatio else heightRatio
 
   if width >= 1200 and height >= 800
     return 1.0 # Full size, scaling not required
@@ -107,4 +150,5 @@ Meteor.startup ->
   iPhoneHideNavbar()
   $("body").on "orientationchange", ->
     iPhoneHideNavbar()
-  scaleInterface()
+  $("body").addClass(noughts.getInterfaceMode())
+  #scaleInterface()
