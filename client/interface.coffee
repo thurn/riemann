@@ -88,17 +88,19 @@ noughts.getInterfaceMode = ->
 # the target.
 noughts.computeScaleFactor = ->
   mode = noughts.getInterfaceMode()
+  {width: width, height: height} = widthAndHeight()
 
   # Computes the ratio of whichever of the current width and height are
   # further from the provided targets.
   computeScale = (targetWidth, targetHeight) ->
-    {width: width, height: height} = widthAndHeight()
     heightRatio = height / targetHeight
     widthRatio = width / targetWidth
     if heightRatio > widthRatio then widthRatio else heightRatio
 
+  return 1 if width > 1200 and height > 768 # Full size, no scaling required
+
   switch mode
-    when noughts.Mode.DESKTOP then return computeScale(1200, 800)
+    when noughts.Mode.DESKTOP then return computeScale(1200, 768)
     when noughts.Mode.LANDSCAPE then return computeScale(268, 234)
     when noughts.Mode.PORTRAIT then return computeScale(320, 366)
 
@@ -145,6 +147,28 @@ scaleInterface = ->
     $(".nNavigation").css(widthHeightCss(scale, NAVIGATION_WIDTH,
         NAVIGATION_HEIGHT))
     $(".nLogoContainer").css(transformCss("scale(#{scale})"))
+
+# Grab most of the DOM (except for <canvas>) and scale "size" attributes by
+# the provided scaling factor.
+zoom = (scaleFactor) ->
+  scaleProperty = (element, property) ->
+    propertyString = element.css(property)
+    value = parseFloat(propertyString)
+    return if isNaN(value)
+    element.css(property, value * scaleFactor)
+
+  properties = ["height", "width", "margin-top", "margin-right",
+      "margin-bottom", "margin-left", "padding-top", "padding-right",
+      "padding-bottom", "padding-left"]
+
+  $("div,nav,header,button").each ->
+    for property in properties
+      scaleProperty($(this), property)
+
+  # Keep in sync with main.less
+  DEFAULT_FONT_SIZE = 26
+  $(".nDefaultFont").css("font-size", DEFAULT_FONT_SIZE * scaleFactor)
+  $(".nScaleTransform").css(transformCss("scale(#{scaleFactor})"))
 
 Meteor.startup ->
   iPhoneHideNavbar()

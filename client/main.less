@@ -9,7 +9,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @import "lib/elements.less";
 
 // -------------------- CONSTANTS -------------------- //
-@defaultFontSize: 26px;
+@defaultFontSize: 26px; // Keep in sync with interface.coffee
 @containerHeight: 768px;
 @containerWidth: 1064px;
 @mainWidth: 640px;
@@ -45,7 +45,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   width: device-width;
 }
 
-.defaultFont () {
+.nDefaultFont {
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
@@ -54,7 +54,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 body {
   position: relative;
   width: 100%;
-  .defaultFont();
 }
 
 .centeredBlock (@width, @height) {
@@ -150,7 +149,6 @@ body {
   background-image: none;
   border-radius: 0;
   border-color: #aaaaaa;
-  .defaultFont();
   width: @navigationWidth;
   height: @menuButtonHeight;
 }
@@ -169,11 +167,6 @@ body {
 // -------------------- DESKTOP-ONLY STYLE -------------------- //
 
 @media screen and (min-width: 600px) and (min-height: 600px) {
-  .nMain {
-    position: absolute;
-    top: 0;
-  }
-
   .nLogo {
     position: absolute;
   }
@@ -269,13 +262,32 @@ body {
 }
 
 
+// 640x732 is the target size for Main because this is double the mobile
+// target (from iPhone) of 320x366. The width is more or less arbitrary,
+// as long as it's under the desktop target of 1200px.
+@containerWidth: 1100px;
+@containerHeight: 732px;
+@mainWidth: 640px;
+@mainHeight: @containerHeight;
+@navigationWidth: 400px;
+@navigationHeight: @containerHeight;
 
 .nDesktopMode {
   .nContainer {
-    .centeredBlock(1024px, 768px);
+    .centeredBlock(@containerWidth, @containerHeight);
+    position: fixed;
   }
+
   .nMain {
-    width: 640px;
-    height: 768px;
+    width: @mainWidth;
+    height: @mainHeight;
+    position: absolute;
+    top: 0;
+    right: 0;
+   }
+
+  .nNavigation {
+    width: @navigationWidth;
+    height: @navigationHeight;
   }
 }
