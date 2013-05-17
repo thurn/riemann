@@ -148,31 +148,40 @@ scaleInterface = ->
         NAVIGATION_HEIGHT))
     $(".nLogoContainer").css(transformCss("scale(#{scale})"))
 
-# Grab most of the DOM (except for <canvas>) and scale "size" attributes by
-# the provided scaling factor.
-zoom = (scaleFactor) ->
+# Returns an array of functions for scaling DOM elements. Each function takes a
+# scale as a parameter, and then applies this scale to a particular CSS
+# property. The functions apply to most of the display-able DOM elements.
+getZoomFunctions = ->
+  functions = []
+
+  # Returns a function which will scale the provided CSS property on the
+  # provided element by a certain scaling factor.
   scaleProperty = (element, property) ->
     propertyString = element.css(property)
     value = parseFloat(propertyString)
-    return if isNaN(value)
-    element.css(property, value * scaleFactor)
+    return if isNaN(value) or value == 0
+    functions.push((scale) -> element.css(property, value * scale))
 
   properties = ["height", "width", "margin-top", "margin-right",
       "margin-bottom", "margin-left", "padding-top", "padding-right",
-      "padding-bottom", "padding-left"]
+      "padding-bottom", "padding-left", "font-size"]
 
-  $("div,nav,header,button").each ->
+  $("div,nav,header,button,img").each ->
     for property in properties
       scaleProperty($(this), property)
 
-  # Keep in sync with main.less
-  DEFAULT_FONT_SIZE = 26
-  $(".nDefaultFont").css("font-size", DEFAULT_FONT_SIZE * scaleFactor)
-  $(".nScaleTransform").css(transformCss("scale(#{scaleFactor})"))
+  return functions
+
+# Given an array of zoom functions as returned by getZoomeFunctions, invoke
+# each zoom function with the provided scaling factor.
+zoom = (zoomFunctions, scaleFactor) ->
+  for zoomFunction in zoomFunctions
+    zoomFunction(scaleFactor)
 
 Meteor.startup ->
   iPhoneHideNavbar()
   $("body").on "orientationchange", ->
     iPhoneHideNavbar()
   $("body").addClass(noughts.getInterfaceMode())
-  #scaleInterface()
+  zoomFunctions = getZoomFunctions()
+  zoom(zoomFunctions, 1.0)
