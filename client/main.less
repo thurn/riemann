@@ -8,8 +8,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 @import "lib/elements.less";
 
-// -------------------- CONSTANTS -------------------- //
-@defaultFontSize: 26px; // Keep in sync with interface.coffee
+// Constants
+@defaultFontSize: 26px;
 @containerHeight: 768px;
 @containerWidth: 1064px;
 @mainWidth: 640px;
@@ -34,7 +34,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @mobileLandscapeGameHeight: @mobileLandscapeGameWidth;
 
 
-// -------------------- COMMON STYLE -------------------- //
+// Common Styles
 
 @charset "UTF-8";
 @-ms-viewport {
@@ -161,9 +161,9 @@ body {
 }
 
 
-// -------------------- MOBILE-ONLY STYLE -------------------- //
+// Mobile-only styles
 
-@media screen and (max-width: 599px), screen and (max-height: 599px) {
+.nPortraitMode, .nLandscapeMode {
   html, body, .nWrapper, .nContainer, .nMain {
     height: 100%;
     width: 100%;
@@ -220,16 +220,17 @@ body {
 
 }
 
-// -------------------- MOBILE PORTRAIT STYLE -------------------- //
-@media screen and (min-height: 356px) and (max-height: 599px),
-       screen and (max-width: 479px)  {
+// Portrait styles
+
+.nPortraitMode {
   .nGame {
     margin-top: -(600/2) + (@mobileHeaderSize/2);
   }
 }
 
-// -------------------- MOBILE LANDSCAPE STYLE -------------------- //
-@media screen and (max-height: 355px) and (min-width: 480px) {
+// Landscape styles
+
+.nLandscapeMode{
   .nTopHeader {
     height: 100%;
     width: @mobileHeaderSize;
