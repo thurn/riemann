@@ -1,15 +1,12 @@
-doc = document.documentElement
-navClass = 'nNavOpen'
-
 closeNav = (event) ->
   event.stopPropagation()
-  $(doc).removeClass(navClass);
+  $("body").removeClass("nNavOpen");
   $(".nTopHeader, .nMain").off("click")
   $(".nMenuToggleButton").on("click", openNav)
 
 openNav = (event) ->
   event.stopPropagation()
-  $(doc).addClass(navClass)
+  $("body").addClass("nNavOpen")
   $(".nMenuToggleButton").off("click")
   $(".nTopHeader, .nMain").on("click", closeNav)
 
@@ -37,6 +34,8 @@ noughts.Mode =
   DESKTOP: "nDesktopMode"
   PORTRAIT: "nPortraitMode"
   LANDSCAPE: "nLandscapeMode"
+
+isMobileMode = -> getInterfaceMode() != noughts.Mode.DESKTOP
 
 # Computes which of the three UI modes (Desktop, Portrait, Landscape) should be
 # used, based on the current window height and width.
@@ -71,8 +70,8 @@ computeScaleFactor = ->
 
   result = switch mode
     when noughts.Mode.DESKTOP then computeScale(1200, 768)
-    when noughts.Mode.LANDSCAPE then computeScale(268, 234)
-    when noughts.Mode.PORTRAIT then computeScale(320, 366)
+    when noughts.Mode.LANDSCAPE then computeScale(804, 702)
+    when noughts.Mode.PORTRAIT then computeScale(640, 732)
   Session.set("scaleFactor", result)
   return result
 
@@ -93,8 +92,8 @@ getZoomFunctions = ->
   properties = ["height", "width", "margin-top", "margin-right",
       "margin-bottom", "margin-left", "padding-top", "padding-right",
       "padding-bottom", "padding-left", "font-size"]
-
-  $("div,nav,header,button,img").each ->
+  selector = if isMobileMode() then ".nMain" else "body"
+  $("#{selector} *").each ->
     for property in properties
       scaleProperty($(this), property)
 
@@ -108,17 +107,27 @@ zoom = (scaleFactor) ->
   for zoomFunction in zoomFunctions
     zoomFunction(scaleFactor)
 
+scaleInterface = ->
+  # Clear any pre-existing mode classes
+  $("html").removeClass()
+
+  mode = getInterfaceMode()
+  $("html").addClass(mode)
+  if isMobileMode()
+    $("html").addClass("nMobile")
+  zoom(computeScaleFactor())
+
 Meteor.startup ->
   iPhoneHideNavbar()
   $("body").on "orientationchange", ->
     iPhoneHideNavbar()
-  $("body").addClass(getInterfaceMode())
+    scaleInterface()
 
   $(window).on "load", ->
     zoomFunctions = getZoomFunctions()
-    zoom(computeScaleFactor())
+    scaleInterface()
 
   rescale = null
   $(window).on "resize", ->
     clearTimeout(rescale)
-    rescale = setTimeout((-> zoom(computeScaleFactor())), 100)
+    rescale = setTimeout((-> scaleInterface()), 50)

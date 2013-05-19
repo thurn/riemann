@@ -10,14 +10,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 // Constants
 @defaultFontSize: 26px;
-@containerHeight: 768px;
-@containerWidth: 1064px;
-@mainWidth: 640px;
-@mainHeight: @containerHeight;
 @gameWidth: 600px;
 @gameHeight: @gameWidth;
-@navigationWidth: 400px;
-@navigationHeight: @containerHeight;
 @newGamePromoWidth: 400px;
 @newGamePromoHeight: 400px;
 @gameDescriptionLeftMargin: 24px;
@@ -32,6 +26,16 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @mobileGameHeight: @mobileGameWidth;
 @mobileLandscapeGameWidth: 250px;
 @mobileLandscapeGameHeight: @mobileLandscapeGameWidth;
+
+// 640x732 is the target size for Main because this is double the mobile
+// target (from iPhone) of 320x366. The width is more or less arbitrary,
+// as long as it's under the desktop target of 1200px.
+@containerWidth: 1100px;
+@containerHeight: 732px;
+@mainWidth: 640px;
+@mainHeight: @containerHeight;
+@navigationWidth: 400px;
+@navigationHeight: @containerHeight;
 
 
 // Common Styles
@@ -163,8 +167,13 @@ body {
 
 // Mobile-only styles
 
-.nPortraitMode, .nLandscapeMode {
-  html, body, .nWrapper, .nContainer, .nMain {
+html.nMobile {
+  height: 100%;
+  width: 100%;
+}
+
+.nMobile {
+  body, .nWrapper, .nContainer, .nMain {
     height: 100%;
     width: 100%;
   }
@@ -224,7 +233,7 @@ body {
 
 .nPortraitMode {
   .nGame {
-    margin-top: -(600/2) + (@mobileHeaderSize/2);
+    //margin-top: -(600/2) + (@mobileHeaderSize/2);
   }
 }
 
@@ -247,16 +256,6 @@ body {
   }
 }
 
-
-// 640x732 is the target size for Main because this is double the mobile
-// target (from iPhone) of 320x366. The width is more or less arbitrary,
-// as long as it's under the desktop target of 1200px.
-@containerWidth: 1100px;
-@containerHeight: 732px;
-@mainWidth: 640px;
-@mainHeight: @containerHeight;
-@navigationWidth: 400px;
-@navigationHeight: @containerHeight;
 
 .nDesktopMode {
   .nContainer {
