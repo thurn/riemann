@@ -107,7 +107,9 @@ zoom = (scaleFactor) ->
   for zoomFunction in zoomFunctions
     zoomFunction(scaleFactor)
 
-scaleInterface = ->
+# Adds classes to the <html> element corresponding to the current interface
+# mode.
+setInterfaceModeClass = ->
   # Clear any pre-existing mode classes
   $("html").removeClass()
 
@@ -115,19 +117,26 @@ scaleInterface = ->
   $("html").addClass(mode)
   if isMobileMode()
     $("html").addClass("nMobile")
-  zoom(computeScaleFactor())
+
+zoomy = ->
+  setInterfaceModeClass()
+  scale = computeScaleFactor()
+  $("html").css({"font-size": "#{scale*100}%"})
+  $(".nLogo").css({"-webkit-transform": "scale(#{scale})"})
 
 Meteor.startup ->
   iPhoneHideNavbar()
+  zoomy()
+
   $("body").on "orientationchange", ->
     iPhoneHideNavbar()
-    scaleInterface()
+    zoomy()
 
-  $(window).on "load", ->
-    zoomFunctions = getZoomFunctions()
-    scaleInterface()
+  #$(window).on "load", ->
+    #zoomFunctions = getZoomFunctions()
+    #scaleInterface()
 
   rescale = null
   $(window).on "resize", ->
     clearTimeout(rescale)
-    rescale = setTimeout((-> scaleInterface()), 50)
+    rescale = setTimeout((-> zoomy()), 50)

@@ -6,23 +6,21 @@ received a copy of the CC0 Public Domain Dedication along with this software.
 If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
-@import "lib/elements.less";
-
 // Constants
-@defaultFontSize: 26px;
-@gameWidth: 600px;
+@defaultFontSize: 1.625rem;
+@gameWidth: 37.5rem;
 @gameHeight: @gameWidth;
-@newGamePromoWidth: 400px;
-@newGamePromoHeight: 400px;
-@gameDescriptionLeftMargin: 24px;
-@menuButtonHeight: 90px;
-@largerFontSize: 32px;
-@menuIconRightMargin: 20px;
-@promoButtonContainerTopMargin: 100px;
-@menuButtonTextLeftMargin: 10px;
+@newGamePromoWidth: 25rem;
+@newGamePromoHeight: 25rem;
+@gameDescriptionLeftMargin: 1.5rem;
+@menuButtonHeight: 5.625rem;
+@largerFontSize: 2rem;
+@menuIconRightMargin: 1.25rem;
+@promoButtonContainerTopMargin: 6.25rem;
+@menuButtonTextLeftMargin: 0.625rem;
 
 @mobileHeaderSize: 45px;
-@mobileGameWidth: 300px;
+@mobileGameWidth: 18.75rem;
 @mobileGameHeight: @mobileGameWidth;
 @mobileLandscapeGameWidth: 250px;
 @mobileLandscapeGameHeight: @mobileLandscapeGameWidth;
@@ -30,11 +28,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 // 640x732 is the target size for Main because this is double the mobile
 // target (from iPhone) of 320x366. The width is more or less arbitrary,
 // as long as it's under the desktop target of 1200px.
-@containerWidth: 1100px;
-@containerHeight: 732px;
-@mainWidth: 640px;
+@containerWidth: 68.75rem;
+@containerHeight: 45.75rem;
+@mainWidth: 40rem;
 @mainHeight: @containerHeight;
-@navigationWidth: 400px;
+@navigationWidth: 25rem;
 @navigationHeight: @containerHeight;
 
 
@@ -49,6 +47,43 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   width: device-width;
 }
 
+.centeredBlock (@width, @height) {
+  height: @height;
+  width: @width;
+  margin-top: -(@height/2);
+  margin-left: -(@width/2);
+  top: 50%;
+  left: 50%;
+}
+
+.transform(...) {
+  -webkit-transform: @arguments;
+  -moz-transform: @arguments;
+  -o-transform: @arguments;
+  -ms-transform: @arguments;
+  transform: @arguments;
+}
+
+.transition(@prop, @duration:0.2s, @ease:ease-out) {
+  -webkit-transition: @prop @duration @ease;
+  -moz-transition: @prop @duration @ease;
+  -o-transition: @prop @duration @ease;
+  transition: @prop @duration @ease;
+}
+
+.transition-transform(@duration:0.2s, @ease:ease-out) {
+  -webkit-transition: -webkit-tranform @duration @ease;
+  -moz-transition: -moz-transform @duration @ease;
+  -o-transition: -o-transform @duration @ease;
+  transition: transform @duration @ease;
+}
+
+.box-shadow(@arguments) {
+  -webkit-box-shadow: @arguments;
+  -moz-box-shadow: @arguments;
+  box-shadow: @arguments;
+}
+
 .nDefaultFont {
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
@@ -58,15 +93,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 body {
   position: relative;
   width: 100%;
-}
-
-.centeredBlock (@width, @height) {
-  height: @height;
-  width: @width;
-  margin-top: -(@height/2);
-  margin-left: -(@width/2);
-  top: 50%;
-  left: 50%;
 }
 
 .nContainer {
@@ -115,12 +141,12 @@ body {
   position: relative;
   border: solid 1px #aaa;
   display: block;
-  .centeredBlock(600px, 600px);
+  .centeredBlock(37.5rem, 37.5rem);
 }
 
 .nLogo {
   display: block;
-  margin: 10px auto 0 auto;
+  margin: 0.625rem auto 0 auto;
 }
 
 .nNotification {
@@ -220,7 +246,7 @@ html.nMobile {
   .nContainer {
     left: 0 !important;
     .transform(translate3d(0, 0, 0));
-    .transition(500ms, ease);
+    .transition(-webkit-transform, 500ms, ease);
   }
 
   .nNavOpen .nContainer {
