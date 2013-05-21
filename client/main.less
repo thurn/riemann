@@ -7,45 +7,22 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
 // Constants
-@defaultFontSize: 1.625rem;
-@gameWidth: 37.5rem;
-@gameHeight: @gameWidth;
-@newGamePromoWidth: 25rem;
-@newGamePromoHeight: 25rem;
-@gameDescriptionLeftMargin: 1.5rem;
-@menuButtonHeight: 5.625rem;
-@largerFontSize: 2rem;
-@menuIconRightMargin: 1.25rem;
-@promoButtonContainerTopMargin: 6.25rem;
-@menuButtonTextLeftMargin: 0.625rem;
 
-@mobileHeaderSize: 45px;
-@mobileGameWidth: 18.75rem;
-@mobileGameHeight: @mobileGameWidth;
-@mobileLandscapeGameWidth: 250px;
-@mobileLandscapeGameHeight: @mobileLandscapeGameWidth;
-
-// 640x732 is the target size for Main because this is double the mobile
-// target (from iPhone) of 320x366. The width is more or less arbitrary,
-// as long as it's under the desktop target of 1200px.
 @containerWidth: 68.75rem;
 @containerHeight: 45.75rem;
 @mainWidth: 40rem;
 @mainHeight: @containerHeight;
 @navigationWidth: 25rem;
 @navigationHeight: @containerHeight;
+@defaultFontSize: 1.625rem;
+@newGamePromoWidth: 25rem;
+@newGamePromoHeight: 25rem;
+@gameDescriptionLeftMargin: 1.5rem;
+@menuButtonHeight: 5.625rem;
+@promoButtonContainerTopMargin: 6.25rem;
+@menuButtonTextLeftMargin: 0.625rem;
 
-
-// Common Styles
-
-@charset "UTF-8";
-@-ms-viewport {
-  width: device-width;
-}
-
-@viewport {
-  width: device-width;
-}
+// Mixins
 
 .centeredBlock (@width, @height) {
   height: @height;
@@ -84,24 +61,38 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   box-shadow: @arguments;
 }
 
+// Common Styles
+
+@charset "UTF-8";
+@-ms-viewport {
+  width: device-width;
+}
+
+@viewport {
+  width: device-width;
+}
+
 .nDefaultFont {
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
 }
 
-body {
-  position: relative;
+html {
+  height: 100%;
   width: 100%;
 }
 
-.nContainer {
+body {
+  position: relative;
+  height: 100%;
   width: 100%;
 }
 
 .nWrapper {
   position: relative;
   overflow: hidden;
+  height: 100%;
   width: 100%;
 }
 
@@ -114,7 +105,7 @@ body {
   background-color: #f5f5f5;
 }
 
-.nTopHeader {
+.nHeader {
   display: none;
 }
 
@@ -128,11 +119,11 @@ body {
 }
 
 .nMenuToggleButton {
-  font-size: 26px;
+  font-size: 2rem;
   cursor: pointer;
   position: relative;
-  top: 10px;
-  left: 10px;
+  top: 0.8rem;
+  left: 0.625rem;
 }
 
 .nGame {
@@ -190,16 +181,10 @@ body {
   margin-left: @gameDescriptionLeftMargin;
 }
 
-
 // Mobile-only styles
 
-html.nMobile {
-  height: 100%;
-  width: 100%;
-}
-
 .nMobile {
-  body, .nWrapper, .nContainer, .nMain {
+  .nContainer, .nMain {
     height: 100%;
     width: 100%;
   }
@@ -225,9 +210,9 @@ html.nMobile {
     left: 0;
   }
 
-  .nTopHeader {
+  .nHeader {
     display: block;
-    height: 45px;
+    height: 2.5em;
     z-index: 100;
     color: #000;
     background: #f5f5f5;
@@ -255,26 +240,18 @@ html.nMobile {
 
 }
 
-// Portrait styles
-
-.nPortraitMode {
-  .nGame {
-    //margin-top: -(600/2) + (@mobileHeaderSize/2);
-  }
-}
-
 // Landscape styles
 
 .nLandscapeMode{
-  .nTopHeader {
+  .nHeader {
     height: 100%;
-    width: @mobileHeaderSize;
+    width: 4em;
   }
 
   .nMenuToggleButton {
-    font-size: 16px;
-    top: 5px;
-    left: 5px;
+    font-size: 2.5rem;
+    top: 1rem;
+    left: 0.8rem;
   }
 
   .nNotification {

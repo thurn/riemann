@@ -75,38 +75,6 @@ computeScaleFactor = ->
   Session.set("scaleFactor", result)
   return result
 
-# Returns an array of functions for scaling DOM elements. Each function takes a
-# scale as a parameter, and then applies this scale to a particular CSS
-# property. The functions apply to most of the display-able DOM elements.
-getZoomFunctions = ->
-  functions = []
-
-  # Returns a function which will scale the provided CSS property on the
-  # provided element by a certain scaling factor.
-  scaleProperty = (element, property) ->
-    propertyString = element.css(property)
-    value = parseFloat(propertyString)
-    return if isNaN(value) or value == 0
-    functions.push((scale) -> element.css(property, value * scale))
-
-  properties = ["height", "width", "margin-top", "margin-right",
-      "margin-bottom", "margin-left", "padding-top", "padding-right",
-      "padding-bottom", "padding-left", "font-size"]
-  selector = if isMobileMode() then ".nMain" else "body"
-  $("#{selector} *").each ->
-    for property in properties
-      scaleProperty($(this), property)
-
-  return functions
-
-zoomFunctions = null
-# Using the value in 'zoomFunctions', an array of zoom functions as returned by
-# getZoomeFunctions, invoke each zoom function with the provided scaling factor.
-zoom = (scaleFactor) ->
-  return unless zoomFunctions
-  for zoomFunction in zoomFunctions
-    zoomFunction(scaleFactor)
-
 # Adds classes to the <html> element corresponding to the current interface
 # mode.
 setInterfaceModeClass = ->
@@ -118,25 +86,29 @@ setInterfaceModeClass = ->
   if isMobileMode()
     $("html").addClass("nMobile")
 
-zoomy = ->
+# Scales the interface by setting the font-size attribute on the root <html>
+# element and by directling applying css scaling transformation to elements
+# with the 'nScale' class.
+scaleInterface = ->
   setInterfaceModeClass()
   scale = computeScaleFactor()
   $("html").css({"font-size": "#{scale*100}%"})
-  $(".nLogo").css({"-webkit-transform": "scale(#{scale})"})
+  $(".nScale").css
+    "-webkit-transform": "scale(#{scale})"
+    "-moz-transform": "scale(#{scale})"
+    "-o-transform": "scale(#{scale})"
+    "-ms-transform": "scale(#{scale})"
+    "transform": "scale(#{scale})"
 
 Meteor.startup ->
   iPhoneHideNavbar()
-  zoomy()
+  scaleInterface()
 
-  $("body").on "orientationchange", ->
+  $(window).on "orientationchange", ->
     iPhoneHideNavbar()
-    zoomy()
-
-  #$(window).on "load", ->
-    #zoomFunctions = getZoomFunctions()
-    #scaleInterface()
+    scaleInterface()
 
   rescale = null
   $(window).on "resize", ->
     clearTimeout(rescale)
-    rescale = setTimeout((-> zoomy()), 50)
+    rescale = setTimeout((-> scaleInterface()), 25)
