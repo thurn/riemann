@@ -131,7 +131,7 @@ initialize = ->
 
 Meteor.startup ->
   $(".nNewGameButton").on("click", handleNewGameClick)
-  window.onReady -> initialize()
+  #window.onReady -> initialize()
 
 onSubscribe = ->
   $(".nLoading").css({display: "none"})
@@ -211,3 +211,6 @@ Meteor.startup ->
       newUrl += "#{separator}#{key}=#{value}"
     window.history.replaceState("", {}, newUrl)
     Session.set("requestedPlayer", requestedPlayer)
+
+
+# Easle.js
