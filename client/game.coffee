@@ -72,7 +72,6 @@ PlayScreen = me.ScreenObject.extend
     Meteor.autorun =>
       game = noughts.Games.findOne Session.get("gameId")
       return if not game
-
       me.game.removeAll()
       this.loadMainLevel_()
 
@@ -112,7 +111,7 @@ handleNewGameClick = ->
           me.state.change(me.state.PLAY))
     else
       # TODO(dthurn): Display regular invite dialog
-      me.state.change(me.state.PLAY)
+    me.state.change(me.state.PLAY)
 
 initialize = ->
   #scaleFactor = Session.get("scaleFactor")
@@ -214,3 +213,11 @@ Meteor.startup ->
 
 
 # Easle.js
+
+Meteor.startup ->
+  stage = new createjs.Stage("testCanvas")
+  circle = new createjs.Shape()
+  circle.graphics.beginFill("red").drawCircle(0, 0, 40)
+  circle.x = circle.y = 50
+  stage.addChild(circle)
+  stage.update()
