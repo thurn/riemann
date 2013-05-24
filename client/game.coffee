@@ -18,7 +18,7 @@ gameResources = [
 SPRITE_Z_INDEX = 2
 
 displayError = (msg) ->
-  alert(msg)
+  alert("ERROR: " + msg)
   throw new Error(msg)
 
 getSuggestedFriends = ->
@@ -41,15 +41,19 @@ showFacebookInviteDialog = (inviteCallback) ->
     max_recipients: 1,
     message: "Want to play some Noughts?", inviteCallback
 
+# Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
+# Updates the currently displayed location bar URL to contain the provided game
+# ID.
 setUrl = (gameId) ->
     window.history.pushState({}, "", "?game_id=#{gameId}")
 
-PlayScreen = me.ScreenObject.extend
-  handleClick_: (tile) ->
-    Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
+# Handler for a click on the provided tile
+handleClick = (tile) ->
+  Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
 
+PlayScreen = me.ScreenObject.extend
   loadMainLevel_: ->
     me.levelDirector.loadLevel("tilemap")
     @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
@@ -60,14 +64,10 @@ PlayScreen = me.ScreenObject.extend
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
     this.loadMainLevel_()
-
-    Meteor.autorun =>
-      me.sys.scale = Session.get("scaleFactor")
-      # Attach click event listeners
-      for column in [0..2]
-        for row in [0..2]
-          tile = @mainLayer_.layerData[column][row]
-          me.input.registerMouseEvent("mouseup", tile, _.bind(@handleClick_, this, tile))
+    me.input.registerMouseEvent "mouseup", me.game.viewport, (event) =>
+      touch = me.input.touches[0]
+      tile = @mainLayer_.getTile(touch.x, touch.y)
+      handleClick(tile)
 
     Meteor.autorun =>
       game = noughts.Games.findOne Session.get("gameId")
@@ -94,7 +94,7 @@ PlayScreen = me.ScreenObject.extend
       else if game.currentPlayer == Meteor.userId()
         displayNotice("It's your turn. Click on a square to make your move.")
       else
-        displayNotice("It's your opponent's turn.")
+        displayNotice("") # Clear any previous note
 
 handleNewGameClick = ->
   Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
@@ -111,16 +111,11 @@ handleNewGameClick = ->
           me.state.change(me.state.PLAY))
     else
       # TODO(dthurn): Display regular invite dialog
-    me.state.change(me.state.PLAY)
+      me.state.change(me.state.PLAY)
 
 initialize = ->
-  #scaleFactor = Session.get("scaleFactor")
-  scaleFactor = 1
+  scaleFactor = Session.get("scaleFactor")
   initialized = me.video.init("nMain", 600, 600, true, scaleFactor)
-  #$(".nMain canvas").css(noughts.centeredBlockCss(scaleFactor, 600, 600))
-  #if noughts.mobilePortrait()
-    # Take into account header on mobile
-    #$(".nMain canvas").css({"margin-top": -(scaleFactor * 600)/2 + 22.5})
   if not initialized
     displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
@@ -130,7 +125,7 @@ initialize = ->
 
 Meteor.startup ->
   $(".nNewGameButton").on("click", handleNewGameClick)
-  #window.onReady -> initialize()
+  window.onReady -> initialize()
 
 onSubscribe = ->
   $(".nLoading").css({display: "none"})
@@ -152,8 +147,9 @@ onSubscribe = ->
   if gameIdParam
     Meteor.call "validateGameId", gameIdParam, (err, gameExists) ->
       if err then throw err
-      unless gameExists
-        displayError("Game not found for gameId: " + gameIdParam)
+      unless gameExists or Session.get("requestedPlayer")
+        # Don't display this error if you've requested to join the game
+        displayError("You have not been invited to this game")
       Session.set("gameId", gameIdParam)
       return me.state.change(me.state.PLAY)
 
@@ -210,14 +206,3 @@ Meteor.startup ->
       newUrl += "#{separator}#{key}=#{value}"
     window.history.replaceState("", {}, newUrl)
     Session.set("requestedPlayer", requestedPlayer)
-
-
-# Easle.js
-
-Meteor.startup ->
-  stage = new createjs.Stage("testCanvas")
-  circle = new createjs.Shape()
-  circle.graphics.beginFill("red").drawCircle(0, 0, 40)
-  circle.x = circle.y = 50
-  stage.addChild(circle)
-  stage.update()

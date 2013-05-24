@@ -21,8 +21,19 @@
 #     isX: Boolean - True if square is "X", false if "O"
 #   }]
 # }
+#
+# Security:
+# There are a few intentionally insecure aspects of the system:
+#
+# - As a general rule, if you know the Game ID, you may modify the participants
+#   in the game however you wish
+# - If you know somebody's secret UUID (stored in their cookie), you can
+#   impersonate them at will
 
 noughts.Games = new Meteor.Collection("games")
+
+# Placeholder User ID for players who haven't joined the game yet
+NOT_SELECTED = "<not selected>"
 
 noughts.BadRequestError = (message) ->
   @error = 500
@@ -63,9 +74,6 @@ Meteor.methods
 
   # Logs the user in based on an anonymous user ID.
   anonymousAuthenticate: (uuid) ->
-    # This is intentionally somewhat insecure. Anybody can log in as you if they
-    # know your UUID. We use the SHA3 hash of this UUID as your user ID for game
-    # purposes.
     this.setUserId(CryptoJS.SHA3(uuid, {outputLength: 256}).toString())
 
   # Add the current player's symbol at the provided location if
@@ -92,27 +100,31 @@ Meteor.methods
     noughts.Games.insert
       xPlayer: creatorId
       currentPlayer: creatorId
+      oPlayer: NOT_SELECTED
       moves: []
 
   # Add an opponent to a partially-created game
   facebookInviteOpponent: (gameId, opponentId, requestId) ->
     game = getGame(gameId)
     ensureIsCurrentUser(game.currentPlayer)
-    die("game already has opponent") if game.oPlayer
+    die("game already has opponent") unless game.oPlayer == NOT_SELECTED
     noughts.Games.update gameId,
       $set: {oPlayer: opponentId, requestId: requestId}
 
   # Sets the ID of a player in the provided game
   setPlayerId: (gameId, playerId, isX) ->
-    game = getGame(gameId)
-    if isX
-      noughts.Games.update(gameId, {$set: {xPlayer: playerId}})
-    else
-      noughts.Games.update(gameId, {$set: {oPlayer: playerId}})
+    if Meteor.isServer
+      game = getGame(gameId)
+      if isX
+        noughts.Games.update(gameId, {$set: {xPlayer: playerId}})
+      else
+        noughts.Games.update(gameId, {$set: {oPlayer: playerId}})
 
-  # Checks that a game exists based on its ID, allowing you to validate URL
-  # parameters without being subscribed to the game.
-  validateGameId: (gameId) -> noughts.Games.findOne(gameId)?
+  # Checks that a game exists based on its ID and that the current user is a
+  # participant in it.
+  validateGameId: (gameId) ->
+    game = noughts.Games.findOne(gameId)
+    game and (game.xPlayer == this.userId or game.oPlayer == this.userId)
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
