@@ -92,7 +92,7 @@ PlayScreen = me.ScreenObject.extend
       else if noughts.isDraw(game)
         displayNotice("The game is over, and it was a draw!")
       else if game.currentPlayer == Meteor.userId()
-        displayNotice("It's your turn. Click on a square to make your move.")
+        displayNotice("It's your turn. Select a square to make your move.")
       else
         displayNotice("") # Clear any previous note
 
@@ -120,7 +120,7 @@ initialize = ->
     displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
   me.loader.onload = ->
-    noughts.maybeInitialize()
+    maybeInitialize()
   me.loader.preload(gameResources)
 
 Meteor.startup ->
@@ -134,31 +134,8 @@ onSubscribe = ->
     if gameId
       setUrl(gameId)
 
-  Meteor.autorun ->
-    requestedPlayer = Session.get("requestedPlayer")
-    gameId = Session.get("gameId")
-    if requestedPlayer and Meteor.userId() and gameId
-      isX = requestedPlayer == "x"
-      Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
-        if err then throw err
-        Session.set("requestedPlayer", null)
-
-  gameIdParam = $.url().param("game_id")
-  if gameIdParam
-    Meteor.call "validateGameId", gameIdParam, (err, gameExists) ->
-      if err then throw err
-      unless gameExists or Session.get("requestedPlayer")
-        # Don't display this error if you've requested to join the game
-        displayError("You have not been invited to this game")
-      Session.set("gameId", gameIdParam)
-      return me.state.change(me.state.PLAY)
-
   requestIds = $.url().param("request_ids")?.split(",")
   if requestIds
-    unless Session.get("useFacebook")
-      # This shouldn't happen because we check for Facebook and redirect when
-      # there's a request_id.
-      displayError("Request ID specified without Facebook authentication")
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
       game = noughts.Games.findOne {requestId: requestId}
@@ -173,7 +150,7 @@ onSubscribe = ->
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded
-noughts.maybeInitialize = _.after 2, ->
+maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
   if Session.get("useFacebook")
     # Kick off some fetches now for friend ranking data to use later in the
@@ -189,13 +166,14 @@ noughts.maybeInitialize = _.after 2, ->
           _.pluck(installed, "installed"))
   Meteor.subscribe("myGames", onSubscribe)
 
-Meteor.startup ->
+getRequestedPlayer = ->
   requestedPlayer = $.url().param("player")
   if requestedPlayer
     if requestedPlayer != "x" and requestedPlayer != "o"
       displayError("Invalid requested player!")
 
-    # Need to rebuild the url without the "player" param
+    # We take the '?player=' param out of the URL to prevent somebody from
+    # accidentally taking over your role when sent a link
     newUrl = "/"
     firstIteration = true
     for key,value of $.url().param()
@@ -205,4 +183,31 @@ Meteor.startup ->
       firstIteration = false
       newUrl += "#{separator}#{key}=#{value}"
     window.history.replaceState("", {}, newUrl)
-    Session.set("requestedPlayer", requestedPlayer)
+  requestedPlayer
+
+setPlayer = (requestedPlayer, gameId, callback) ->
+  if requestedPlayer
+    isX = requestedPlayer == "x"
+    # TODO(dthurn): Consider issuing a warning if there's already a player in
+    # the slot you've requested.
+    Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
+      if err then throw err
+      callback()
+  else
+    # No change requested, just invoke callback
+    callback()
+
+noughts.afterAuthenticate = ->
+  Meteor.startup ->
+    requestedPlayer = getRequestedPlayer()
+    gameIdParam = $.url().param("game_id")
+    if gameIdParam
+      Meteor.call "validateGameId", gameIdParam, (err, gameExists) ->
+        if err then throw err
+        unless gameExists or requestedPlayer
+          # Don't display this error if you've requested to join the game
+          displayError("You have not been invited to this game")
+        Session.set("gameId", gameIdParam)
+        setPlayer requestedPlayer, gameIdParam, ->
+          return me.state.change(me.state.PLAY)
+    maybeInitialize()

@@ -41,14 +41,16 @@ Template.facebook.created = ->
             $.cookie("noughtsUuid", uuid, {expires: 7300})
           Meteor.call "anonymousAuthenticate", uuid, (err) ->
             if err then throw err
-            noughts.maybeInitialize()
+            noughts.afterAuthenticate()
       else
+        # TODO(dthurn): If there's a pre-existing anonymous cookie, upgrade
+        # all references to it to use the Facebook ID instead.
         accessToken = response.authResponse.accessToken
         userId = response.authResponse.userID
         Meteor.call "facebookAuthenticate", userId, accessToken, (err) ->
           if err then throw err
           Session.set("useFacebook", true)
-          noughts.maybeInitialize()
+          noughts.afterAuthenticate()
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')

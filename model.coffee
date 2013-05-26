@@ -32,9 +32,6 @@
 
 noughts.Games = new Meteor.Collection("games")
 
-# Placeholder User ID for players who haven't joined the game yet
-NOT_SELECTED = "<not selected>"
-
 noughts.BadRequestError = (message) ->
   @error = 500
   @reason = message
@@ -81,6 +78,8 @@ Meteor.methods
   performMoveIfLegal: (gameId, column, row) ->
     game = getGame(gameId)
     ensureIsCurrentUser(game.currentPlayer)
+    unless game.xPlayer and game.oPlayer and game.currentPlayer
+      die("Game #{gameId} is still missing players!")
     if _.some(game.moves, (move) -> move.column == column and move.row == row)
       # Space already taken!
       return
@@ -100,19 +99,20 @@ Meteor.methods
     noughts.Games.insert
       xPlayer: creatorId
       currentPlayer: creatorId
-      oPlayer: NOT_SELECTED
       moves: []
 
   # Add an opponent to a partially-created game
   facebookInviteOpponent: (gameId, opponentId, requestId) ->
     game = getGame(gameId)
     ensureIsCurrentUser(game.currentPlayer)
-    die("game already has opponent") unless game.oPlayer == NOT_SELECTED
+    die("game already has opponent") if game.oPlayer_
     noughts.Games.update gameId,
       $set: {oPlayer: opponentId, requestId: requestId}
 
   # Sets the ID of a player in the provided game
   setPlayerId: (gameId, playerId, isX) ->
+    # Don't run this on the client because the game with this ID will often not
+    # be present there.
     if Meteor.isServer
       game = getGame(gameId)
       if isX
