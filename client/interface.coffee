@@ -42,9 +42,9 @@ isMobileMode = -> getInterfaceMode() != noughts.Mode.DESKTOP
 getInterfaceMode = ->
   {width: width, height: height} = widthAndHeight()
 
-  # Desktop mode triggers for screens bigger than 900x600, otherwise the mode
+  # Desktop mode triggers for screens bigger than 600x600, otherwise the mode
   # just depends on whether width or height is larger.
-  if width > 900 and height > 600
+  if width > 600 and height > 600
     return noughts.Mode.DESKTOP
   else if width > height
     return noughts.Mode.LANDSCAPE
@@ -66,12 +66,14 @@ computeScaleFactor = ->
     widthRatio = width / targetWidth
     if heightRatio > widthRatio then widthRatio else heightRatio
 
-  return 1 if width > 1200 and height > 768 # Full size, no scaling required
-
-  result = switch mode
-    when noughts.Mode.DESKTOP then computeScale(1200, 768)
-    when noughts.Mode.LANDSCAPE then computeScale(804, 702)
-    when noughts.Mode.PORTRAIT then computeScale(640, 732)
+  result =
+    if width > 1200 and height > 768 # Full size, no scaling required
+      1
+    else
+      switch mode
+        when noughts.Mode.DESKTOP then computeScale(1200, 768)
+        when noughts.Mode.LANDSCAPE then computeScale(804, 702)
+        when noughts.Mode.PORTRAIT then computeScale(640, 732)
   Session.set("scaleFactor", result)
   return result
 
