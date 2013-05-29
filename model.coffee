@@ -78,8 +78,6 @@ Meteor.methods
   performMoveIfLegal: (gameId, column, row) ->
     game = getGame(gameId)
     ensureIsCurrentUser(game.currentPlayer)
-    unless game.xPlayer and game.oPlayer and game.currentPlayer
-      die("Game #{gameId} is still missing players!")
     if _.some(game.moves, (move) -> move.column == column and move.row == row)
       # Space already taken!
       return

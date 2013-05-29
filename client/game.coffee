@@ -129,10 +129,17 @@ Meteor.startup ->
 
 onSubscribe = ->
   $(".nLoading").css({display: "none"})
+
+  # Update the URL when the game ID changes
   Meteor.autorun ->
     gameId = Session.get("gameId")
-    if gameId
-      setUrl(gameId)
+    if gameId then setUrl(gameId)
+
+  # Update game scale when scaleFactor changes
+  Meteor.autorun ->
+    scaleFactor = Session.get("scaleFactor")
+    console.log("updating scale to #{scaleFactor}")
+    if scaleFactor then me.video.updateDisplaySize(scaleFactor, scaleFactor)
 
   requestIds = $.url().param("request_ids")?.split(",")
   if requestIds
