@@ -91,13 +91,13 @@ PlayScreen = me.ScreenObject.extend
           displayNotice("Sorry, you lose!")
       else if noughts.isDraw(game)
         displayNotice("The game is over, and it was a draw!")
-      else if game.currentPlayer == Meteor.userId()
+      else if game[game.currentPlayer] == Meteor.userId()
         displayNotice("It's your turn. Select a square to make your move.")
       else
         displayNotice("") # Clear any previous note
 
 handleNewGameClick = ->
-  Meteor.call "newGame", Meteor.userId(), (err, gameId) ->
+  Meteor.call "newGame", (err, gameId) ->
     if err then throw err
     Session.set("gameId", gameId)
     if Session.get("useFacebook")
@@ -138,7 +138,6 @@ onSubscribe = ->
   # Update game scale when scaleFactor changes
   Meteor.autorun ->
     scaleFactor = Session.get("scaleFactor")
-    console.log("updating scale to #{scaleFactor}")
     if scaleFactor then me.video.updateDisplaySize(scaleFactor, scaleFactor)
 
   requestIds = $.url().param("request_ids")?.split(",")

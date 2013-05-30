@@ -13,7 +13,7 @@
 # Game {
 #   xPlayer: UserID
 #   oPlayer: UserID
-#   currentPlayer: UserID
+#   currentPlayer: "xPlayer" or "oPlayer"
 #   requestId: Facebook request ID
 #   moves: [{
 #     column: Number - Square column number (numbered from zero)
@@ -46,9 +46,10 @@ die = (msg) ->
   console.log("ERORR: " + msg)
   throw new noughts.BadRequestError(msg)
 
-# Ensures that the provided userId is the ID of the current user
-ensureIsCurrentUser = (userId) ->
-  unless userId and Meteor.userId() and userId == Meteor.userId()
+# Ensures that the provided userId is the current player in the provided game
+ensureIsCurrentPlayer = (game, userId) ->
+  currentUser = game[game.currentPlayer]
+  unless currentUser and userId and currentUser = userId
     die("Unauthorized user: '#{Meteor.userId()}'")
 
 getGame = (gameId) ->
@@ -77,32 +78,31 @@ Meteor.methods
   # this is a legal move
   performMoveIfLegal: (gameId, column, row) ->
     game = getGame(gameId)
-    ensureIsCurrentUser(game.currentPlayer)
+    ensureIsCurrentPlayer(game, this.userId)
     if _.some(game.moves, (move) -> move.column == column and move.row == row)
       # Space already taken!
       return
     if noughts.checkForVictory(game)
       # Game over!
       return
-    isXPlayer = game.currentPlayer == game.xPlayer
+    isXPlayer = game.currentPlayer == "xPlayer"
     noughts.Games.update gameId,
       $set:
-        currentPlayer: if isXPlayer then game.oPlayer else game.xPlayer
+        currentPlayer: if isXPlayer then "oPlayer" else "xPlayer"
       $push:
         moves: {column: column, row: row, isX: isXPlayer}
 
   # Partially create a new game with no opponent specified yet
-  newGame: (creatorId) ->
-    ensureIsCurrentUser(creatorId)
+  newGame: ->
     noughts.Games.insert
-      xPlayer: creatorId
-      currentPlayer: creatorId
+      xPlayer: this.userId
+      currentPlayer: "xPlayer"
       moves: []
 
   # Add an opponent to a partially-created game
   facebookInviteOpponent: (gameId, opponentId, requestId) ->
     game = getGame(gameId)
-    ensureIsCurrentUser(game.currentPlayer)
+    ensureIsCurrentPlayer(game, this.userId)
     die("game already has opponent") if game.oPlayer_
     noughts.Games.update gameId,
       $set: {oPlayer: opponentId, requestId: requestId}
