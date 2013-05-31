@@ -29,7 +29,7 @@ widthAndHeight = ->
   height += 60 if isiPhone() # Compensate for the hidden navigation bar on iPhones
   return {width: width, height: height}
 
-# Possible UI modes
+# Possible UI mode CSS classes
 noughts.Mode =
   DESKTOP: "nDesktopMode"
   PORTRAIT: "nPortraitMode"

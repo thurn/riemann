@@ -6,8 +6,9 @@
 # If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
-# Project Riemann client interface
+# Project Riemann web client
 
+# Array of game assets in melonjs format
 gameResources = [
   {name: "square", type: "image", src: "/tilemaps/square.jpg"},
   {name: "x", type: "image", src: "/images/x.png"},
@@ -15,12 +16,18 @@ gameResources = [
   {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
 ]
 
+# The Z-Index to add new sprites at
 SPRITE_Z_INDEX = 2
 
+# Pops up an alert to the user saying that an error has occurred. Should be used
+# for un-recoverable errors.
 displayError = (msg) ->
   alert("ERROR: " + msg)
   throw new Error(msg)
 
+# Returns a list of the user IDs of the current user's Facebook friends, sorted
+# first by whether or not they have the application installed and then by mutual
+# friend count.
 getSuggestedFriends = ->
   return [] unless noughts.mutualFriends_ and noughts.appInstalled_
   installed = _.filter(noughts.mutualFriends_, (x) -> noughts.appInstalled_[x.uid])
@@ -28,6 +35,8 @@ getSuggestedFriends = ->
       not noughts.appInstalled_[x.uid])
   return _.pluck(installed.concat(notInstalled), "uid")
 
+# Displays the Facebook friend-picker invite dialog to let the user select an
+# opponent.
 showFacebookInviteDialog = (inviteCallback) ->
   suggestedFriends = getSuggestedFriends()
   if suggestedFriends
@@ -44,36 +53,31 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
-# Updates the currently displayed location bar URL to contain the provided game
-# ID.
-setUrl = (gameId) ->
-    window.history.pushState({}, "", "?game_id=#{gameId}")
-
-# Handler for a click on the provided tile
-handleClick = (tile) ->
-  Meteor.call("performMoveIfLegal", Session.get("gameId"), tile.col, tile.row)
-
 PlayScreen = me.ScreenObject.extend
-  loadMainLevel_: ->
+  # Helper method to get the game's main layer stored in @mainLayer_
+  loadMainLayer_: ->
     me.levelDirector.loadLevel("tilemap")
     @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
 
+  # Called whenever the game state changes to me.state.PLAY, initializes the
+  # game and hooks up the appropriate game click event handlers.
   onResetEvent: () ->
     $(".nIdNewGame").remove()
     $(".nMain canvas").css({display: "block"})
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
-    this.loadMainLevel_()
+    this.loadMainLayer_()
     me.input.registerMouseEvent "mouseup", me.game.viewport, (event) =>
       touch = me.input.touches[0]
       tile = @mainLayer_.getTile(touch.x, touch.y)
-      handleClick(tile)
+      gameId = Session.get("gameId")
+      Meteor.call("performMoveIfLegal", gameId, tile.col, tile.row)
 
     Meteor.autorun =>
       game = noughts.Games.findOne Session.get("gameId")
       return if not game
       me.game.removeAll()
-      this.loadMainLevel_()
+      this.loadMainLayer_()
 
       # Redraw all previous moves
       for move in game.moves
@@ -96,6 +100,7 @@ PlayScreen = me.ScreenObject.extend
       else
         displayNotice("") # Clear any previous note
 
+# Handles a click on the "new game" button by popping up an invite dialog
 handleNewGameClick = ->
   Meteor.call "newGame", (err, gameId) ->
     if err then throw err
@@ -113,27 +118,31 @@ handleNewGameClick = ->
       # TODO(dthurn): Display regular invite dialog
       me.state.change(me.state.PLAY)
 
+# Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
   initialized = me.video.init("nMain", 600, 600, true, scaleFactor)
   if not initialized
     displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
-  me.loader.onload = ->
-    maybeInitialize()
+  me.loader.onload = maybeInitialize
   me.loader.preload(gameResources)
 
+# Functions to run as soon as possible on startup. Hooks up event listeners
+# and sets up for melonJs loading.
 Meteor.startup ->
   $(".nNewGameButton").on("click", handleNewGameClick)
   window.onReady -> initialize()
 
+# Callback for when the user's games are retrieved from the server. Sets up
+# some reactive functions and handles facebook ?request_ids params
 onSubscribe = ->
   $(".nLoading").css({display: "none"})
 
   # Update the URL when the game ID changes
   Meteor.autorun ->
     gameId = Session.get("gameId")
-    if gameId then setUrl(gameId)
+    if gameId then window.history.pushState({}, "", "?game_id=#{gameId}")
 
   # Update game scale when scaleFactor changes
   Meteor.autorun ->
@@ -155,7 +164,8 @@ onSubscribe = ->
   $(".nNewGamePromo").css({display: "block"})
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
-# are loaded
+# are loaded. Kicks off Meteor subscriptions and makes some exploratory Facebook
+# API calls.
 maybeInitialize = _.after 2, ->
   me.state.set(me.state.PLAY, new PlayScreen())
   if Session.get("useFacebook")
@@ -172,6 +182,9 @@ maybeInitialize = _.after 2, ->
           _.pluck(installed, "installed"))
   Meteor.subscribe("myGames", onSubscribe)
 
+# If the URL includes a request to become a specific player within the game,
+# returns the identifying string and strips the ?player parameter out of the
+# URL, returning a falsey value if no player was requested.
 getRequestedPlayer = ->
   requestedPlayer = $.url().param("player")
   if requestedPlayer
@@ -191,6 +204,9 @@ getRequestedPlayer = ->
     window.history.replaceState("", {}, newUrl)
   requestedPlayer
 
+# Sets the current player as the player 'requestedPlayer' ("x" or "o") in
+# the game with the id gameId, invoking the provided callback when finished.
+# If 'requestedPlayer' is falsey, immediately invokes the callback.
 setPlayer = (requestedPlayer, gameId, callback) ->
   if requestedPlayer
     isX = requestedPlayer == "x"
@@ -203,6 +219,7 @@ setPlayer = (requestedPlayer, gameId, callback) ->
     # No change requested, just invoke callback
     callback()
 
+# Callback once the user's identity has been established
 noughts.afterAuthenticate = ->
   Meteor.startup ->
     requestedPlayer = getRequestedPlayer()
@@ -215,5 +232,5 @@ noughts.afterAuthenticate = ->
           displayError("You have not been invited to this game")
         Session.set("gameId", gameIdParam)
         setPlayer requestedPlayer, gameIdParam, ->
-          return me.state.change(me.state.PLAY)
+          me.state.change(me.state.PLAY)
     maybeInitialize()
