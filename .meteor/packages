@@ -8,6 +8,4 @@ coffeescript
 less
 force-ssl
 accounts-base
-accounts-facebook
-normalize.css
-font-awesome
+http

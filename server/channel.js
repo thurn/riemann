@@ -2,8 +2,8 @@
 // http://stackoverflow.com/a/13871399/145349
 
 // Serve channel.html file, based on
-var connect = __meteor_bootstrap__.require("connect");
-var Fiber = __meteor_bootstrap__.require('fibers');
+var connect = Npm.require("connect");
+var Fiber = Npm.require('fibers');
 
 __meteor_bootstrap__.app
   .use(connect.query())
