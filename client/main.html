@@ -44,7 +44,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
                a game for two players.
             </div>
             <div class="nPromoButtonContainer">
-              <button type="button" class="btn nMenuButton nNewGameButton nDefaultFont">
+              <button type="button" class="btn nMenuButton nNewGameButton">
                   <i class="icon-play icon-large"></i>
                   <span class="nMenuButtonText">New Game</span>
               </button>
@@ -54,6 +54,30 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
+<div class="modal hide fade nNewGameModal" tabindex="-1" role="dialog"
+    aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3>New Game</h3>
+  </div>
+  <div class="modal-body" style="text-align: center;">
+    <p>Invite your opponent through Facebook:</p>
+    <div class="fb-login-button" data-show-faces="false" data-width="200"
+        data-max-rows="1">
+      Invite via Facebook
+    </div>
+    <div style="margin-top: 2rem;">
+      <p>Or you can just send them this link:
+        <br/>
+        {{> gameUrl}}
+      </p>
+    </div>
+  </div>
+</div>
+</template>
+
+<template name="gameUrl">
+  <strong>https://noughts.meteor.com/?game_id={{gameId}}</strong>
 </template>
 
 <template name="facebook">

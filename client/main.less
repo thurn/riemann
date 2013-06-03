@@ -15,6 +15,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @navigationWidth: 25rem;
 @navigationHeight: @containerHeight;
 @defaultFontSize: 1.625rem;
+@smallFontSize: 1rem;
 @newGamePromoWidth: 25rem;
 @newGamePromoHeight: 25rem;
 @gameDescriptionLeftMargin: 1.5rem;
@@ -78,6 +79,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
+}
+
+.nSmallFont {
+  font-size: @smallFontSize;
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
 }
 
 html {
@@ -177,6 +183,9 @@ body {
   border-color: #aaaaaa;
   width: @navigationWidth;
   height: @menuButtonHeight;
+  font-size: @defaultFontSize;
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+  line-height: 1.1;
 }
 
 .nMenuButtonText {
@@ -187,6 +196,13 @@ body {
   // I always find that left-aligned text blocks need to be nudged to the right
   // a bit to make them not look off-center.
   margin-left: @gameDescriptionLeftMargin;
+}
+
+// Override bootstrap's default modal style
+.modal {
+  width: 320px;
+  margin-left: -160px;
+  height: 250px;
 }
 
 // Mobile-only styles

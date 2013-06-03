@@ -104,7 +104,6 @@ PlayScreen = me.ScreenObject.extend
 handleNewGameClick = ->
   Meteor.call "newGame", (err, gameId) ->
     if err then throw err
-    Session.set("gameId", gameId)
     if Session.get("useFacebook")
       showFacebookInviteDialog (inviteResponse) ->
         return if not inviteResponse
@@ -113,10 +112,13 @@ handleNewGameClick = ->
         Meteor.call("facebookInviteOpponent", gameId, invitedUser,
             requestId, (err) ->
           if err then throw err
+          Session.set("gameId", gameId)
           me.state.change(me.state.PLAY))
     else
       # TODO(dthurn): Display regular invite dialog
-      me.state.change(me.state.PLAY)
+      Session.set("gameId", gameId)
+      $(".nNewGameModal").modal()
+      #me.state.change(me.state.PLAY)
 
 # Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
@@ -162,6 +164,8 @@ onSubscribe = ->
     return me.state.change(me.state.PLAY)
 
   $(".nNewGamePromo").css({display: "block"})
+
+Template.gameUrl.gameId = -> Session.get("gameId")
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded. Kicks off Meteor subscriptions and makes some exploratory Facebook

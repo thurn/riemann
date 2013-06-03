@@ -1,5 +1,5 @@
 /* =========================================================
- * bootstrap-modal.js v2.3.1
+ * bootstrap-modal.js v2.3.2
  * http://twitter.github.com/bootstrap/javascript.html#modals
  * =========================================================
  * Copyright 2012 Twitter, Inc.
@@ -247,7 +247,7 @@
 }(window.jQuery);
 
 /* ==========================================================
- * bootstrap-alert.js v2.3.1
+ * bootstrap-alert.js v2.3.2
  * http://twitter.github.com/bootstrap/javascript.html#alerts
  * ==========================================================
  * Copyright 2012 Twitter, Inc.
@@ -346,7 +346,7 @@
 
 }(window.jQuery);
 /* ============================================================
- * bootstrap-button.js v2.3.1
+ * bootstrap-button.js v2.3.2
  * http://twitter.github.com/bootstrap/javascript.html#buttons
  * ============================================================
  * Copyright 2012 Twitter, Inc.
