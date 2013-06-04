@@ -6066,6 +6066,18 @@ window.me = window.me || {};
 			return _screenObject[_state].screen;
 		};
 
+    /**
+     * Returns the state constant for the current state
+     * @name currentStateConstant
+     * @memberOf me.state
+     * @public
+     * @function
+     * @return {Int} state
+     */
+    obj.currentStateConstant = function() {
+      return _state;
+    };
+
 		/**
 		 * specify a global transition effect
 		 * @name transition

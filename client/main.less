@@ -16,6 +16,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @navigationHeight: @containerHeight;
 @defaultFontSize: 1.625rem;
 @smallFontSize: 1rem;
+@largeFontSize: 2rem;
 @newGamePromoWidth: 25rem;
 @newGamePromoHeight: 25rem;
 @gameDescriptionLeftMargin: 1.5rem;
@@ -162,8 +163,8 @@ body {
 
 .nNewGamePromo {
   .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
-  display: none;
   position: relative;
+  display: none;
 }
 
 .nLoading {
@@ -186,6 +187,17 @@ body {
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
+  margin-top: -1px; // Overlap borders when multiple buttons are stacked
+  text-align: left;
+  padding-left: 5rem;
+}
+
+.nMenuButtonIcon {
+  position: absolute;
+  left: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  text-align: center;
 }
 
 .nMenuButtonText {
@@ -198,11 +210,24 @@ body {
   margin-left: @gameDescriptionLeftMargin;
 }
 
-// Override bootstrap's default modal style
-.modal {
-  width: 320px;
-  margin-left: -160px;
-  height: 250px;
+.nNewGameButton {
+  text-align: center;
+  padding-left: 0;
+}
+
+.nNewGameMenu {
+  display: none;
+  .centeredBlock(@navigationWidth, @menuButtonHeight * 6);
+  position: relative;
+  margin-top: -18.5rem; // Perfect vertical centering looks strange here.
+}
+
+.nNewGameMenuHeader {
+  height: @menuButtonHeight;
+  width: @navigationWidth;
+  line-height: @menuButtonHeight;
+  font-size: @largeFontSize;
+  font-weight: bold;
 }
 
 // Mobile-only styles

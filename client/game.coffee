@@ -16,8 +16,11 @@ gameResources = [
   {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
 ]
 
-# The Z-Index to add new sprites at
-SPRITE_Z_INDEX = 2
+SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
+
+noughts.state =
+  INITIAL_PROMO: me.state.USER + 0 # Initial game description state
+  NEW_GAME_MENU: me.state.USER + 1 # Game state for showing new game menu
 
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
@@ -53,6 +56,46 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
+# History of game states in reverse chronological order, with the first element
+# being the current state
+noughts.state.history = []
+
+# Changes the current game state to 'newState' and records the change in
+# noughts.state.history
+changeState = (newState) ->
+  noughts.state.history.unshift(newState)
+  me.state.change(newState)
+
+# Changes the current game state to the previous one in history. It's an error
+# to call popState() if no state history exists.
+popState = ->
+  if noughts.state.history.length < 1
+    displayError("Tried to popState with no more states available")
+  noughts.state.history.shift()
+  me.state.change(noughts.state.history[0])
+
+noughts.NewGameMenu = me.ScreenObject.extend
+  init: ->
+    $(".nNewGameMenuCloseButton").on "click", ->
+      popState()
+
+  onResetEvent: ->
+    window.history.pushState({}, "", "/new")
+    if noughts.state.history.length < 1
+      # Don't show the close button if there's no previous state to go back to.
+      $(".nNewGameMenuCloseButton").hide()
+    $(".nGame").children().hide()
+    $(".nNewGameMenu").show()
+
+noughts.InitialPromo = me.ScreenObject.extend
+  init: ->
+    $(".nNewGameButton").on("click", handleNewGameClick)
+
+  onResetEvent: ->
+    window.history.pushState({}, "", "/")
+    $(".nGame").children().hide()
+    $(".nNewGamePromo").show()
+
 PlayScreen = me.ScreenObject.extend
   # Helper method to get the game's main layer stored in @mainLayer_
   loadMainLayer_: ->
@@ -61,7 +104,9 @@ PlayScreen = me.ScreenObject.extend
 
   # Called whenever the game state changes to me.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
-  onResetEvent: () ->
+  onResetEvent: ->
+    gameId = Session.get("gameId")
+    window.history.pushState({}, "", "/#{gameId}")
     $(".nIdNewGame").remove()
     $(".nMain canvas").css({display: "block"})
     @xImg_ = me.loader.getImage("x")
@@ -70,7 +115,6 @@ PlayScreen = me.ScreenObject.extend
     me.input.registerMouseEvent "mouseup", me.game.viewport, (event) =>
       touch = me.input.touches[0]
       tile = @mainLayer_.getTile(touch.x, touch.y)
-      gameId = Session.get("gameId")
       Meteor.call("performMoveIfLegal", gameId, tile.col, tile.row)
 
     Meteor.autorun =>
@@ -101,7 +145,7 @@ PlayScreen = me.ScreenObject.extend
         displayNotice("") # Clear any previous note
 
 # Handles a click on the "new game" button by popping up an invite dialog
-handleNewGameClick = ->
+handleNewGameClickOld = ->
   Meteor.call "newGame", (err, gameId) ->
     if err then throw err
     if Session.get("useFacebook")
@@ -113,12 +157,15 @@ handleNewGameClick = ->
             requestId, (err) ->
           if err then throw err
           Session.set("gameId", gameId)
-          me.state.change(me.state.PLAY))
+          changeState(me.state.PLAY))
     else
       # TODO(dthurn): Display regular invite dialog
       Session.set("gameId", gameId)
       $(".nNewGameModal").modal()
-      #me.state.change(me.state.PLAY)
+      #changeState(me.state.PLAY)
+
+handleNewGameClick = ->
+  changeState(noughts.state.NEW_GAME_MENU)
 
 # Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
@@ -133,14 +180,14 @@ initialize = ->
 # Functions to run as soon as possible on startup. Hooks up event listeners
 # and sets up for melonJs loading.
 Meteor.startup ->
-  $(".nNewGameButton").on("click", handleNewGameClick)
+  me.state.set(me.state.PLAY, new PlayScreen())
+  me.state.set(noughts.state.NEW_GAME_MENU, new noughts.NewGameMenu())
+  me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
   window.onReady -> initialize()
 
 # Callback for when the user's games are retrieved from the server. Sets up
 # some reactive functions and handles facebook ?request_ids params
 onSubscribe = ->
-  $(".nLoading").css({display: "none"})
-
   # Update the URL when the game ID changes
   Meteor.autorun ->
     gameId = Session.get("gameId")
@@ -161,17 +208,14 @@ onSubscribe = ->
       # the game for the last one.
     displayError("Game not found for requestIds: " + requestIds) unless game
     Session.set("gameId", game._id)
-    return me.state.change(me.state.PLAY)
-
-  $(".nNewGamePromo").css({display: "block"})
-
-Template.gameUrl.gameId = -> Session.get("gameId")
+    return changeState(me.state.PLAY)
+  else
+    changeState(noughts.state.INITIAL_PROMO)
 
 # Only runs the second time it's called, to ensure both facebook and melon.js
 # are loaded. Kicks off Meteor subscriptions and makes some exploratory Facebook
 # API calls.
 maybeInitialize = _.after 2, ->
-  me.state.set(me.state.PLAY, new PlayScreen())
   if Session.get("useFacebook")
     # Kick off some fetches now for friend ranking data to use later in the
     # invite dialog
@@ -236,5 +280,5 @@ noughts.afterAuthenticate = ->
           displayError("You have not been invited to this game")
         Session.set("gameId", gameIdParam)
         setPlayer requestedPlayer, gameIdParam, ->
-          me.state.change(me.state.PLAY)
+          changeState(me.state.PLAY)
     maybeInitialize()

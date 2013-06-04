@@ -38,42 +38,65 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
           <div class="nLoading">
             Loading...
           </div>
-          <div class="nNewGamePromo">
-            <div class="nGameDescription">
-              "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
-               a game for two players.
-            </div>
-            <div class="nPromoButtonContainer">
-              <button type="button" class="btn nMenuButton nNewGameButton">
-                  <i class="icon-play icon-large"></i>
-                  <span class="nMenuButtonText">New Game</span>
-              </button>
-            </div>
-          </div> <!--/nNewGamePromo-->
+          {{> newGamePromo}}
+          {{> newGameMenu}}
         </div> <!--/nGame-->
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
-<div class="modal hide fade nNewGameModal" tabindex="-1" role="dialog"
-    aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3>New Game</h3>
-  </div>
-  <div class="modal-body" style="text-align: center;">
-    <p>Invite your opponent through Facebook:</p>
-    <div class="fb-login-button" data-show-faces="false" data-width="200"
-        data-max-rows="1">
-      Invite via Facebook
+</template>
+
+<template name="newGamePromo">
+  <div class="nNewGamePromo">
+    <div class="nGameDescription">
+      "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
+       a game for two players.
     </div>
-    <div style="margin-top: 2rem;">
-      <p>Or you can just send them this link:
-        <br/>
-        {{> gameUrl}}
-      </p>
+    <div class="nPromoButtonContainer">
+      <button type="button" class="btn nMenuButton nNewGameButton">
+        <i class="icon-play icon-large"></i>
+        <span class="nMenuButtonText">New Game</span>
+      </button>
     </div>
+  </div> <!--/nNewGamePromo-->
+</template>
+
+<template name="newGameMenu">
+  <div class="nNewGameMenu">
+    <div class="nNewGameMenuHeader">
+      New Game:
+    </div>
+    <button type="button" class="btn nMenuButton nFacebookInviteButton">
+      <div class="nMenuButtonIcon">
+        <i class="icon-facebook-sign icon-large"></i>
+      </div>
+      <span class="nMenuButtonText">Invite via Facebook</span>
+    </button>
+    <button type="button" class="btn nMenuButton nVsComputerButton">
+      <div class="nMenuButtonIcon">
+        <i class="icon-laptop icon-large"></i>
+      </div>
+      <span class="nMenuButtonText">Play vs. Computer</span>
+    </button>
+    <button type="button" class="btn nMenuButton nLocalMultiplayerButton">
+      <div class="nMenuButtonIcon">
+        <i class="icon-group icon-large"></i>
+      </div>
+      <span class="nMenuButtonText">Local Multiplayer</span>
+    </button>
+    <button type="button" class="btn nMenuButton nUrlInviteButton">
+      <div class="nMenuButtonIcon">
+        <i class="icon-link icon-large"></i>
+      </div>
+      <span class="nMenuButtonText">Invite via URL</span>
+    </button>
+    <button type="button" class="btn nMenuButton nNewGameMenuCloseButton">
+      <div class="nMenuButtonIcon">
+        <i class="icon-remove icon-large"></i>
+      </div>
+      <span class="nMenuButtonText">Cancel</span>
+    </button>
   </div>
-</div>
 </template>
 
 <template name="gameUrl">
