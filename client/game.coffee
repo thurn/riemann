@@ -19,8 +19,31 @@ gameResources = [
 SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
 
 noughts.state =
+  PLAY:          me.state.PLAY
   INITIAL_PROMO: me.state.USER + 0 # Initial game description state
   NEW_GAME_MENU: me.state.USER + 1 # Game state for showing new game menu
+
+# History of game states in reverse chronological order, with the first element
+# being the current state
+noughts.state.history = []
+
+# Changes the current game state to 'newState' and records the change in
+# noughts.state.history
+noughts.state.changeState = (newState) ->
+  noughts.state.history.unshift(newState)
+  me.state.change(newState)
+
+# Returns true if there's a previous state in the state history to go back to
+noughts.state.hasPreviousState = ->
+  noughts.state.history.length > 1
+
+# Changes the current game state to the previous one in history. It's an error
+# to call popState() if no state history exists.
+noughts.state.popState = ->
+  unless noughts.state.hasPreviousState()
+    displayError("Tried to popState with no more states available")
+  noughts.state.history.shift()
+  me.state.change(noughts.state.history[0])
 
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
@@ -56,44 +79,40 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
-# History of game states in reverse chronological order, with the first element
-# being the current state
-noughts.state.history = []
-
-# Changes the current game state to 'newState' and records the change in
-# noughts.state.history
-changeState = (newState) ->
-  noughts.state.history.unshift(newState)
-  me.state.change(newState)
-
-# Changes the current game state to the previous one in history. It's an error
-# to call popState() if no state history exists.
-popState = ->
-  if noughts.state.history.length < 1
-    displayError("Tried to popState with no more states available")
-  noughts.state.history.shift()
-  me.state.change(noughts.state.history[0])
-
 noughts.NewGameMenu = me.ScreenObject.extend
   init: ->
     $(".nNewGameMenuCloseButton").on "click", ->
-      popState()
+      if noughts.state.hasPreviousState()
+        noughts.state.popState()
+      else
+        noughts.state.changeState(noughts.state.INITIAL_PROMO)
+
+    $(".nUrlInviteButton").on "click", ->
+      Meteor.call "newGame", (err, gameId) ->
+        if err then throw err
+        Session.set("gameId", gameId)
+        $(".nBubble").show()
+        $(".nDarkenScreen").show()
+        $(".nOkUrlCalloutButton").on "click", ->
+          $(".nBubble").hide()
+          $(".nDarkenScreen").hide()
+        noughts.state.changeState(noughts.state.PLAY)
 
   onResetEvent: ->
     window.history.pushState({}, "", "/new")
-    if noughts.state.history.length < 1
-      # Don't show the close button if there's no previous state to go back to.
-      $(".nNewGameMenuCloseButton").hide()
     $(".nGame").children().hide()
     $(".nNewGameMenu").show()
+    $(".nGame").css({border: ""})
 
 noughts.InitialPromo = me.ScreenObject.extend
   init: ->
-    $(".nNewGameButton").on("click", handleNewGameClick)
+    $(".nNewGameButton").on "click", ->
+      noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 
   onResetEvent: ->
     window.history.pushState({}, "", "/")
     $(".nGame").children().hide()
+    $(".nGame").css({border: ""})
     $(".nNewGamePromo").show()
 
 PlayScreen = me.ScreenObject.extend
@@ -102,13 +121,15 @@ PlayScreen = me.ScreenObject.extend
     me.levelDirector.loadLevel("tilemap")
     @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
 
-  # Called whenever the game state changes to me.state.PLAY, initializes the
+  # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
   onResetEvent: ->
     gameId = Session.get("gameId")
     window.history.pushState({}, "", "/#{gameId}")
-    $(".nIdNewGame").remove()
-    $(".nMain canvas").css({display: "block"})
+    $(".nGame").children().hide()
+    $(".nGame").css({border: "none"})
+    $(".nMain canvas").show()
+
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
     this.loadMainLayer_()
@@ -157,30 +178,28 @@ handleNewGameClickOld = ->
             requestId, (err) ->
           if err then throw err
           Session.set("gameId", gameId)
-          changeState(me.state.PLAY))
+          noughts.state.changeState(noughts.state.PLAY))
     else
       # TODO(dthurn): Display regular invite dialog
       Session.set("gameId", gameId)
       $(".nNewGameModal").modal()
-      #changeState(me.state.PLAY)
-
-handleNewGameClick = ->
-  changeState(noughts.state.NEW_GAME_MENU)
+      #noughts.state.changeState(noughts.state.PLAY)
 
 # Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
-  initialized = me.video.init("nMain", 600, 600, true, scaleFactor)
+  initialized = me.video.init("nIdGame", 600, 600, true, scaleFactor)
+  $(".nGame canvas").addClass("nGameCanvas")
   if not initialized
     displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
-  me.loader.onload = maybeInitialize
+  me.loader.onload = noughts.maybeInitialize
   me.loader.preload(gameResources)
 
-# Functions to run as soon as possible on startup. Hooks up event listeners
-# and sets up for melonJs loading.
+# Functions to run as soon as possible on startup. Defines the state map
+# and adds a melonjs callback.
 Meteor.startup ->
-  me.state.set(me.state.PLAY, new PlayScreen())
+  me.state.set(noughts.state.PLAY, new PlayScreen())
   me.state.set(noughts.state.NEW_GAME_MENU, new noughts.NewGameMenu())
   me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
   window.onReady -> initialize()
@@ -191,15 +210,41 @@ onSubscribe = ->
   # Update the URL when the game ID changes
   Meteor.autorun ->
     gameId = Session.get("gameId")
-    if gameId then window.history.pushState({}, "", "?game_id=#{gameId}")
+    if gameId then window.history.pushState({}, "", "/#{gameId}")
 
   # Update game scale when scaleFactor changes
   Meteor.autorun ->
     scaleFactor = Session.get("scaleFactor")
     if scaleFactor then me.video.updateDisplaySize(scaleFactor, scaleFactor)
 
+  setStateFromUrl()
+
+# Kick off some fetches now for friend ranking data to use later in the
+# invite dialog
+cacheFacebookData = ->
+  fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
+      "( SELECT uid2 FROM friend WHERE uid1=me() )"
+  FB.api {method: "fql.query", query: fql}, (result) ->
+    noughts.mutualFriends_ = _.sortBy result, (x) ->
+      -1 * parseInt(x["mutual_friend_count"], 10)
+  FB.api "/me/friends?fields=installed", (result) ->
+    installed = _.filter(result.data, (x) -> x.installed)
+    noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
+        _.pluck(installed, "installed"))
+
+# Only runs the second time it's called, to ensure both facebook and melon.js
+# are loaded. Kicks off Meteor subscriptions and makes some exploratory Facebook
+# API calls.
+noughts.maybeInitialize = _.after 2, ->
+  cacheFacebookData() if Session.get("useFacebook")
+  Meteor.subscribe("myGames", onSubscribe)
+
+# Inspects the URL and sets the initial game state accordingly.
+setStateFromUrl = ->
   requestIds = $.url().param("request_ids")?.split(",")
+  path = $.url().segment(1)
   if requestIds
+    # Handle a Facebook request_id
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
       game = noughts.Games.findOne {requestId: requestId}
@@ -208,77 +253,18 @@ onSubscribe = ->
       # the game for the last one.
     displayError("Game not found for requestIds: " + requestIds) unless game
     Session.set("gameId", game._id)
-    return changeState(me.state.PLAY)
-  else
-    changeState(noughts.state.INITIAL_PROMO)
-
-# Only runs the second time it's called, to ensure both facebook and melon.js
-# are loaded. Kicks off Meteor subscriptions and makes some exploratory Facebook
-# API calls.
-maybeInitialize = _.after 2, ->
-  if Session.get("useFacebook")
-    # Kick off some fetches now for friend ranking data to use later in the
-    # invite dialog
-    fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
-        "( SELECT uid2 FROM friend WHERE uid1=me() )"
-    FB.api {method: "fql.query", query: fql}, (result) ->
-      noughts.mutualFriends_ = _.sortBy result, (x) ->
-        -1 * parseInt(x["mutual_friend_count"], 10)
-    FB.api "/me/friends?fields=installed", (result) ->
-      installed = _.filter(result.data, (x) -> x.installed)
-      noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
-          _.pluck(installed, "installed"))
-  Meteor.subscribe("myGames", onSubscribe)
-
-# If the URL includes a request to become a specific player within the game,
-# returns the identifying string and strips the ?player parameter out of the
-# URL, returning a falsey value if no player was requested.
-getRequestedPlayer = ->
-  requestedPlayer = $.url().param("player")
-  if requestedPlayer
-    if requestedPlayer != "x" and requestedPlayer != "o"
-      displayError("Invalid requested player!")
-
-    # We take the '?player=' param out of the URL to prevent somebody from
-    # accidentally taking over your role when sent a link
-    newUrl = "/"
-    firstIteration = true
-    for key,value of $.url().param()
-      if key == "player"
-        continue
-      separator = if firstIteration then "?" else "&"
-      firstIteration = false
-      newUrl += "#{separator}#{key}=#{value}"
-    window.history.replaceState("", {}, newUrl)
-  requestedPlayer
-
-# Sets the current player as the player 'requestedPlayer' ("x" or "o") in
-# the game with the id gameId, invoking the provided callback when finished.
-# If 'requestedPlayer' is falsey, immediately invokes the callback.
-setPlayer = (requestedPlayer, gameId, callback) ->
-  if requestedPlayer
-    isX = requestedPlayer == "x"
-    # TODO(dthurn): Consider issuing a warning if there's already a player in
-    # the slot you've requested.
-    Meteor.call "setPlayerId", gameId, Meteor.userId(), isX, (err) ->
+    noughts.state.changeState(noughts.state.PLAY)
+  else if path == "new"
+    noughts.state.changeState(noughts.state.NEW_GAME_MENU)
+  else if path == ""
+    # TODO(dthurn): If the user is logged in, display their game list instead
+    # of the new game promo
+    noughts.state.changeState(noughts.state.INITIAL_PROMO)
+  else # For simplicity, assume any unrecognized path is a game id
+    Meteor.call "validateGameId", path, (err, gameExists) ->
       if err then throw err
-      callback()
-  else
-    # No change requested, just invoke callback
-    callback()
-
-# Callback once the user's identity has been established
-noughts.afterAuthenticate = ->
-  Meteor.startup ->
-    requestedPlayer = getRequestedPlayer()
-    gameIdParam = $.url().param("game_id")
-    if gameIdParam
-      Meteor.call "validateGameId", gameIdParam, (err, gameExists) ->
-        if err then throw err
-        unless gameExists or requestedPlayer
-          # Don't display this error if you've requested to join the game
-          displayError("You have not been invited to this game")
-        Session.set("gameId", gameIdParam)
-        setPlayer requestedPlayer, gameIdParam, ->
-          changeState(me.state.PLAY)
-    maybeInitialize()
+      displayError("Error: Game not found.") unless gameExists
+      Session.set("gameId", path)
+      # TODO(dthurn) add the current player to the game if they are not already
+      # a player.
+      noughts.state.changeState(noughts.state.PLAY)
