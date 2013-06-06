@@ -6,9 +6,7 @@
 # If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
-Meteor.publish "myGames", ->
-  noughts.Games.find
-    $or: [{xPlayer: this.userId}, {oPlayer: this.userId}]
+Meteor.publish "myGames", -> noughts.Games.find {players: this.userId}
 
 Meteor.startup ->
   return unless Meteor.settings["test"]

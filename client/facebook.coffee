@@ -8,21 +8,21 @@
 
 getOathUrl = (requestIds) ->
   url = "https://www.facebook.com/dialog/oauth/?" +
-      "client_id=#{noughts.Config.appId}" +
+      "client_id=#{noughts.ClientConfig.appId}" +
       "&scope=email,read_stream"
   if requestIds
-    url += "&redirect_uri=#{noughts.Config.appUrl}?request_ids=#{requestIds}"
+    url += "&redirect_uri=#{noughts.ClientConfig.appUrl}?request_ids=#{requestIds}"
   else
-    url += "&redirect_uri=#{noughts.Config.appUrl}"
+    url += "&redirect_uri=#{noughts.ClientConfig.appUrl}"
   url
 
 Template.facebook.created = ->
   window.fbAsyncInit = ->
     # Init the FB JS SDK
     FB.init
-      appId: noughts.Config.appId, # App ID from the App Dashboard
+      appId: noughts.ClientConfig.appId, # App ID from the App Dashboard
       frictionlessRequests: true # Don't require authorization for each request
-      channelUrl: noughts.Config.appUrl + '/fb/channel.html',
+      channelUrl: noughts.ClientConfig.appUrl + '/fb/channel.html',
       status: true, # check the login status upon init?
       cookie: true, # set sessions cookies to allow your server to access the session?
       xfbml: true  # parse XFBML tags on this page?

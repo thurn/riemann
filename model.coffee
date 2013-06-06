@@ -10,17 +10,20 @@
 
 # The state of a given game is represented by a document in the games
 # collection:
+#
 # Game {
-#   xPlayer: UserID
-#   oPlayer: UserID
-#   currentPlayer: "xPlayer" or "oPlayer"
-#   requestId: Facebook request ID
+#   players: ([String]) List of player IDs in this game
+#   currentPlayer: (Integer) Index of current player in the player list
+#   requestId: (String) Facebook request ID associated with this game
 #   moves: [{
 #     column: Number - Square column number (numbered from zero)
 #     row: Number - Square row number (numbered from zero)
 #     isX: Boolean - True if square is "X", false if "O"
 #   }]
 # }
+#
+# By convention, players[0] is the game initiator and the "x" player, while
+# players[1] is the "o" player.
 #
 # Security:
 # There are a few intentionally insecure aspects of the system:
@@ -41,6 +44,9 @@ noughts.BadRequestError = (message) ->
 noughts.BadRequestError.prototype = new Meteor.Error()
 noughts.BadRequestError.constructor = noughts.BadRequestError
 
+X_PLAYER = 0
+O_PLAYER = 1
+
 # Translates a message into a BadRequestError
 die = (msg) ->
   console.log("ERORR: " + msg)
@@ -48,7 +54,7 @@ die = (msg) ->
 
 # Ensures that the provided userId is the current player in the provided game
 ensureIsCurrentPlayer = (game, userId) ->
-  currentUser = game[game.currentPlayer]
+  currentUser = game.players[game.currentPlayer]
   unless currentUser and userId and currentUser = userId
     die("Unauthorized user: '#{Meteor.userId()}'")
 
@@ -85,44 +91,41 @@ Meteor.methods
     if noughts.checkForVictory(game)
       # Game over!
       return
-    isXPlayer = game.currentPlayer == "xPlayer"
+    isXPlayer = (game.currentPlayer == X_PLAYER)
     noughts.Games.update gameId,
       $set:
-        currentPlayer: if isXPlayer then "oPlayer" else "xPlayer"
+        currentPlayer: if isXPlayer then O_PLAYER else X_PLAYER
       $push:
         moves: {column: column, row: row, isX: isXPlayer}
 
   # Partially create a new game with no opponent specified yet
   newGame: ->
     noughts.Games.insert
-      xPlayer: this.userId
-      currentPlayer: "xPlayer"
+      players: [this.userId]
+      currentPlayer: X_PLAYER
       moves: []
 
-  # Add an opponent to a partially-created game
-  facebookInviteOpponent: (gameId, opponentId, requestId) ->
+  # Stores a facebook request ID with a game so that somebody invited via
+  # Facebook can later find the game.
+  facebookSetRequestId: (gameId, requestId) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game, this.userId)
-    die("game already has opponent") if game.oPlayer_
+    die("game is full") if game.players.length >= noughts.Config.maxPlayers
     noughts.Games.update gameId,
-      $set: {oPlayer: opponentId, requestId: requestId}
+      $set: {requestId: requestId}
 
-  # Sets the ID of a player in the provided game
-  setPlayerId: (gameId, playerId, isX) ->
-    # Don't run this on the client because the game with this ID will often not
-    # be present there.
-    if Meteor.isServer
-      game = getGame(gameId)
-      if isX
-        noughts.Games.update(gameId, {$set: {xPlayer: playerId}})
-      else
-        noughts.Games.update(gameId, {$set: {oPlayer: playerId}})
+  # If the current user is not present in game.players (and the game is not
+  # full), add her to the player list.
+  addPlayerIfNotPresent: (gameId) ->
+    game = getGame(gameId)
+    if (game.players.length < noughts.Config.maxPlayers and
+        not _.contains(game.players, this.userId))
+      noughts.Games.update gameId,
+        $push: {players: this.userId}
 
   # Checks that a game exists based on its ID and that the current user is a
   # participant in it.
-  validateGameId: (gameId) ->
-    game = noughts.Games.findOne(gameId)
-    game and (game.xPlayer == this.userId or game.oPlayer == this.userId)
+  validateGameId: (gameId) -> noughts.Games.findOne(gameId)
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
@@ -141,7 +144,7 @@ noughts.checkForVictory = (game) ->
     move3 = getMove(line[2][0], line[2][1])
     continue unless move1? and move2? and move3?
     if move1.isX == move2.isX and move2.isX == move3.isX
-      return if move1.isX then game.xPlayer else game.oPlayer
+      return if move1.isX then game.players[X_PLAYER] else game.players[O_PLAYER]
   return false
 
 # Returns true if this game is a draw, otherwise false.

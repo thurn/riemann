@@ -8,3 +8,7 @@
 
 root = exports ? this
 root.noughts = {}
+
+noughts.Config = {
+  maxPlayers: 2
+}

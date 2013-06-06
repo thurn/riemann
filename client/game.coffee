@@ -160,7 +160,7 @@ PlayScreen = me.ScreenObject.extend
           displayNotice("Sorry, you lose!")
       else if noughts.isDraw(game)
         displayNotice("The game is over, and it was a draw!")
-      else if game[game.currentPlayer] == Meteor.userId()
+      else if game.players[game.currentPlayer] == Meteor.userId()
         displayNotice("It's your turn. Select a square to make your move.")
       else
         displayNotice("") # Clear any previous note
@@ -174,8 +174,7 @@ handleNewGameClickOld = ->
         return if not inviteResponse
         invitedUser = inviteResponse.to[0]
         requestId = inviteResponse.request
-        Meteor.call("facebookInviteOpponent", gameId, invitedUser,
-            requestId, (err) ->
+        Meteor.call("facebookSetRequestId", gameId, requestId, (err) ->
           if err then throw err
           Session.set("gameId", gameId)
           noughts.state.changeState(noughts.state.PLAY))
@@ -265,6 +264,8 @@ setStateFromUrl = ->
       if err then throw err
       displayError("Error: Game not found.") unless gameExists
       Session.set("gameId", path)
-      # TODO(dthurn) add the current player to the game if they are not already
-      # a player.
-      noughts.state.changeState(noughts.state.PLAY)
+      Meteor.call "addPlayerIfNotPresent", path, (err) ->
+        if err then throw err
+        # TODO(dthurn): Show some kind of message if the game is full and the
+        # viewer is only a spectator
+        noughts.state.changeState(noughts.state.PLAY)
