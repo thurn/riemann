@@ -28,22 +28,42 @@ noughts.state =
 noughts.state.history = []
 
 # Changes the current game state to 'newState' and records the change in
-# noughts.state.history
-noughts.state.changeState = (newState) ->
+# noughts.state.history. The "urlBehavior" parameter shoud be a
+# noughts.UrlBehavior, and the browser URL will be modified accordingly.
+noughts.state.changeState = (newState, urlBehavior) ->
   noughts.state.history.unshift(newState)
-  me.state.change(newState)
+  me.state.change(newState, urlBehavior)
+
+# What a new state should do to the browser URL when entered.
+noughts.UrlBehavior =
+  # Change the current URL and add it to the browser history stack:
+  PUSH_URL: 1
+  # Keep the existing URL without modifying browser history:
+  PRESERVE_URL: 2
+  # Change the current URL without modifying browser history:
+  REPLACE_URL: 3
 
 # Returns true if there's a previous state in the state history to go back to
 noughts.state.hasPreviousState = ->
   noughts.state.history.length > 1
 
+# Possibly modifies the current browser URL to the to provided path, based on
+# the behavior requested in the 'urlBehavior' parameter (a
+# noughts.state.UrlBehavior).
+noughts.state.updateUrl = (path, urlBehavior) ->
+  if urlBehavior == noughts.UrlBehavior.PUSH_URL
+    window.history.pushState({}, "", path)
+  else if urlBehavior == noughts.UrlBehavior.REPLACE_URL
+    window.history.replaceState({}, "", path)
+  # UrlBehavior.PRESERVE_URL is a no-op.
+
 # Changes the current game state to the previous one in history. It's an error
-# to call popState() if no state history exists.
+# to call popState() if no state history exists. Always updates the browser URL.
 noughts.state.popState = ->
   unless noughts.state.hasPreviousState()
     displayError("Tried to popState with no more states available")
   noughts.state.history.shift()
-  me.state.change(noughts.state.history[0])
+  me.state.change(noughts.state.history[0], noughts.UrlBehavior.REPLACE_URL)
 
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
@@ -85,7 +105,8 @@ noughts.NewGameMenu = me.ScreenObject.extend
       if noughts.state.hasPreviousState()
         noughts.state.popState()
       else
-        noughts.state.changeState(noughts.state.INITIAL_PROMO)
+        noughts.state.changeState(noughts.state.INITIAL_PROMO,
+            noughts.UrlBehavior.PUSH_URL)
 
     $(".nUrlInviteButton").on "click", ->
       Meteor.call "newGame", (err, gameId) ->
@@ -96,10 +117,10 @@ noughts.NewGameMenu = me.ScreenObject.extend
         $(".nOkUrlCalloutButton").on "click", ->
           $(".nBubble").hide()
           $(".nDarkenScreen").hide()
-        noughts.state.changeState(noughts.state.PLAY)
+        noughts.state.changeState(noughts.state.PLAY, noughts.UrlBehavior.PUSH_URL)
 
-  onResetEvent: ->
-    window.history.pushState({}, "", "/new")
+  onResetEvent: (urlBehavior) ->
+    noughts.state.updateUrl("/new", urlBehavior)
     $(".nGame").children().hide()
     $(".nNewGameMenu").show()
     $(".nGame").css({border: ""})
@@ -107,10 +128,11 @@ noughts.NewGameMenu = me.ScreenObject.extend
 noughts.InitialPromo = me.ScreenObject.extend
   init: ->
     $(".nNewGameButton").on "click", ->
-      noughts.state.changeState(noughts.state.NEW_GAME_MENU)
+      noughts.state.changeState(noughts.state.NEW_GAME_MENU,
+          noughts.UrlBehavior.PUSH_URL)
 
-  onResetEvent: ->
-    window.history.pushState({}, "", "/")
+  onResetEvent: (urlBehavior) ->
+    noughts.state.updateUrl("/", urlBehavior)
     $(".nGame").children().hide()
     $(".nGame").css({border: ""})
     $(".nNewGamePromo").show()
@@ -123,9 +145,9 @@ PlayScreen = me.ScreenObject.extend
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
-  onResetEvent: ->
+  onResetEvent: (urlBehavior) ->
     gameId = Session.get("gameId")
-    window.history.pushState({}, "", "/#{gameId}")
+    noughts.state.updateUrl("/#{gameId}", urlBehavior)
     $(".nGame").children().hide()
     $(".nGame").css({border: "none"})
     $(".nMain canvas").show()
@@ -177,12 +199,13 @@ handleNewGameClickOld = ->
         Meteor.call("facebookSetRequestId", gameId, requestId, (err) ->
           if err then throw err
           Session.set("gameId", gameId)
-          noughts.state.changeState(noughts.state.PLAY))
+          noughts.state.changeState(noughts.state.PLAY,
+              noughts.UrlBehavior.PUSH_URL))
     else
       # TODO(dthurn): Display regular invite dialog
       Session.set("gameId", gameId)
       $(".nNewGameModal").modal()
-      #noughts.state.changeState(noughts.state.PLAY)
+      #noughts.state.changeState(noughts.state.PLAY, noughts.UrlBehavior.PUSH_URL)
 
 # Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
@@ -206,11 +229,6 @@ Meteor.startup ->
 # Callback for when the user's games are retrieved from the server. Sets up
 # some reactive functions and handles facebook ?request_ids params
 onSubscribe = ->
-  # Update the URL when the game ID changes
-  Meteor.autorun ->
-    gameId = Session.get("gameId")
-    if gameId then window.history.pushState({}, "", "/#{gameId}")
-
   # Update game scale when scaleFactor changes
   Meteor.autorun ->
     scaleFactor = Session.get("scaleFactor")
@@ -238,6 +256,9 @@ noughts.maybeInitialize = _.after 2, ->
   cacheFacebookData() if Session.get("useFacebook")
   Meteor.subscribe("myGames", onSubscribe)
 
+  $(window).on "popstate", ->
+    setStateFromUrl()
+
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->
   requestIds = $.url().param("request_ids")?.split(",")
@@ -252,13 +273,15 @@ setStateFromUrl = ->
       # the game for the last one.
     displayError("Game not found for requestIds: " + requestIds) unless game
     Session.set("gameId", game._id)
-    noughts.state.changeState(noughts.state.PLAY)
+    noughts.state.changeState(noughts.state.PLAY, noughts.UrlBehavior.PUSH_URL)
   else if path == "new"
-    noughts.state.changeState(noughts.state.NEW_GAME_MENU)
+    noughts.state.changeState(noughts.state.NEW_GAME_MENU,
+        noughts.UrlBehavior.PRESERVE_URL)
   else if path == ""
     # TODO(dthurn): If the user is logged in, display their game list instead
     # of the new game promo
-    noughts.state.changeState(noughts.state.INITIAL_PROMO)
+    noughts.state.changeState(noughts.state.INITIAL_PROMO,
+        noughts.UrlBehavior.PRESERVE_URL)
   else # For simplicity, assume any unrecognized path is a game id
     Meteor.call "validateGameId", path, (err, gameExists) ->
       if err then throw err
@@ -267,5 +290,7 @@ setStateFromUrl = ->
       Meteor.call "addPlayerIfNotPresent", path, (err) ->
         if err then throw err
         # TODO(dthurn): Show some kind of message if the game is full and the
-        # viewer is only a spectator
-        noughts.state.changeState(noughts.state.PLAY)
+        # viewer is only a spectator, allowing the viewer to watch or perhaps
+        # "clone" the game.
+        noughts.state.changeState(noughts.state.PLAY,
+            noughts.UrlBehavior.PRESERVE_URL)
