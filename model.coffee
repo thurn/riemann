@@ -14,12 +14,16 @@
 # Game {
 #   players: ([String]) List of player IDs in this game
 #   currentPlayer: (Integer) Index of current player in the player list
+#   actions: [Action] List of game actions
 #   requestId: (String) Facebook request ID associated with this game
-#   moves: [{
-#     column: Number - Square column number (numbered from zero)
-#     row: Number - Square row number (numbered from zero)
-#     isX: Boolean - True if square is "X", false if "O"
-#   }]
+# }
+#
+# An Action is defined as follows:
+#
+# Action {
+#   player: (String) player ID
+#   commands: [Command] Chronological list of commands making up this action
+#   commandIndex: Current position within the command list, altered by "undo"
 # }
 #
 # By convention, players[0] is the game initiator and the "x" player, while
