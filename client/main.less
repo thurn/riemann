@@ -99,6 +99,14 @@ body {
   background-color: white;
 }
 
+.btn {
+  border-radius: 0;
+  border-color: #aaaaaa;
+  line-height: 1.1;
+  font-size: @defaultFontSize;
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+}
+
 .nWrapper {
   height: 100%;
   overflow: hidden;
@@ -180,13 +188,8 @@ body {
 
 .nMenuButton {
   background-image: none;
-  border-radius: 0;
-  border-color: #aaaaaa;
   width: @navigationWidth;
   height: @menuButtonHeight;
-  font-size: @defaultFontSize;
-  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-  line-height: 1.1;
   margin-top: -1px; // Overlap borders when multiple buttons are stacked
   text-align: left;
   padding-left: 5rem;
@@ -228,6 +231,19 @@ body {
   line-height: @menuButtonHeight;
   font-size: @largeFontSize;
   font-weight: bold;
+}
+
+.nMoveControlsContainer {
+  text-align: center;
+  margin-top: 0.5em;
+}
+
+.nMoveControlIcon {
+  margin-right: 0.5em;
+}
+
+.nMoveControlButton {
+  font-size: @smallFontSize;
 }
 
 // Mobile-only styles
