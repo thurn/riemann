@@ -12,18 +12,30 @@
 # collection:
 #
 # Game {
+#   _id: (String) Game ID
 #   players: ([String]) List of player IDs in this game
 #   currentPlayer: (Integer) Index of current player in the player list
-#   actions: [Action] List of game actions
+#   actions: [String] List of action IDs of the actions in this game.
+#   currentAction: (String) ID of action currently being constructed. In most
+#       circumstances, this action should not yet be submitted.
 #   requestId: (String) Facebook request ID associated with this game
 # }
 #
 # An Action is defined as follows:
 #
 # Action {
-#   player: (String) player ID
-#   commands: [Command] Chronological list of commands making up this action
-#   commandIndex: Current position within the command list, altered by "undo"
+#   _id: (String) Action ID
+#   player: (String) Owner player ID
+#   gameId: (String) Owning game ID
+#   submitted: (Boolean) Whether this Action has been submitted. Submitted
+#       actions are visible to all players, un-submitted actions are only
+#       visible to their owner.
+#   commands: [Command] Chronological list of commands making up this action.
+#   commandIndex: Current position within the command list. All commands
+#       with an index less than this index should be executed to get the
+#       current game state (an index of 0 indicates no commands for this
+#       action). Performing an "undo" action decrements this index by 1, and
+#       a "redo" increases it by 1.
 # }
 #
 # By convention, players[0] is the game initiator and the "x" player, while
@@ -38,6 +50,7 @@
 #   impersonate them at will
 
 noughts.Games = new Meteor.Collection("games")
+noughts.Actions = new Meteor.Collection("actions")
 
 noughts.BadRequestError = (message) ->
   @error = 500
@@ -51,20 +64,37 @@ noughts.BadRequestError.constructor = noughts.BadRequestError
 X_PLAYER = 0
 O_PLAYER = 1
 
-# Translates a message into a BadRequestError
+# Translates a message into a BadRequestError.
 die = (msg) ->
   console.log("ERORR: " + msg)
   throw new noughts.BadRequestError(msg)
 
-# Ensures that the provided userId is the current player in the provided game
+# Ensures that the provided userId is the current player in the provided game.
 ensureIsCurrentPlayer = (game, userId) ->
   currentUser = game.players[game.currentPlayer]
   unless currentUser and userId and currentUser = userId
     die("Unauthorized user: '#{Meteor.userId()}'")
 
+# Returns the game with ID gameId, or throws an exception if it doesn't exist.
 getGame = (gameId) ->
   game = noughts.Games.findOne(gameId)
   if game then game else die("Invalid game ID: '#{gameId}'")
+
+# Returns the action with ID actionID, or throws an exception if it doesn't
+# exist.
+getAction = (actionId) ->
+  action = noughts.Actions.findOne(actionId)
+  if action then action else die("Invalid action ID: '#{actionId}'")
+
+# Creates a new action with the provided gameId and owning playerId, returning
+# the action ID.
+newAction = (gameId, playerId) ->
+  noughts.Actions.insert
+    player: playerId
+    gameId: gameId
+    submitted: false
+    commands: []
+    commandIndex: 0
 
 Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
@@ -74,7 +104,7 @@ Meteor.methods
           params: {fields: "id", access_token: accessToken}
       responseUserId = JSON.parse(result.content)["id"]
       unless userId and responseUserId and responseUserId == userId
-        die("invalid access token")
+        die("Invalid access token!")
       this.setUserId(responseUserId)
     else
       # Don't need to check the user ID on the client
@@ -83,6 +113,42 @@ Meteor.methods
   # Logs the user in based on an anonymous user ID.
   anonymousAuthenticate: (uuid) ->
     this.setUserId(CryptoJS.SHA3(uuid, {outputLength: 256}).toString())
+
+  # Submits the provided game's current action and swaps the current player.
+  # Validates that the current action is a legal one.
+  submitCurrentAction: (gameId) ->
+    game = getGame(gameId)
+    ensureIsCurrentPlayer(game, this.userId)
+    currentActionId = game.currentAction
+
+    unless noughts.isLegalAction(getAction(currentActionId))
+      die("Illegal action!")
+
+    newPlayerId = if game.currentPlayer == X_PLAYER then O_PLAYER else X_PLAYER
+    newActionId = newAction(gameId, newPlayerId)
+
+    noughts.Games.update gameId,
+      $set: {currentPlayer: newPlayerId, currentAction: newActionId}
+      $push: {actions: newActionId}
+
+    noughts.Actions.update currentActionId,
+      $set: {submitted: true}
+
+  # Adds the provided command to the current action's command list. No
+  # validation is performed on the legality of the command. Any commands beyond
+  # the current location in the undo history are deleted.
+  addCommandToCurrentAction: (gameId, command) ->
+    game = getGame(gameId)
+    ensureIsCurrentPlayer(game, this.userId)
+    action = getAction(game.currentAction)
+
+    if action.submitted
+      die("Cannot modify submitted action!")
+
+    newCommands = action.commands.slice(0, action.commandIndex)
+    newCommands.push(command)
+    noughts.Actions.update game.currentAction
+      $set: {commands: newCommands, commandIndex: action.commandIndex + 1}
 
   # Add the current player's symbol at the provided location if
   # this is a legal move
@@ -102,12 +168,38 @@ Meteor.methods
       $push:
         moves: {column: column, row: row, isX: isXPlayer}
 
-  # Partially create a new game with no opponent specified yet
+  # Un-does the last command in this game's current action.
+  undoCommand: (gameId) ->
+    game = getGame(gameId)
+    ensureIsCurrentPlayer(game, this.userId)
+    action = getAction(game.currentAction)
+
+    if action.commandIndex <= 0
+      die("No previous command to undo!")
+
+    noughts.Actions.update game.currentAction
+      $set: {commandIndex: action.commandIndex - 1}
+
+  # Re-does the last command in this game's current action.
+  redoCommand: (gameId) ->
+    game = getGame(gameId)
+    ensureIsCurrentPlayer(game, this.userId)
+    action = getAction(game.currentAction)
+
+    if action.commands.length <= action.commandIndex
+      die("No next command to redo!")
+
+    noughts.Actions.update game.currentAction
+      $set: {commandIndex: action.commandIndex + 1}
+
+  # Partially create a new game with no opponent specified yet.
   newGame: ->
+    initialActionId = newAction(gameId, this.userId)
     noughts.Games.insert
       players: [this.userId]
       currentPlayer: X_PLAYER
-      moves: []
+      actions: [initialActionId]
+      currentAction: initialActionId
 
   # Stores a facebook request ID with a game so that somebody invited via
   # Facebook can later find the game.
@@ -152,4 +244,8 @@ noughts.checkForVictory = (game) ->
   return false
 
 # Returns true if this game is a draw, otherwise false.
-noughts.isDraw = (game) -> game.moves.length == 9
+noughts.isDraw = (game) -> game.actions.length == 9
+
+noughts.isLegalAction = (action) ->
+  # TODO(dthurn): Implement this.
+  true
