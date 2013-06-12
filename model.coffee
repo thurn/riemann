@@ -119,9 +119,8 @@ Meteor.methods
   submitCurrentAction: (gameId) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game, this.userId)
-    currentActionId = game.currentAction
 
-    unless noughts.isLegalAction(getAction(currentActionId))
+    unless noughts.isLegalAction(gameId, game.currentAction)
       die("Illegal action!")
 
     newPlayerId = if game.currentPlayer == X_PLAYER then O_PLAYER else X_PLAYER
@@ -131,7 +130,7 @@ Meteor.methods
       $set: {currentPlayer: newPlayerId, currentAction: newActionId}
       $push: {actions: newActionId}
 
-    noughts.Actions.update currentActionId,
+    noughts.Actions.update game.currentAction,
       $set: {submitted: true}
 
   # Adds the provided command to the current action's command list. No
@@ -223,29 +222,43 @@ Meteor.methods
   # participant in it.
   validateGameId: (gameId) -> noughts.Games.findOne(gameId)
 
+# Returns a 2-dimensional array of *submitted* game actions spatially indexed
+# by row and then column number, so e.g. row[0][2] is the bottom-left square's
+# action.
+actionTable = (gameId) ->
+  result = [[], [], []]
+  noughts.Actions.find({gameId: gameId}).forEach (action) ->
+    return unless action.submitted
+    command = action.commands[0] # only 1 command per action in this game
+    if command then result[command.column][command.row] = action
+  result
+
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
 noughts.checkForVictory = (game) ->
-  getMove = (column, row) ->
-    _.find(game.moves, (x) -> x.column == column and x.row == row)
+  actionTable = actionTable(game._id)
 
-  # All possible winning lines in (col, row) format
+  # All possible winning lines in [column, row] format
   victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
       [[0,2], [1,2], [2,2]], [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]],
       [[2,0], [2,1], [2,2]], [[0,0], [1,1], [2,2]], [[2,0], [1,1], [0,2]] ]
 
   for line in victoryLines
-    move1 = getMove(line[0][0], line[0][1])
-    move2 = getMove(line[1][0], line[1][1])
-    move3 = getMove(line[2][0], line[2][1])
-    continue unless move1? and move2? and move3?
-    if move1.isX == move2.isX and move2.isX == move3.isX
-      return if move1.isX then game.players[X_PLAYER] else game.players[O_PLAYER]
+    action1 = actionTable[line[0][0]][line[0][1]]
+    action2 = actionTable[line[1][0]][line[1][1]]
+    action3 = actionTable[line[2][0]][line[2][1]]
+    continue unless action1? and action2? and action3?
+    if action1.player == action2.player and action2.player == action3.player
+      return action1.player
   return false
 
 # Returns true if this game is a draw, otherwise false.
 noughts.isDraw = (game) -> game.actions.length == 9
 
-noughts.isLegalAction = (action) ->
-  # TODO(dthurn): Implement this.
-  true
+# Returns true if the provided action would be a legal game action.
+noughts.isLegalAction = (gameId, actionId) ->
+  action = getAction(actionId)
+  actionTable = actionTable(gameId)
+  return false if action.commands.length != 1
+  command = action.commands[0]
+  not actionTable[command.column][command.row]
