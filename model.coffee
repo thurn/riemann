@@ -61,8 +61,8 @@ noughts.BadRequestError = (message) ->
 noughts.BadRequestError.prototype = new Meteor.Error()
 noughts.BadRequestError.constructor = noughts.BadRequestError
 
-X_PLAYER = 0
-O_PLAYER = 1
+noughts.X_PLAYER = 0
+noughts.O_PLAYER = 1
 
 # Translates a message into a BadRequestError.
 die = (msg) ->
@@ -86,13 +86,13 @@ getAction = (actionId) ->
   action = noughts.Actions.findOne(actionId)
   if action then action else die("Invalid action ID: '#{actionId}'")
 
-# Creates a new action with the provided gameId and owning playerId, returning
-# the action ID.
-newAction = (gameId, playerId) ->
+# Creates a new action owned by the provided playerId, returning
+# the action ID. If the game ID is not yet known, 'null' can be passed.
+newAction = (playerId, gameId) ->
   noughts.Actions.insert
     player: playerId
-    gameId: gameId
     submitted: false
+    gameId: gameId
     commands: []
     commandIndex: 0
 
@@ -123,8 +123,12 @@ Meteor.methods
     unless noughts.isLegalAction(gameId, game.currentAction)
       die("Illegal action!")
 
-    newPlayerId = if game.currentPlayer == X_PLAYER then O_PLAYER else X_PLAYER
-    newActionId = newAction(gameId, newPlayerId)
+    newPlayerId =
+      if game.currentPlayer == noughts.X_PLAYER
+        noughts.O_PLAYER
+      else
+        noughts.X_PLAYER
+    newActionId = newAction(newPlayerId, gameId)
 
     noughts.Games.update gameId,
       $set: {currentPlayer: newPlayerId, currentAction: newActionId}
@@ -136,7 +140,7 @@ Meteor.methods
   # Adds the provided command to the current action's command list. No
   # validation is performed on the legality of the command. Any commands beyond
   # the current location in the undo history are deleted.
-  addCommandToCurrentAction: (gameId, command) ->
+  addCommand: (gameId, command) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game, this.userId)
     action = getAction(game.currentAction)
@@ -146,26 +150,8 @@ Meteor.methods
 
     newCommands = action.commands.slice(0, action.commandIndex)
     newCommands.push(command)
-    noughts.Actions.update game.currentAction
+    noughts.Actions.update game.currentAction,
       $set: {commands: newCommands, commandIndex: action.commandIndex + 1}
-
-  # Add the current player's symbol at the provided location if
-  # this is a legal move
-  performMoveIfLegal: (gameId, column, row) ->
-    game = getGame(gameId)
-    ensureIsCurrentPlayer(game, this.userId)
-    if _.some(game.moves, (move) -> move.column == column and move.row == row)
-      # Space already taken!
-      return
-    if noughts.checkForVictory(game)
-      # Game over!
-      return
-    isXPlayer = (game.currentPlayer == X_PLAYER)
-    noughts.Games.update gameId,
-      $set:
-        currentPlayer: if isXPlayer then O_PLAYER else X_PLAYER
-      $push:
-        moves: {column: column, row: row, isX: isXPlayer}
 
   # Un-does the last command in this game's current action.
   undoCommand: (gameId) ->
@@ -191,14 +177,19 @@ Meteor.methods
     noughts.Actions.update game.currentAction
       $set: {commandIndex: action.commandIndex + 1}
 
-  # Partially create a new game with no opponent specified yet.
+  # Partially create a new game with no opponent specified yet, returning the
+  # game ID.
   newGame: ->
-    initialActionId = newAction(gameId, this.userId)
-    noughts.Games.insert
+    # null gameId replaced below once known
+    initialActionId = newAction(this.userId, null)
+    gameId = noughts.Games.insert
       players: [this.userId]
-      currentPlayer: X_PLAYER
+      currentPlayer: noughts.X_PLAYER
       actions: [initialActionId]
       currentAction: initialActionId
+    noughts.Actions.update initialActionId,
+      $set: {gameId: gameId}
+    gameId
 
   # Stores a facebook request ID with a game so that somebody invited via
   # Facebook can later find the game.
@@ -223,9 +214,8 @@ Meteor.methods
   validateGameId: (gameId) -> noughts.Games.findOne(gameId)
 
 # Returns a 2-dimensional array of *submitted* game actions spatially indexed
-# by row and then column number, so e.g. row[0][2] is the bottom-left square's
-# action.
-actionTable = (gameId) ->
+# by [column][row], so e.g. table[0][2] is the bottom-left square's action.
+makeActionTable = (gameId) ->
   result = [[], [], []]
   noughts.Actions.find({gameId: gameId}).forEach (action) ->
     return unless action.submitted
@@ -236,7 +226,7 @@ actionTable = (gameId) ->
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
 noughts.checkForVictory = (game) ->
-  actionTable = actionTable(game._id)
+  actionTable = makeActionTable(game._id)
 
   # All possible winning lines in [column, row] format
   victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
@@ -250,7 +240,7 @@ noughts.checkForVictory = (game) ->
     continue unless action1? and action2? and action3?
     if action1.player == action2.player and action2.player == action3.player
       return action1.player
-  return false
+  false
 
 # Returns true if this game is a draw, otherwise false.
 noughts.isDraw = (game) -> game.actions.length == 9
@@ -258,7 +248,11 @@ noughts.isDraw = (game) -> game.actions.length == 9
 # Returns true if the provided action would be a legal game action.
 noughts.isLegalAction = (gameId, actionId) ->
   action = getAction(actionId)
-  actionTable = actionTable(gameId)
   return false if action.commands.length != 1
   command = action.commands[0]
-  not actionTable[command.column][command.row]
+  noughts.isSquareAvailable(gameId, command.column, command.row)
+
+noughts.isSquareAvailable = (gameId, column, row) ->
+  return false if column < 0 or row < 0 or column > 2 or row > 2
+  actionTable = makeActionTable(gameId)
+  not actionTable[column][row]

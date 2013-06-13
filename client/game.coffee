@@ -23,10 +23,10 @@ noughts.state =
   INITIAL_PROMO: me.state.USER + 0 # Initial game description state
   NEW_GAME_MENU: me.state.USER + 1 # Game state for showing new game menu
 
-# Changes the current game state to 'newState' and records the change in
-# noughts.state.history. The optional "urlBehavior" parameter shoud be a
-# noughts.state.UrlBehavior, and the browser URL will be modified accordingly. The
-# default urlBehavior is noughts.state.UrlBehavior.PUSH_URL.
+# Changes the current game state to 'newState'. The optional "urlBehavior"
+# parameter shoud be a noughts.state.UrlBehavior, and the browser URL will be
+# modified accordingly. The default urlBehavior is
+# noughts.state.UrlBehavior.PUSH_URL.
 noughts.state.changeState = (newState, urlBehavior) ->
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
   me.state.change(newState, urlBehavior)
@@ -140,6 +140,38 @@ PlayScreen = me.ScreenObject.extend
     me.levelDirector.loadLevel("tilemap")
     @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
 
+  # Invokes via Meteor.autorun while in the PLAY state, reactively updates the
+  # UI to show the current game state.
+  autorun_: ->
+    gameId = Session.get("gameId")
+    game = noughts.Games.findOne gameId
+    return if not game
+    me.game.removeAll()
+    this.loadMainLayer_()
+
+    # Redraw all previous moves
+    noughts.Actions.find({gameId: gameId}).forEach (action) ->
+      command = action.commands[0] # only 1 command per action
+      tile = @mainLayer_.layerData[command.column][command.row]
+      isX = action.player == game.players[noughts.X_PLAYER]
+      image = if isX then @xImg_ else @oImg_
+      sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
+      me.game.add(sprite, SPRITE_Z_INDEX)
+    me.game.sort()
+
+    winner = noughts.checkForVictory(game)
+    if winner
+      if winner == Meteor.userId()
+        displayNotice("Hooray! You win!")
+      else
+        displayNotice("Sorry, you lose!")
+    else if noughts.isDraw(game)
+      displayNotice("The game is over, and it was a draw!")
+    else if game.players[game.currentPlayer] == Meteor.userId()
+      displayNotice("It's your turn. Select a square to make your move.")
+    else
+      displayNotice("") # Clear any previous note
+
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
   onResetEvent: (urlBehavior) ->
@@ -152,37 +184,19 @@ PlayScreen = me.ScreenObject.extend
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
     this.loadMainLayer_()
+
     me.input.registerMouseEvent "mouseup", me.game.viewport, (event) =>
       touch = me.input.touches[0]
       tile = @mainLayer_.getTile(touch.x, touch.y)
-      Meteor.call("performMoveIfLegal", gameId, tile.col, tile.row)
+      if noughts.isSquareAvailable(gameId, tile.col, tile.row)
+        command = {column: tile.col, row: tile.row}
+        Meteor.call "addCommand", gameId, command, (err) ->
+          if err then throw err
 
-    Meteor.autorun =>
-      game = noughts.Games.findOne Session.get("gameId")
-      return if not game
-      me.game.removeAll()
-      this.loadMainLayer_()
-
-      # Redraw all previous moves
-      for move in game.moves
-        tile = @mainLayer_.layerData[move.column][move.row]
-        image = if move.isX then @xImg_ else @oImg_
-        sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
-        me.game.add(sprite, SPRITE_Z_INDEX)
-      me.game.sort()
-
-      winner = noughts.checkForVictory(game)
-      if winner
-        if winner == Meteor.userId()
-          displayNotice("Hooray! You win!")
-        else
-          displayNotice("Sorry, you lose!")
-      else if noughts.isDraw(game)
-        displayNotice("The game is over, and it was a draw!")
-      else if game.players[game.currentPlayer] == Meteor.userId()
-        displayNotice("It's your turn. Select a square to make your move.")
-      else
-        displayNotice("") # Clear any previous note
+    Meteor.subscribe "gameActions", gameId, (err) =>
+      if err then throw err
+      Meteor.autorun =>
+        this.autorun_()
 
 # Handles a click on the "new game" button by popping up an invite dialog
 handleNewGameClickOld = ->
