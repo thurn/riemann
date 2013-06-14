@@ -98,6 +98,7 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
+# The "new game" menu
 noughts.NewGameMenu = me.ScreenObject.extend
   init: ->
     $(".nNewGameMenuCloseButton").on "click", ->
@@ -123,6 +124,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
     $(".nNewGameMenu").show()
     $(".nGame").css({border: ""})
 
+# The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = me.ScreenObject.extend
   init: ->
     $(".nNewGameButton").on "click", ->
@@ -134,6 +136,7 @@ noughts.InitialPromo = me.ScreenObject.extend
     $(".nGame").css({border: ""})
     $(".nNewGamePromo").show()
 
+# The main screen used for actually playing the game.
 PlayScreen = me.ScreenObject.extend
   # Helper method to get the game's main layer stored in @mainLayer_
   loadMainLayer_: ->
@@ -150,7 +153,7 @@ PlayScreen = me.ScreenObject.extend
     this.loadMainLayer_()
 
     # Redraw all previous moves
-    noughts.Actions.find({gameId: gameId}).forEach (action) ->
+    noughts.Actions.find({gameId: gameId}).forEach (action) =>
       command = action.commands[0] # only 1 command per action
       tile = @mainLayer_.layerData[command.column][command.row]
       isX = action.player == game.players[noughts.X_PLAYER]

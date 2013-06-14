@@ -11,4 +11,4 @@ Meteor.publish "myGames", ->
 
 Meteor.publish "gameActions", (gameId) ->
   noughts.Actions.find
-    $and: [gameId: gameId, $or: [submitted: true, player: this.userId]]
+    $and: [{gameId: gameId}, {$or: [{submitted: true}, {player: this.userId}]}]
