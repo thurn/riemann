@@ -16,8 +16,9 @@
 #   players: ([String]) List of player IDs in this game
 #   currentPlayer: (Integer) Index of current player in the player list
 #   actions: [String] List of action IDs of the actions in this game.
-#   currentAction: (String) ID of action currently being constructed. In most
-#       circumstances, this action should not yet be submitted.
+#   currentAction: (String) ID of action currently being constructed, or null if
+#       no action is under construction. Should never point to a submitted
+#       action.
 #   requestId: (String) Facebook request ID associated with this game
 # }
 #
@@ -33,9 +34,10 @@
 #   commands: [Command] Chronological list of commands making up this action.
 #   commandIndex: Current position within the command list. All commands
 #       with an index less than this index should be executed to get the
-#       current game state (an index of 0 indicates no commands for this
-#       action). Performing an "undo" action decrements this index by 1, and
-#       a "redo" increases it by 1.
+#       current game state. An index of 0 indicates no commands for this
+#       action, an index equal to the length of the command list indicates
+#       we are up-to-date in history. Performing an "undo" action decrements
+#       this index by 1, and a "redo" increases it by 1.
 # }
 #
 # By convention, players[0] is the game initiator and the "x" player, while
@@ -66,13 +68,18 @@ noughts.O_PLAYER = 1
 
 # Translates a message into a BadRequestError.
 die = (msg) ->
+  debugger
   console.log("ERORR: " + msg)
   throw new noughts.BadRequestError(msg)
 
-# Ensures that the provided userId is the current player in the provided game.
-ensureIsCurrentPlayer = (game, userId) ->
-  currentUser = game.players[game.currentPlayer]
-  unless currentUser and userId and currentUser = userId
+# Returns true if the current user is the current player in the provided game.
+isCurrentPlayer = (game) ->
+  game.currentPlayer and Meteor.userId() and
+      Meteor.userId() == game.players[game.currentPlayer]
+
+# Ensures that the current user is the current player in the provided game.
+ensureIsCurrentPlayer = (game) ->
+  unless isCurrentPlayer(game)
     die("Unauthorized user: '#{Meteor.userId()}'")
 
 # Returns the game with ID gameId, or throws an exception if it doesn't exist.
@@ -118,9 +125,9 @@ Meteor.methods
   # Validates that the current action is a legal one.
   submitCurrentAction: (gameId) ->
     game = getGame(gameId)
-    ensureIsCurrentPlayer(game, this.userId)
+    ensureIsCurrentPlayer(game)
 
-    unless noughts.isLegalAction(gameId, game.currentAction)
+    unless noughts.isCurrentActionLegal(gameId)
       die("Illegal action!")
 
     newPlayerId =
@@ -128,21 +135,20 @@ Meteor.methods
         noughts.O_PLAYER
       else
         noughts.X_PLAYER
-    newActionId = newAction(newPlayerId, gameId)
 
     noughts.Games.update gameId,
-      $set: {currentPlayer: newPlayerId, currentAction: newActionId}
-      $push: {actions: newActionId}
+      $set: {currentPlayer: newPlayerId}
 
     noughts.Actions.update game.currentAction,
       $set: {submitted: true}
 
-  # Adds the provided command to the current action's command list. No
-  # validation is performed on the legality of the command. Any commands beyond
-  # the current location in the undo history are deleted.
+  # Adds the provided command to the current action's command list. If there is
+  # no current action, creates one. No validation is performed on the legality
+  # of the command. Any commands beyond the current location in the undo
+  # history are deleted.
   addCommand: (gameId, command) ->
     game = getGame(gameId)
-    ensureIsCurrentPlayer(game, this.userId)
+    ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
     if action.submitted
@@ -156,7 +162,7 @@ Meteor.methods
   # Un-does the last command in this game's current action.
   undoCommand: (gameId) ->
     game = getGame(gameId)
-    ensureIsCurrentPlayer(game, this.userId)
+    ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
     if action.commandIndex <= 0
@@ -168,7 +174,7 @@ Meteor.methods
   # Re-does the last command in this game's current action.
   redoCommand: (gameId) ->
     game = getGame(gameId)
-    ensureIsCurrentPlayer(game, this.userId)
+    ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
     if action.commands.length <= action.commandIndex
@@ -181,21 +187,17 @@ Meteor.methods
   # game ID.
   newGame: ->
     # null gameId replaced below once known
-    initialActionId = newAction(this.userId, null)
-    gameId = noughts.Games.insert
+    noughts.Games.insert
       players: [this.userId]
       currentPlayer: noughts.X_PLAYER
-      actions: [initialActionId]
-      currentAction: initialActionId
-    noughts.Actions.update initialActionId,
-      $set: {gameId: gameId}
-    gameId
+      actions: []
+      currentAction: null
 
   # Stores a facebook request ID with a game so that somebody invited via
   # Facebook can later find the game.
   facebookSetRequestId: (gameId, requestId) ->
     game = getGame(gameId)
-    ensureIsCurrentPlayer(game, this.userId)
+    ensureIsCurrentPlayer(game)
     die("game is full") if game.players.length >= noughts.Config.maxPlayers
     noughts.Games.update gameId,
       $set: {requestId: requestId}
@@ -245,9 +247,12 @@ noughts.checkForVictory = (game) ->
 # Returns true if this game is a draw, otherwise false.
 noughts.isDraw = (game) -> game.actions.length == 9
 
-# Returns true if the provided action would be a legal game action.
-noughts.isLegalAction = (gameId, actionId) ->
-  action = getAction(actionId)
+# Returns true if the game's current action would be a legal game action.
+# Returns false if you are not the current player.
+noughts.isCurrentActionLegal = (gameId) ->
+  game = getGame(gameId)
+  return false if not game.currentAction or not isCurrentPlayer(game)
+  action = noughts.Actions.findOne(game.currentAction)
   return false if action.commands.length != 1
   command = action.commands[0]
   noughts.isSquareAvailable(gameId, command.column, command.row)
@@ -256,3 +261,15 @@ noughts.isSquareAvailable = (gameId, column, row) ->
   return false if column < 0 or row < 0 or column > 2 or row > 2
   actionTable = makeActionTable(gameId)
   not actionTable[column][row]
+
+noughts.canUndo = (gameId) ->
+  game = getGame(gameId)
+  return false if not game.currentAction or not isCurrentPlayer(game)
+  action = noughts.Actions.findOne(game.currentAction)
+  return action.commandIndex > 0
+
+noughts.canRedo = (gameId) ->
+  game = getGame(gameId)
+  return false if not game.currentAction or not isCurrentPlayer(game)
+  action = noughts.Actions.findOne(game.currentAction)
+  return action.commandIndex < action.commands.length

@@ -80,6 +80,14 @@ getSuggestedFriends = ->
       not noughts.appInstalled_[x.uid])
   return _.pluck(installed.concat(notInstalled), "uid")
 
+# If 'enabled' is true, removes the 'disabled' attribute on the provided
+# (jquery-wrapped) element, otherwise adds it.
+setElementEnabled = (element, enabled) ->
+  if enabled
+    element.removeAttr("disabled")
+  else
+    element.attr("disabled", "disabled")
+
 # Displays the Facebook friend-picker invite dialog to let the user select an
 # opponent.
 showFacebookInviteDialog = (inviteCallback) ->
@@ -138,6 +146,18 @@ noughts.InitialPromo = me.ScreenObject.extend
 
 # The main screen used for actually playing the game.
 PlayScreen = me.ScreenObject.extend
+  init: ->
+    $(".nSubmitButton").on "click", ->
+      Meteor.call "submitCurrentAction", Session.get("gameId"), (err) ->
+        if err then throw err
+
+  # Enables/disables the three move control buttons (undo, redo, submit) based
+  # on whether or not they are currently applicable.
+  toggleMoveControls_: (gameId) ->
+    setElementEnabled($(".nSubmitButton"), noughts.isCurrentActionLegal(gameId))
+    setElementEnabled($(".nUndoButton"), noughts.canUndo(gameId))
+    setElementEnabled($(".nRedoButton"), noughts.canRedo(gameId))
+
   # Helper method to get the game's main layer stored in @mainLayer_
   loadMainLayer_: ->
     me.levelDirector.loadLevel("tilemap")
@@ -152,14 +172,17 @@ PlayScreen = me.ScreenObject.extend
     me.game.removeAll()
     this.loadMainLayer_()
 
+    this.toggleMoveControls_(gameId)
+
     # Redraw all previous moves
     noughts.Actions.find({gameId: gameId}).forEach (action) =>
       command = action.commands[0] # only 1 command per action
-      tile = @mainLayer_.layerData[command.column][command.row]
-      isX = action.player == game.players[noughts.X_PLAYER]
-      image = if isX then @xImg_ else @oImg_
-      sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
-      me.game.add(sprite, SPRITE_Z_INDEX)
+      for command in action.commands
+        tile = @mainLayer_.layerData[command.column][command.row]
+        isX = action.player == game.players[noughts.X_PLAYER]
+        image = if isX then @xImg_ else @oImg_
+        sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
+        me.game.add(sprite, SPRITE_Z_INDEX)
     me.game.sort()
 
     winner = noughts.checkForVictory(game)
@@ -193,7 +216,7 @@ PlayScreen = me.ScreenObject.extend
       tile = @mainLayer_.getTile(touch.x, touch.y)
       if noughts.isSquareAvailable(gameId, tile.col, tile.row)
         command = {column: tile.col, row: tile.row}
-        Meteor.call "addCommand", gameId, command, (err) ->
+        Meteor.call "addCommand", gameId, command, (err) =>
           if err then throw err
 
     Meteor.subscribe "gameActions", gameId, (err) =>
