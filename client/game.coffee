@@ -92,7 +92,7 @@ setElementEnabled = (element, enabled) ->
 # opponent.
 showFacebookInviteDialog = (inviteCallback) ->
   suggestedFriends = getSuggestedFriends()
-  if suggestedFriends
+  if suggestedFriends != []
     filters = [{name: "Friends", user_ids: suggestedFriends}]
   else
     filters = ["app_non_users"]
@@ -117,7 +117,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
 
     $(".nUrlInviteButton").on "click", ->
       Meteor.call "newGame", (err, gameId) ->
-        if err then throw err
+        if err? then throw err
         Session.set("gameId", gameId)
         $(".nBubble").show()
         $(".nDarkenScreen").show()
@@ -149,7 +149,7 @@ PlayScreen = me.ScreenObject.extend
   init: ->
     $(".nSubmitButton").on "click", ->
       Meteor.call "submitCurrentAction", Session.get("gameId"), (err) ->
-        if err then throw err
+        if err? then throw err
 
   # Enables/disables the three move control buttons (undo, redo, submit) based
   # on whether or not they are currently applicable.
@@ -168,7 +168,7 @@ PlayScreen = me.ScreenObject.extend
   autorun_: ->
     gameId = Session.get("gameId")
     game = noughts.Games.findOne gameId
-    return if not game
+    return unless game?
     me.game.removeAll()
     this.loadMainLayer_()
 
@@ -185,13 +185,13 @@ PlayScreen = me.ScreenObject.extend
         me.game.add(sprite, SPRITE_Z_INDEX)
     me.game.sort()
 
-    winner = noughts.checkForVictory(game)
+    winner = noughts.checkForVictory(gameId)
     if winner
       if winner == Meteor.userId()
         displayNotice("Hooray! You win!")
       else
         displayNotice("Sorry, you lose!")
-    else if noughts.isDraw(game)
+    else if noughts.isDraw(gameId)
       displayNotice("The game is over, and it was a draw!")
     else if game.players[game.currentPlayer] == Meteor.userId()
       displayNotice("It's your turn. Select a square to make your move.")
@@ -217,24 +217,24 @@ PlayScreen = me.ScreenObject.extend
       if noughts.isSquareAvailable(gameId, tile.col, tile.row)
         command = {column: tile.col, row: tile.row}
         Meteor.call "addCommand", gameId, command, (err) =>
-          if err then throw err
+          if err? then throw err
 
     Meteor.subscribe "gameActions", gameId, (err) =>
-      if err then throw err
+      if err? then throw err
       Meteor.autorun =>
         this.autorun_()
 
 # Handles a click on the "new game" button by popping up an invite dialog
 handleNewGameClickOld = ->
   Meteor.call "newGame", (err, gameId) ->
-    if err then throw err
+    if err? then throw err
     if Session.get("useFacebook")
       showFacebookInviteDialog (inviteResponse) ->
-        return if not inviteResponse
+        return unless inviteResponse?
         invitedUser = inviteResponse.to[0]
         requestId = inviteResponse.request
         Meteor.call("facebookSetRequestId", gameId, requestId, (err) ->
-          if err then throw err
+          if err? then throw err
           Session.set("gameId", gameId)
           noughts.state.changeState(noughts.state.PLAY))
     else
@@ -268,7 +268,7 @@ onSubscribe = ->
   # Update game scale when scaleFactor changes
   Meteor.autorun ->
     scaleFactor = Session.get("scaleFactor")
-    if scaleFactor then me.video.updateDisplaySize(scaleFactor, scaleFactor)
+    if scaleFactor? then me.video.updateDisplaySize(scaleFactor, scaleFactor)
 
   setStateFromUrl()
   $(window).on "popstate", ->
@@ -306,7 +306,7 @@ setStateFromUrl = ->
       FB.api(fullId, "delete", ->)
       # TODO(dthurn): do something smarter with multiple request_ids than loading
       # the game for the last one.
-    displayError("Game not found for requestIds: " + requestIds) unless game
+    displayError("Game not found for requestIds: " + requestIds) unless game?
     Session.set("gameId", game._id)
     noughts.state.changeState(noughts.state.PLAY)
   else if path == "new"
@@ -319,11 +319,11 @@ setStateFromUrl = ->
         noughts.state.UrlBehavior.PRESERVE_URL)
   else # For simplicity, assume any unrecognized path is a game id
     Meteor.call "validateGameId", path, (err, gameExists) ->
-      if err then throw err
+      if err? then throw err
       displayError("Error: Game not found.") unless gameExists
       Session.set("gameId", path)
       Meteor.call "addPlayerIfNotPresent", path, (err) ->
-        if err then throw err
+        if err? then throw err
         # TODO(dthurn): Show some kind of message if the game is full and the
         # viewer is only a spectator, allowing the viewer to watch or perhaps
         # "clone" the game.

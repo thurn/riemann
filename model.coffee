@@ -74,7 +74,7 @@ die = (msg) ->
 
 # Returns true if the current user is the current player in the provided game.
 isCurrentPlayer = (game) ->
-  game.currentPlayer and Meteor.userId() and
+  game.currentPlayer? and Meteor.userId() and
       Meteor.userId() == game.players[game.currentPlayer]
 
 # Ensures that the current user is the current player in the provided game.
@@ -85,13 +85,13 @@ ensureIsCurrentPlayer = (game) ->
 # Returns the game with ID gameId, or throws an exception if it doesn't exist.
 getGame = (gameId) ->
   game = noughts.Games.findOne(gameId)
-  if game then game else die("Invalid game ID: '#{gameId}'")
+  if game? then game else die("Invalid game ID: '#{gameId}'")
 
 # Returns the action with ID actionID, or throws an exception if it doesn't
 # exist.
 getAction = (actionId) ->
   action = noughts.Actions.findOne(actionId)
-  if action then action else die("Invalid action ID: '#{actionId}'")
+  if action? then action else die("Invalid action ID: '#{actionId}'")
 
 # Creates a new action owned by the provided playerId, returning
 # the action ID. If the game ID is not yet known, 'null' can be passed.
@@ -136,11 +136,10 @@ Meteor.methods
       else
         noughts.X_PLAYER
 
-    noughts.Games.update gameId,
-      $set: {currentPlayer: newPlayerId}
-
     noughts.Actions.update game.currentAction,
       $set: {submitted: true}
+    noughts.Games.update gameId,
+      $set: {currentPlayer: newPlayerId, currentAction: null}
 
   # Adds the provided command to the current action's command list. If there is
   # no current action, creates one. No validation is performed on the legality
@@ -149,15 +148,24 @@ Meteor.methods
   addCommand: (gameId, command) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game)
-    action = getAction(game.currentAction)
 
-    if action.submitted
-      die("Cannot modify submitted action!")
+    if game.currentAction?
+      action = getAction(game.currentAction)
+      die("Cannot modify submitted action!") if action.submitted
 
-    newCommands = action.commands.slice(0, action.commandIndex)
-    newCommands.push(command)
-    noughts.Actions.update game.currentAction,
-      $set: {commands: newCommands, commandIndex: action.commandIndex + 1}
+      newCommands = action.commands.slice(0, action.commandIndex)
+      newCommands.push(command)
+      noughts.Actions.update game.currentAction,
+        $set: {commands: newCommands, commandIndex: action.commandIndex + 1}
+    else # Create a new current action for this game
+      actionId = noughts.Actions.insert
+        player: this.userId
+        submitted: false
+        gameId: gameId
+        commands: [command]
+        commandIndex: 1
+      noughts.Games.update gameId,
+        $set: {currentAction: actionId}
 
   # Un-does the last command in this game's current action.
   undoCommand: (gameId) ->
@@ -186,7 +194,6 @@ Meteor.methods
   # Partially create a new game with no opponent specified yet, returning the
   # game ID.
   newGame: ->
-    # null gameId replaced below once known
     noughts.Games.insert
       players: [this.userId]
       currentPlayer: noughts.X_PLAYER
@@ -205,15 +212,20 @@ Meteor.methods
   # If the current user is not present in game.players (and the game is not
   # full), add her to the player list.
   addPlayerIfNotPresent: (gameId) ->
-    game = getGame(gameId)
-    if (game.players.length < noughts.Config.maxPlayers and
-        not _.contains(game.players, this.userId))
-      noughts.Games.update gameId,
-        $push: {players: this.userId}
+    if Meteor.isServer
+      # Server-only since the game won't be loaded yet on the client
+      game = getGame(gameId)
+      if (game.players.length < noughts.Config.maxPlayers and
+          not _.contains(game.players, this.userId))
+        noughts.Games.update gameId,
+          $push: {players: this.userId}
 
   # Checks that a game exists based on its ID and that the current user is a
   # participant in it.
-  validateGameId: (gameId) -> noughts.Games.findOne(gameId)
+  validateGameId: (gameId) ->
+    if Meteor.isServer
+      # Server-only since the game won't be loaded yet on the client
+      noughts.Games.findOne(gameId)
 
 # Returns a 2-dimensional array of *submitted* game actions spatially indexed
 # by [column][row], so e.g. table[0][2] is the bottom-left square's action.
@@ -222,13 +234,13 @@ makeActionTable = (gameId) ->
   noughts.Actions.find({gameId: gameId}).forEach (action) ->
     return unless action.submitted
     command = action.commands[0] # only 1 command per action in this game
-    if command then result[command.column][command.row] = action
+    if command? then result[command.column][command.row] = action
   result
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
-noughts.checkForVictory = (game) ->
-  actionTable = makeActionTable(game._id)
+noughts.checkForVictory = (gameId) ->
+  actionTable = makeActionTable(gameId)
 
   # All possible winning lines in [column, row] format
   victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
@@ -245,13 +257,15 @@ noughts.checkForVictory = (game) ->
   false
 
 # Returns true if this game is a draw, otherwise false.
-noughts.isDraw = (game) -> game.actions.length == 9
+noughts.isDraw = (gameId) ->
+  game = getGame(gameId)
+  game.actions.length == 9
 
 # Returns true if the game's current action would be a legal game action.
-# Returns false if you are not the current player.
+# Returns false if you are not the current player or there is no current action.
 noughts.isCurrentActionLegal = (gameId) ->
   game = getGame(gameId)
-  return false if not game.currentAction or not isCurrentPlayer(game)
+  return false unless game.currentAction? and isCurrentPlayer(game)
   action = noughts.Actions.findOne(game.currentAction)
   return false if action.commands.length != 1
   command = action.commands[0]
@@ -259,17 +273,22 @@ noughts.isCurrentActionLegal = (gameId) ->
 
 noughts.isSquareAvailable = (gameId, column, row) ->
   return false if column < 0 or row < 0 or column > 2 or row > 2
+  return false if noughts.checkForVictory(gameId) or noughts.isDraw(gameId)
   actionTable = makeActionTable(gameId)
   not actionTable[column][row]
 
 noughts.canUndo = (gameId) ->
   game = getGame(gameId)
-  return false if not game.currentAction or not isCurrentPlayer(game)
-  action = noughts.Actions.findOne(game.currentAction)
-  return action.commandIndex > 0
+  if game.currentAction? and isCurrentPlayer(game)
+    action = noughts.Actions.findOne(game.currentAction)
+    action.commandIndex > 0
+  else
+    false
 
 noughts.canRedo = (gameId) ->
   game = getGame(gameId)
-  return false if not game.currentAction or not isCurrentPlayer(game)
-  action = noughts.Actions.findOne(game.currentAction)
-  return action.commandIndex < action.commands.length
+  if game.currentAction? and isCurrentPlayer(game)
+    action = noughts.Actions.findOne(game.currentAction)
+    return action.commandIndex < action.commands.length
+  else
+    false
