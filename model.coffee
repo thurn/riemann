@@ -32,11 +32,10 @@
 #       actions are visible to all players, un-submitted actions are only
 #       visible to their owner.
 #   commands: [Command] Chronological list of commands making up this action.
-#   commandIndex: Current position within the command list. All commands
-#       with an index less than this index should be executed to get the
-#       current game state. An index of 0 indicates no commands for this
-#       action, an index equal to the length of the command list indicates
-#       we are up-to-date in history. Performing an "undo" action decrements
+#   commandsLength: Length of the *effective* command list. The actual list may
+#       be longer if it contains commands which have been undone. All commands
+#       with an index less than this length should be executed to get the
+#       current game state. Performing an "undo" action decrements
 #       this index by 1, and a "redo" increases it by 1.
 # }
 #
@@ -101,7 +100,7 @@ newAction = (playerId, gameId) ->
     submitted: false
     gameId: gameId
     commands: []
-    commandIndex: 0
+    commandsLength: 0
 
 Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
@@ -142,30 +141,32 @@ Meteor.methods
       $set: {currentPlayer: newPlayerId, currentAction: null}
 
   # Adds the provided command to the current action's command list. If there is
-  # no current action, creates one. No validation is performed on the legality
-  # of the command. Any commands beyond the current location in the undo
-  # history are deleted.
+  # no current action, creates one. Any commands beyond the current location in
+  # the undo history are deleted.
   addCommand: (gameId, command) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game)
+    die("Illegal command!") unless noughts.isLegalCommand(gameId, command)
 
     if game.currentAction?
       action = getAction(game.currentAction)
+      # Should never happen, but let's check:
       die("Cannot modify submitted action!") if action.submitted
 
-      newCommands = action.commands.slice(0, action.commandIndex)
+      newCommands = noughts.effectiveCommands(action)
       newCommands.push(command)
       noughts.Actions.update game.currentAction,
-        $set: {commands: newCommands, commandIndex: action.commandIndex + 1}
+        $set: {commands: newCommands, commandsLength: action.commandsLength + 1}
     else # Create a new current action for this game
       actionId = noughts.Actions.insert
         player: this.userId
         submitted: false
         gameId: gameId
         commands: [command]
-        commandIndex: 1
+        commandsLength: 1
       noughts.Games.update gameId,
         $set: {currentAction: actionId}
+        $push: {actions: actionId}
 
   # Un-does the last command in this game's current action.
   undoCommand: (gameId) ->
@@ -173,11 +174,11 @@ Meteor.methods
     ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
-    if action.commandIndex <= 0
+    if action.commandsLength <= 0
       die("No previous command to undo!")
 
-    noughts.Actions.update game.currentAction
-      $set: {commandIndex: action.commandIndex - 1}
+    noughts.Actions.update game.currentAction,
+      $set: {commandsLength: action.commandsLength - 1}
 
   # Re-does the last command in this game's current action.
   redoCommand: (gameId) ->
@@ -185,11 +186,11 @@ Meteor.methods
     ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
-    if action.commands.length <= action.commandIndex
+    if action.commands.length <= action.commandsLength
       die("No next command to redo!")
 
-    noughts.Actions.update game.currentAction
-      $set: {commandIndex: action.commandIndex + 1}
+    noughts.Actions.update game.currentAction,
+      $set: {commandsLength: action.commandsLength + 1}
 
   # Partially create a new game with no opponent specified yet, returning the
   # game ID.
@@ -233,9 +234,14 @@ makeActionTable = (gameId) ->
   result = [[], [], []]
   noughts.Actions.find({gameId: gameId}).forEach (action) ->
     return unless action.submitted
-    command = action.commands[0] # only 1 command per action in this game
-    if command? then result[command.column][command.row] = action
+    for command in noughts.effectiveCommands(action)
+      result[command.column][command.row] = action
   result
+
+# Returns a list of the *effective* commands for this action (those that have
+# not been undone).
+noughts.effectiveCommands = (action) ->
+  action.commands.slice(0, action.commandsLength)
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
@@ -261,19 +267,29 @@ noughts.isDraw = (gameId) ->
   game = getGame(gameId)
   game.actions.length == 9
 
+# Checks if the provided command could be legally added to the current action.
+noughts.isLegalCommand = (gameId, command) ->
+  game = getGame(gameId)
+  return false unless isCurrentPlayer(game)
+  return false if noughts.checkForVictory(gameId) or noughts.isDraw(gameId)
+  if game.currentAction?
+    action = noughts.Actions.findOne(game.currentAction)
+    return false if noughts.effectiveCommands(action).length != 0
+  return noughts.isSquareAvailable(gameId, command.column, command.row)
+
 # Returns true if the game's current action would be a legal game action.
 # Returns false if you are not the current player or there is no current action.
 noughts.isCurrentActionLegal = (gameId) ->
+  # TODO(dthurn): Is this still necessary with isLegalCommand?
   game = getGame(gameId)
   return false unless game.currentAction? and isCurrentPlayer(game)
   action = noughts.Actions.findOne(game.currentAction)
-  return false if action.commands.length != 1
-  command = action.commands[0]
+  return false if noughts.effectiveCommands(action).length != 1
+  command = noughts.effectiveCommands(action)[0]
   noughts.isSquareAvailable(gameId, command.column, command.row)
 
 noughts.isSquareAvailable = (gameId, column, row) ->
   return false if column < 0 or row < 0 or column > 2 or row > 2
-  return false if noughts.checkForVictory(gameId) or noughts.isDraw(gameId)
   actionTable = makeActionTable(gameId)
   not actionTable[column][row]
 
@@ -281,7 +297,7 @@ noughts.canUndo = (gameId) ->
   game = getGame(gameId)
   if game.currentAction? and isCurrentPlayer(game)
     action = noughts.Actions.findOne(game.currentAction)
-    action.commandIndex > 0
+    action.commandsLength > 0
   else
     false
 
@@ -289,6 +305,6 @@ noughts.canRedo = (gameId) ->
   game = getGame(gameId)
   if game.currentAction? and isCurrentPlayer(game)
     action = noughts.Actions.findOne(game.currentAction)
-    return action.commandIndex < action.commands.length
+    return action.commandsLength < action.commands.length
   else
     false

@@ -148,8 +148,11 @@ noughts.InitialPromo = me.ScreenObject.extend
 PlayScreen = me.ScreenObject.extend
   init: ->
     $(".nSubmitButton").on "click", ->
-      Meteor.call "submitCurrentAction", Session.get("gameId"), (err) ->
-        if err? then throw err
+      Meteor.call("submitCurrentAction", Session.get("gameId"))
+    $(".nUndoButton").on "click", ->
+      Meteor.call("undoCommand", Session.get("gameId"))
+    $(".nRedoButton").on "click", ->
+      Meteor.call("redoCommand", Session.get("gameId"))
 
   # Enables/disables the three move control buttons (undo, redo, submit) based
   # on whether or not they are currently applicable.
@@ -176,8 +179,7 @@ PlayScreen = me.ScreenObject.extend
 
     # Redraw all previous moves
     noughts.Actions.find({gameId: gameId}).forEach (action) =>
-      command = action.commands[0] # only 1 command per action
-      for command in action.commands
+      for command in noughts.effectiveCommands(action)
         tile = @mainLayer_.layerData[command.column][command.row]
         isX = action.player == game.players[noughts.X_PLAYER]
         image = if isX then @xImg_ else @oImg_
@@ -214,10 +216,9 @@ PlayScreen = me.ScreenObject.extend
     me.input.registerMouseEvent "mouseup", me.game.viewport, (event) =>
       touch = me.input.touches[0]
       tile = @mainLayer_.getTile(touch.x, touch.y)
-      if noughts.isSquareAvailable(gameId, tile.col, tile.row)
-        command = {column: tile.col, row: tile.row}
-        Meteor.call "addCommand", gameId, command, (err) =>
-          if err? then throw err
+      command = {column: tile.col, row: tile.row}
+      if noughts.isLegalCommand(gameId, command)
+        Meteor.call("addCommand", gameId, command)
 
     Meteor.subscribe "gameActions", gameId, (err) =>
       if err? then throw err
