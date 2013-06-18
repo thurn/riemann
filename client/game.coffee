@@ -179,7 +179,7 @@ PlayScreen = me.ScreenObject.extend
 
     # Redraw all previous moves
     noughts.Actions.find({gameId: gameId}).forEach (action) =>
-      for command in noughts.effectiveCommands(action)
+      for command in action.commands
         tile = @mainLayer_.layerData[command.column][command.row]
         isX = action.player == game.players[noughts.X_PLAYER]
         image = if isX then @xImg_ else @oImg_

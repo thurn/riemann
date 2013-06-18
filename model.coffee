@@ -32,11 +32,9 @@
 #       actions are visible to all players, un-submitted actions are only
 #       visible to their owner.
 #   commands: [Command] Chronological list of commands making up this action.
-#   commandsLength: Length of the *effective* command list. The actual list may
-#       be longer if it contains commands which have been undone. All commands
-#       with an index less than this length should be executed to get the
-#       current game state. Performing an "undo" action decrements
-#       this index by 1, and a "redo" increases it by 1.
+#   futureCommands: [Command] List of commands that have been undone, from
+#       oldest to newest, so that the LAST command in this list is the one which
+#       will become active with a "redo".
 # }
 #
 # By convention, players[0] is the game initiator and the "x" player, while
@@ -92,16 +90,6 @@ getAction = (actionId) ->
   action = noughts.Actions.findOne(actionId)
   if action? then action else die("Invalid action ID: '#{actionId}'")
 
-# Creates a new action owned by the provided playerId, returning
-# the action ID. If the game ID is not yet known, 'null' can be passed.
-newAction = (playerId, gameId) ->
-  noughts.Actions.insert
-    player: playerId
-    submitted: false
-    gameId: gameId
-    commands: []
-    commandsLength: 0
-
 Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
   facebookAuthenticate: (userId, accessToken) ->
@@ -149,21 +137,16 @@ Meteor.methods
     die("Illegal command!") unless noughts.isLegalCommand(gameId, command)
 
     if game.currentAction?
-      action = getAction(game.currentAction)
-      # Should never happen, but let's check:
-      die("Cannot modify submitted action!") if action.submitted
-
-      newCommands = noughts.effectiveCommands(action)
-      newCommands.push(command)
       noughts.Actions.update game.currentAction,
-        $set: {commands: newCommands, commandsLength: action.commandsLength + 1}
+        $push: {commands: command}
+        $set: {futureCommands: []}
     else # Create a new current action for this game
       actionId = noughts.Actions.insert
         player: this.userId
         submitted: false
         gameId: gameId
         commands: [command]
-        commandsLength: 1
+        futureCommands: []
       noughts.Games.update gameId,
         $set: {currentAction: actionId}
         $push: {actions: actionId}
@@ -174,11 +157,14 @@ Meteor.methods
     ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
-    if action.commandsLength <= 0
+    if action.commands.length == 0
       die("No previous command to undo!")
 
+    command = _.last(action.commands)
+
     noughts.Actions.update game.currentAction,
-      $set: {commandsLength: action.commandsLength - 1}
+      $push: {futureCommands: command}
+      $pop: {commands: 1}
 
   # Re-does the last command in this game's current action.
   redoCommand: (gameId) ->
@@ -186,11 +172,14 @@ Meteor.methods
     ensureIsCurrentPlayer(game)
     action = getAction(game.currentAction)
 
-    if action.commands.length <= action.commandsLength
+    if action.futureCommands.length == 0
       die("No next command to redo!")
 
+    command = _.last(action.futureCommands)
+
     noughts.Actions.update game.currentAction,
-      $set: {commandsLength: action.commandsLength + 1}
+      $push: {commands: command}
+      $pop: {futureCommands: 1}
 
   # Partially create a new game with no opponent specified yet, returning the
   # game ID.
@@ -234,14 +223,9 @@ makeActionTable = (gameId) ->
   result = [[], [], []]
   noughts.Actions.find({gameId: gameId}).forEach (action) ->
     return unless action.submitted
-    for command in noughts.effectiveCommands(action)
+    for command in action.commands
       result[command.column][command.row] = action
   result
-
-# Returns a list of the *effective* commands for this action (those that have
-# not been undone).
-noughts.effectiveCommands = (action) ->
-  action.commands.slice(0, action.commandsLength)
 
 # Checks if somebody has won this game. If they have, returns the winner's
 # user ID. Otherwise, returns false.
@@ -274,7 +258,7 @@ noughts.isLegalCommand = (gameId, command) ->
   return false if noughts.checkForVictory(gameId) or noughts.isDraw(gameId)
   if game.currentAction?
     action = noughts.Actions.findOne(game.currentAction)
-    return false if noughts.effectiveCommands(action).length != 0
+    return false if action.commands.length != 0
   return noughts.isSquareAvailable(gameId, command.column, command.row)
 
 # Returns true if the game's current action would be a legal game action.
@@ -284,8 +268,8 @@ noughts.isCurrentActionLegal = (gameId) ->
   game = getGame(gameId)
   return false unless game.currentAction? and isCurrentPlayer(game)
   action = noughts.Actions.findOne(game.currentAction)
-  return false if noughts.effectiveCommands(action).length != 1
-  command = noughts.effectiveCommands(action)[0]
+  return false if action.commands.length != 1
+  command = action.commands[0]
   noughts.isSquareAvailable(gameId, command.column, command.row)
 
 noughts.isSquareAvailable = (gameId, column, row) ->
@@ -297,7 +281,7 @@ noughts.canUndo = (gameId) ->
   game = getGame(gameId)
   if game.currentAction? and isCurrentPlayer(game)
     action = noughts.Actions.findOne(game.currentAction)
-    action.commandsLength > 0
+    action.commands.length > 0
   else
     false
 
@@ -305,6 +289,6 @@ noughts.canRedo = (gameId) ->
   game = getGame(gameId)
   if game.currentAction? and isCurrentPlayer(game)
     action = noughts.Actions.findOne(game.currentAction)
-    return action.commandsLength < action.commands.length
+    action.futureCommands.length > 0
   else
     false
