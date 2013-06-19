@@ -90,6 +90,8 @@ getAction = (actionId) ->
   action = noughts.Actions.findOne(actionId)
   if action? then action else die("Invalid action ID: '#{actionId}'")
 
+# General methods, which should be simulated on the client before being invoked
+# on the server.
 Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
   facebookAuthenticate: (userId, accessToken) ->
@@ -101,7 +103,7 @@ Meteor.methods
         die("Invalid access token!")
       this.setUserId(responseUserId)
     else
-      # Don't need to check the user ID on the client
+      # No need to validate requested User ID on the client
       this.setUserId(userId)
 
   # Logs the user in based on an anonymous user ID.
@@ -199,22 +201,31 @@ Meteor.methods
     noughts.Games.update gameId,
       $set: {requestId: requestId}
 
-  # If the current user is not present in game.players (and the game is not
-  # full), add her to the player list.
-  addPlayerIfNotPresent: (gameId) ->
-    if Meteor.isServer
-      # Server-only since the game won't be loaded yet on the client
+# Server-only methods (generally, things which won't work on the client because
+# the data isn't in scope yet).
+if Meteor.isServer
+  Meteor.methods
+    # Given a string containing a Facebook request ID, return the ID of the game
+    # to load for this request ID. Also adds the current player as a participant
+    # in the game if they are not already present via addPlayerIfNotPresent.
+    facebookJoinViaRequestId: (requestId) ->
+      game = noughts.Games.findOne {requestId: requestId}
+      die("Game not found for requestId: " + requestId) unless game?
+      Meteor.call("addPlayerIfNotPresent", game._id)
+      return game._id
+
+    # If the current user is not present in game.players (and the game is not
+    # full), add her to the player list.
+    addPlayerIfNotPresent: (gameId) ->
       game = getGame(gameId)
       if (game.players.length < noughts.Config.maxPlayers and
           not _.contains(game.players, this.userId))
         noughts.Games.update gameId,
           $push: {players: this.userId}
 
-  # Checks that a game exists based on its ID and that the current user is a
-  # participant in it.
-  validateGameId: (gameId) ->
-    if Meteor.isServer
-      # Server-only since the game won't be loaded yet on the client
+    # Checks that a game exists based on its ID and that the current user is a
+    # participant in it.
+    validateGameId: (gameId) ->
       noughts.Games.findOne(gameId)
 
 # Returns a 2-dimensional array of *submitted* game actions spatially indexed

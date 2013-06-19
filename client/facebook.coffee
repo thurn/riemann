@@ -6,15 +6,11 @@
 # If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
-getOathUrl = (requestIds) ->
-  url = "https://www.facebook.com/dialog/oauth/?" +
-      "client_id=#{noughts.ClientConfig.appId}" +
-      "&scope=email,read_stream"
-  if requestIds
-    url += "&redirect_uri=#{noughts.ClientConfig.appUrl}?request_ids=#{requestIds}"
-  else
-    url += "&redirect_uri=#{noughts.ClientConfig.appUrl}"
-  url
+getOathUrl = (redirectPath) ->
+  "https://www.facebook.com/dialog/oauth/?" +
+  "client_id=#{noughts.ClientConfig.appId}" +
+  "&scope=read_stream"
+  "&redirect_uri=#{noughts.ClientConfig.appUrl}#{redirectPath}"
 
 Template.facebook.created = ->
   window.fbAsyncInit = ->
@@ -31,10 +27,9 @@ Template.facebook.created = ->
         requestIds = $.url().param("request_ids")
         if requestIds
           # If there's a request ID, get user to auth with facebook
-          top.location.href = getOathUrl(requestIds)
+          top.location.href = getOathUrl("?request_ids=#{requestIds}")
         else
           # Otherwise, continue in the no-facebook state
-          Session.set("useFacebook", false)
           uuid = $.cookie("noughtsUuid")
           unless uuid
             uuid = Meteor.uuid()
@@ -49,7 +44,7 @@ Template.facebook.created = ->
         userId = response.authResponse.userID
         Meteor.call "facebookAuthenticate", userId, accessToken, (err) ->
           if err then throw err
-          Session.set("useFacebook", true)
+          Session.set("facebookConnected", true)
           noughts.maybeInitialize()
 
   ref = document.getElementsByTagName('script')[0]
