@@ -356,3 +356,6 @@ setStateFromUrl = ->
         # "clone" the game.
         noughts.state.changeState(noughts.state.PLAY,
             noughts.state.UrlBehavior.PRESERVE_URL)
+
+Meteor.startup ->
+  $(".chzn-select").chosen()
