@@ -76,10 +76,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   width: device-width;
 }
 
-.nDefaultFont {
+.nDefaultFont () {
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
+  color: #eee;
 }
 
 .nSmallFont {
@@ -102,9 +103,7 @@ body {
 .btn {
   border-radius: 0;
   border-color: #aaaaaa;
-  line-height: 1.1;
-  font-size: @defaultFontSize;
-  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+  .nDefaultFont();
 }
 
 .nWrapper {
@@ -112,6 +111,7 @@ body {
   overflow: hidden;
   position: relative;
   width: 100%;
+  .nDefaultFont();
 }
 
 .nNavigation {
