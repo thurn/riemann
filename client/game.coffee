@@ -19,9 +19,10 @@ gameResources = [
 SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
 
 noughts.state =
-  PLAY:          me.state.PLAY
+  PLAY: me.state.PLAY
   INITIAL_PROMO: me.state.USER + 0 # Initial game description state
   NEW_GAME_MENU: me.state.USER + 1 # Game state for showing new game menu
+  FACEBOOK_INVITE: me.state.USER + 2 # Game state for showing new game menu
 
 # Changes the current game state to 'newState'. The optional "urlBehavior"
 # parameter shoud be a noughts.state.UrlBehavior, and the browser URL will be
@@ -53,6 +54,7 @@ noughts.state.hasPreviousState = ->
 # the behavior requested in the 'urlBehavior' parameter (a
 # noughts.state.UrlBehavior).
 noughts.state.updateUrl = (path, urlBehavior) ->
+  # TODO(dthurn): No point in doing this if we're inside the Facebook iframe
   if urlBehavior == noughts.state.UrlBehavior.PUSH_URL
     window.history.pushState({}, "", path)
   # state.UrlBehavior.PRESERVE_URL is a no-op.
@@ -62,6 +64,7 @@ noughts.state.updateUrl = (path, urlBehavior) ->
 noughts.state.back = ->
   unless noughts.state.hasPreviousState()
     displayError("Tried to invoke state.back() with no more states available")
+  # TODO(dthurn): Make this work inside the Facebook iframe.
   window.history.back()
 
 # Pops up an alert to the user saying that an error has occurred. Should be used
@@ -152,14 +155,20 @@ noughts.NewGameMenu = me.ScreenObject.extend
 
     $(".nUrlInviteButton").on("click",
         _.bind(this.handleUrlInviteButtonClick_, this))
-    $(".nFacebookInviteButton").on("click",
-        _.bind(this.handleFacebookInviteButtonClick_, this))
+    $(".nFacebookInviteButton").on("click", =>
+      noughts.state.changeState(noughts.state.FACEBOOK_INVITE))
 
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/new", urlBehavior)
     $(".nGame").children().hide()
     $(".nNewGameMenu").show()
     $(".nGame").css({border: ""})
+
+noughts.FacebookInviteMenu = me.ScreenObject.extend
+  onResetEvent: (urlBehavior) ->
+    noughts.state.updateUrl("/facebookInvite", urlBehavior)
+    $(".nGame").children().hide()
+    $(".nFacebookInviteMenu").show()
 
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = me.ScreenObject.extend
@@ -174,7 +183,7 @@ noughts.InitialPromo = me.ScreenObject.extend
     $(".nNewGamePromo").show()
 
 # The main screen used for actually playing the game.
-PlayScreen = me.ScreenObject.extend
+noughts.PlayScreen = me.ScreenObject.extend
   init: ->
     $(".nSubmitButton").on "click", ->
       Meteor.call("submitCurrentAction", Session.get("gameId"))
@@ -254,25 +263,6 @@ PlayScreen = me.ScreenObject.extend
       Meteor.autorun =>
         this.autorun_()
 
-# Handles a click on the "new game" button by popping up an invite dialog
-handleNewGameClickOld = ->
-  Meteor.call "newGame", (err, gameId) ->
-    if err? then throw err
-    if Session.get("useFacebook")
-      showFacebookInviteDialog (inviteResponse) ->
-        return unless inviteResponse?
-        invitedUser = inviteResponse.to[0]
-        requestId = inviteResponse.request
-        Meteor.call("facebookSetRequestId", gameId, requestId, (err) ->
-          if err? then throw err
-          Session.set("gameId", gameId)
-          noughts.state.changeState(noughts.state.PLAY))
-    else
-      # TODO(dthurn): Display regular invite dialog
-      Session.set("gameId", gameId)
-      $(".nNewGameModal").modal()
-      #noughts.state.changeState(noughts.state.PLAY)
-
 # Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
@@ -287,9 +277,10 @@ initialize = ->
 # Functions to run as soon as possible on startup. Defines the state map
 # and adds a melonjs callback.
 Meteor.startup ->
-  me.state.set(noughts.state.PLAY, new PlayScreen())
+  me.state.set(noughts.state.PLAY, new noughts.PlayScreen())
   me.state.set(noughts.state.NEW_GAME_MENU, new noughts.NewGameMenu())
   me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
+  me.state.set(noughts.state.FACEBOOK_INVITE, new noughts.FacebookInviteMenu())
   window.onReady -> initialize()
 
 # Callback for when the user's games are retrieved from the server. Sets up
@@ -338,6 +329,9 @@ setStateFromUrl = ->
       noughts.state.changeState(noughts.state.PLAY)
   else if path == "new"
     noughts.state.changeState(noughts.state.NEW_GAME_MENU,
+        noughts.state.UrlBehavior.PRESERVE_URL)
+  else if path == "facebookInvite"
+    noughts.state.changeState(noughts.state.FACEBOOK_INVITE,
         noughts.state.UrlBehavior.PRESERVE_URL)
   else if path == ""
     # TODO(dthurn): If the user is logged in, display their game list instead
