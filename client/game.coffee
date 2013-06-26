@@ -74,15 +74,35 @@ displayError = (msg) ->
   alert("ERROR: " + msg)
   throw new Error(msg)
 
-# Returns a list of the user IDs of the current user's Facebook friends, sorted
-# first by whether or not they have the application installed and then by mutual
-# friend count.
-getSuggestedFriends = ->
-  return [] unless noughts.mutualFriends_ and noughts.appInstalled_
-  installed = _.filter(noughts.mutualFriends_, (x) -> noughts.appInstalled_[x.uid])
-  notInstalled = _.filter(noughts.mutualFriends_, (x) ->
-      not noughts.appInstalled_[x.uid])
-  return _.pluck(installed.concat(notInstalled), "uid")
+# Will be resolved with a list of the user IDs of the current user's Facebook
+# friends, sorted first by whether or not they have the application installed
+# and then by mutual friend count. cacheSuggestedFriends() must be called to
+# get the results.
+suggestedFriendsDeferred = $.Deferred()
+
+# Kicks off fetches to resolve suggestedFriendsDeferred. Can be safely called
+# multiple times without duplicating fetches.
+cacheSuggestedFriends = _.once ->
+  mutualFriendsDeferred = $.Deferred()
+  appInstallersDeferred = $.Deferred()
+  fql = "SELECT uid,mutual_friend_count,name FROM user WHERE uid IN " +
+      "( SELECT uid2 FROM friend WHERE uid1=me() )"
+  FB.api {method: "fql.query", query: fql}, (result) ->
+    sortedList = _.sortBy result, (x) ->
+      -1 * parseInt(x["mutual_friend_count"], 10)
+    mutualFriendsDeferred.resolve(sortedList)
+  FB.api "/me/friends?fields=installed", (result) ->
+    installed = _.filter(result.data, (x) -> x.installed)
+    installedMap = _.object(_.pluck(installed, "id"),
+        _.pluck(installed, "installed"))
+    appInstallersDeferred.resolve(installedMap)
+  promise = $.when(mutualFriendsDeferred, appInstallersDeferred)
+  promise.done (mutualFriends, appInstallers) ->
+    installed = _.filter(mutualFriends, (x) -> appInstallers[x.uid])
+    notInstalled = _.filter(mutualFriends, (x) ->
+        not appInstallers[x.uid])
+    suggestedFriendsDeferred.resolve(installed.concat(notInstalled))
+  null # No return value
 
 # If 'enabled' is true, removes the 'disabled' attribute on the provided
 # (jquery-wrapped) element, otherwise adds it.
@@ -137,13 +157,14 @@ noughts.NewGameMenu = me.ScreenObject.extend
           noughts.state.changeState(noughts.state.PLAY))
 
   handleFacebookInviteButtonClick_: ->
-      if err? then throw err
       if Session.get("facebookConnected")
-        this.newGameViaFacebook_()
+        cacheSuggestedFriends()
+        noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
       else
         FB.login (response) =>
           if response.authResponse
-            this.newGameViaFacebook_()
+            Session.set("facebookConnected", true)
+            noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
         , {scope: 'read_stream'}
 
   init: ->
@@ -155,8 +176,8 @@ noughts.NewGameMenu = me.ScreenObject.extend
 
     $(".nUrlInviteButton").on("click",
         _.bind(this.handleUrlInviteButtonClick_, this))
-    $(".nFacebookInviteButton").on("click", =>
-      noughts.state.changeState(noughts.state.FACEBOOK_INVITE))
+    $(".nFacebookInviteButton").on("click",
+        _.bind(this.handleFacebookInviteButtonClick_, this))
 
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/new", urlBehavior)
@@ -169,6 +190,9 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     $(".nGame").children().hide()
     $(".nFacebookInviteMenu").show()
+    suggestedFriendsDeferred.done (suggestedFriends) ->
+      # http://graph.facebook.com/{id}/picture?type=square
+      debugger
 
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = me.ScreenObject.extend
@@ -263,6 +287,8 @@ noughts.PlayScreen = me.ScreenObject.extend
       Meteor.autorun =>
         this.autorun_()
 
+noughts.melonDeferred = $.Deferred()
+
 # Initializer to be called after the DOM ready even to set up MelonJS.
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
@@ -271,7 +297,8 @@ initialize = ->
   if not initialized
     displayError("Sorry, your browser doesn't support HTML 5 canvas!")
     return
-  me.loader.onload = noughts.maybeInitialize
+  me.loader.onload = ->
+    noughts.melonDeferred.resolve()
   me.loader.preload(gameResources)
 
 # Functions to run as soon as possible on startup. Defines the state map
@@ -282,6 +309,10 @@ Meteor.startup ->
   me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
   me.state.set(noughts.state.FACEBOOK_INVITE, new noughts.FacebookInviteMenu())
   window.onReady -> initialize()
+  $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
+    # Facebook & Melon both loaded
+    cacheSuggestedFriends() if Session.get("facebookConnected")
+    Meteor.subscribe("myGames", onSubscribe)
 
 # Callback for when the user's games are retrieved from the server. Sets up
 # some reactive functions and handles facebook ?request_ids params
@@ -294,26 +325,6 @@ onSubscribe = ->
   setStateFromUrl()
   $(window).on "popstate", ->
     setStateFromUrl()
-
-# Kick off some fetches now for friend ranking data to use later in the
-# invite dialog
-cacheFacebookData = ->
-  fql = "SELECT uid,mutual_friend_count FROM user WHERE uid IN " +
-      "( SELECT uid2 FROM friend WHERE uid1=me() )"
-  FB.api {method: "fql.query", query: fql}, (result) ->
-    noughts.mutualFriends_ = _.sortBy result, (x) ->
-      -1 * parseInt(x["mutual_friend_count"], 10)
-  FB.api "/me/friends?fields=installed", (result) ->
-    installed = _.filter(result.data, (x) -> x.installed)
-    noughts.appInstalled_ = _.object(_.pluck(installed, "id"),
-        _.pluck(installed, "installed"))
-
-# Only runs the second time it's called, to ensure both facebook and melon.js
-# are loaded. Kicks off Meteor subscriptions and makes some exploratory Facebook
-# API calls.
-noughts.maybeInitialize = _.after 2, ->
-  cacheFacebookData() if Session.get("facebookConnected")
-  Meteor.subscribe("myGames", onSubscribe)
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->

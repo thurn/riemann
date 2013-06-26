@@ -12,6 +12,8 @@ getOathUrl = (redirectPath) ->
   "&scope=read_stream"
   "&redirect_uri=#{noughts.ClientConfig.appUrl}#{redirectPath}"
 
+noughts.facebookDeferred = $.Deferred()
+
 Template.facebook.created = ->
   window.fbAsyncInit = ->
     # Init the FB JS SDK
@@ -36,7 +38,7 @@ Template.facebook.created = ->
             $.cookie("noughtsUuid", uuid, {expires: 7300})
           Meteor.call "anonymousAuthenticate", uuid, (err) ->
             if err then throw err
-            noughts.maybeInitialize()
+            noughts.facebookDeferred.resolve()
       else
         # TODO(dthurn): If there's a pre-existing anonymous cookie, upgrade
         # all references to it to use the Facebook ID instead.
@@ -45,7 +47,7 @@ Template.facebook.created = ->
         Meteor.call "facebookAuthenticate", userId, accessToken, (err) ->
           if err then throw err
           Session.set("facebookConnected", true)
-          noughts.maybeInitialize()
+          noughts.facebookDeferred.resolve()
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')
