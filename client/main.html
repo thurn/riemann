@@ -61,7 +61,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
           </div>
           {{> newGamePromo}}
           {{> newGameMenu}}
-          {{> facebookInviteMenu}}
+          <div class="nFacebookInviteMenu"></div>
         </div> <!--/nGame-->
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
@@ -122,9 +122,17 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="facebookInviteMenu">
-  <div class="nFacebookInviteMenu">
-    facebook invite menu
-  </div>
+  <select multiple="true" class="nFacebookFriendSelect">
+    <option value=""></option>
+    {{#each suggestedFriends}}
+      <option value="{{this.uid}}">{{this.name}}</option>
+    {{/each}}
+  </select>
+</template>
+
+<template name="facebookFriend">
+  <img src="https://graph.facebook.com/{{uid}}/picture?type=square" />
+  <strong>{{name}}</strong>
 </template>
 
 <template name="gameUrl">

@@ -78,13 +78,14 @@ displayError = (msg) ->
 # friends, sorted first by whether or not they have the application installed
 # and then by mutual friend count. cacheSuggestedFriends() must be called to
 # get the results.
-suggestedFriendsDeferred = $.Deferred()
 
 # Kicks off fetches to resolve suggestedFriendsDeferred. Can be safely called
 # multiple times without duplicating fetches.
-cacheSuggestedFriends = _.once ->
+buildSuggestedFriends = _.once ->
   mutualFriendsDeferred = $.Deferred()
   appInstallersDeferred = $.Deferred()
+  suggestedFriendsDeferred = $.Deferred()
+
   fql = "SELECT uid,mutual_friend_count,name FROM user WHERE uid IN " +
       "( SELECT uid2 FROM friend WHERE uid1=me() )"
   FB.api {method: "fql.query", query: fql}, (result) ->
@@ -101,7 +102,15 @@ cacheSuggestedFriends = _.once ->
     installed = _.filter(mutualFriends, (x) -> appInstallers[x.uid])
     notInstalled = _.filter(mutualFriends, (x) ->
         not appInstallers[x.uid])
-    suggestedFriendsDeferred.resolve(installed.concat(notInstalled))
+    suggestedFriends = installed.concat(notInstalled)
+    $(".nFacebookInviteMenu").html(
+        Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
+    selectFormatter = (option) ->
+      Template.facebookFriend({name: option.text, uid: option.id})
+    $(".nFacebookFriendSelect").select2
+      allowClear: true
+      placeholder: "Select an opponent"
+      formatResult: selectFormatter
   null # No return value
 
 # If 'enabled' is true, removes the 'disabled' attribute on the provided
@@ -158,7 +167,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
 
   handleFacebookInviteButtonClick_: ->
       if Session.get("facebookConnected")
-        cacheSuggestedFriends()
+        buildSuggestedFriends()
         noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
       else
         FB.login (response) =>
@@ -190,9 +199,6 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     $(".nGame").children().hide()
     $(".nFacebookInviteMenu").show()
-    suggestedFriendsDeferred.done (suggestedFriends) ->
-      # http://graph.facebook.com/{id}/picture?type=square
-      debugger
 
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = me.ScreenObject.extend
@@ -311,7 +317,7 @@ Meteor.startup ->
   window.onReady -> initialize()
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
     # Facebook & Melon both loaded
-    cacheSuggestedFriends() if Session.get("facebookConnected")
+    buildSuggestedFriends() if Session.get("facebookConnected")
     Meteor.subscribe("myGames", onSubscribe)
 
 # Callback for when the user's games are retrieved from the server. Sets up
