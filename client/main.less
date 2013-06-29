@@ -80,7 +80,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   font-size: @defaultFontSize;
   font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
   line-height: 1.1;
-  color: #eee;
+  //color: #eee;
 }
 
 .nSmallFont {
@@ -195,6 +195,10 @@ body {
   padding-left: 5rem;
 }
 
+.nSmallInviteButton {
+  background-image: none;
+}
+
 .nMenuButtonIcon {
   position: absolute;
   left: 2rem;
@@ -227,6 +231,8 @@ body {
 
 .nFacebookInviteMenu {
   display: none;
+  position: relative;
+  .centeredBlock(33.4rem, 35rem);
 }
 
 .nNewGameMenuHeader {
@@ -251,7 +257,16 @@ body {
 }
 
 .nFacebookFriendSelect {
-  width: 20rem;
+  width: 25rem;
+}
+
+.select2-results {
+  max-height: 25rem;
+}
+
+.select2-search-choice {
+  // Man, why would you hardcode a value for this select2.js
+  line-height: inherit !important;
 }
 
 // Mobile-only styles

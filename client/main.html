@@ -122,12 +122,19 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="facebookInviteMenu">
+  <div class="nNewGameMenuHeader">
+    Invite via Facebook:
+  </div>
   <select multiple="true" class="nFacebookFriendSelect">
     <option value=""></option>
     {{#each suggestedFriends}}
       <option value="{{this.uid}}">{{this.name}}</option>
     {{/each}}
   </select>
+  <button type="button" class="btn nSmallButton">
+    <i class="icon-facebook-sign"></i>
+    <span class="nMenuButtonText">Invite</span>
+  </button>
 </template>
 
 <template name="facebookFriend">
