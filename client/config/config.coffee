@@ -7,7 +7,7 @@
 ###
 
 isLocalhost = window.location.href.indexOf("localhost") != -1
-devUrl = "http://apps.facebook.com/noughts-dev/"
+devUrl = "http://localhost:3000/"
 prodUrl = "https://apps.facebook.com/noughts/"
 
 noughts.ClientConfig = {}

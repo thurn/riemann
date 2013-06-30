@@ -131,15 +131,15 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       <option value="{{this.uid}}">{{this.name}}</option>
     {{/each}}
   </select>
-  <button type="button" class="btn nSmallButton">
+  <button type="button" class="btn nSmallButton nSmallFacebookInviteButton">
     <i class="icon-facebook-sign"></i>
-    <span class="nMenuButtonText">Invite</span>
+    <span class="nMenuButtonText">Send Invite</span>
   </button>
 </template>
 
 <template name="facebookFriend">
   <img src="https://graph.facebook.com/{{uid}}/picture?type=square" />
-  <strong>{{name}}</strong>
+  <strong class="nFacebookFriendName">{{name}}</strong>
 </template>
 
 <template name="gameUrl">

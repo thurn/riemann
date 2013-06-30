@@ -107,7 +107,7 @@ buildSuggestedFriends = _.once ->
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
     $(".nFacebookFriendSelect").select2
       allowClear: true
-      placeholder: "Select an opponent"
+      placeholder: "Enter opponent's name"
       formatResult: (option) ->
         Template.facebookFriend({name: option.text, uid: option.id})
       maximumSelectionSize: 1
@@ -117,7 +117,6 @@ buildSuggestedFriends = _.once ->
       formatSelection: (option, container) ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
-    $(".nFacebookFriendSelect").select2("open")
   null
 
 # If 'enabled' is true, removes the 'disabled' attribute on the provided
@@ -181,7 +180,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
           if response.authResponse
             Session.set("facebookConnected", true)
             noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
-        , {scope: 'read_stream'}
+        , {redirect_uri: noughts.appUrl + "facebookInvite"}
 
   init: ->
     $(".nNewGameMenuCloseButton").on "click", =>
@@ -206,7 +205,6 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     $(".nGame").children().hide()
     $(".nFacebookInviteMenu").show()
-    $(".nFacebookFriendSelect").select2("open")
 
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = me.ScreenObject.extend

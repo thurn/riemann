@@ -9,7 +9,6 @@
 getOathUrl = (redirectPath) ->
   "https://www.facebook.com/dialog/oauth/?" +
   "client_id=#{noughts.ClientConfig.appId}" +
-  "&scope=read_stream"
   "&redirect_uri=#{noughts.ClientConfig.appUrl}#{redirectPath}"
 
 noughts.facebookDeferred = $.Deferred()
