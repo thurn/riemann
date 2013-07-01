@@ -74,10 +74,27 @@ displayError = (msg) ->
   alert("ERROR: " + msg)
   throw new Error(msg)
 
+facebookInviteCallback = (inviteResponse) ->
+  return unless inviteResponse?
+  Meteor.call "newGame", (err, gameId) ->
+    invitedUser = inviteResponse.to[0]
+    requestId = inviteResponse.request
+    Meteor.call("facebookSetRequestId", gameId, requestId, (err) =>
+      if err? then throw err
+      Session.set("gameId", gameId)
+      noughts.state.changeState(noughts.state.PLAY))
 # Will be resolved with a list of the user IDs of the current user's Facebook
 # friends, sorted first by whether or not they have the application installed
 # and then by mutual friend count. cacheSuggestedFriends() must be called to
 # get the results.
+handleSendFacebookInviteClick = (e) ->
+  values = $(".nFacebookFriendSelect").select2("val")
+  die("expected a single value") if values.length != 1
+  FB.ui
+    method: "apprequests",
+    title: "Invite opponent",
+    to: values[0]
+    message: "Want to play some Noughts?", facebookInviteCallback
 
 # Kicks off fetches to resolve suggestedFriendsDeferred. Can be safely called
 # multiple times without duplicating fetches.
@@ -105,6 +122,9 @@ buildSuggestedFriends = _.once ->
     suggestedFriends = installed.concat(notInstalled)
     $(".nFacebookInviteMenu").html(
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
+    $(".nSmallFacebookInviteButton").on("click", handleSendFacebookInviteClick)
+    $(".nFacebookFriendSelect").on "change", (e) ->
+      setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
     $(".nFacebookFriendSelect").select2
       allowClear: true
       placeholder: "Enter opponent's name"
@@ -178,6 +198,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
       else
         FB.login (response) =>
           if response.authResponse
+            buildSuggestedFriends()
             Session.set("facebookConnected", true)
             noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
         , {redirect_uri: noughts.appUrl + "facebookInvite"}
