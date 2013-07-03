@@ -218,6 +218,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/new", urlBehavior)
     $(".nGame").children().hide()
+    $(".nMoveControlsContainer").hide()
     $(".nNewGameMenu").show()
     $(".nGame").css({border: ""})
 
@@ -225,6 +226,7 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     $(".nGame").children().hide()
+    $(".nMoveControlsContainer").hide()
     $(".nFacebookInviteMenu").show()
 
 # The initial promo for non-players that explains what's going on.
@@ -236,6 +238,7 @@ noughts.InitialPromo = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/", urlBehavior)
     $(".nGame").children().hide()
+    $(".nMoveControlsContainer").hide()
     $(".nGame").css({border: ""})
     $(".nNewGamePromo").show()
 
@@ -301,6 +304,7 @@ noughts.PlayScreen = me.ScreenObject.extend
     gameId = Session.get("gameId")
     noughts.state.updateUrl("/#{gameId}", urlBehavior)
     $(".nGame").children().hide()
+    $(".nMoveControlsContainer").show()
     $(".nGame").css({border: "none"})
     $(".nMain canvas").show()
 

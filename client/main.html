@@ -33,24 +33,12 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <span class="nMenuToggleButton">
           <i class="icon-reorder"></i>
         </span>
+        {{> moveControls}}
       </header>
 
       <nav class="nNavigation" role="navigation">
         <img class="nLogo" src="/images/logo300.png" />
-        <div class="nMoveControlsContainer">
-          <button type="button" class="btn nMoveControlButton nUndoButton"
-              disabled="disabled">
-            <i class="icon-undo nMoveControlIcon"></i>Undo
-          </button>
-          <button type="button" class="btn nMoveControlButton nRedoButton"
-              disabled="disabled">
-            <i class="icon-repeat nMoveControlIcon"></i>Redo
-          </button>
-          <button type="button" class="btn nMoveControlButton nSubmitButton"
-              disabled="disabled">
-            <i class="icon-signout nMoveControlIcon"></i>Submit
-          </button>
-        </div>
+        {{> moveControls}}
       </nav>
 
       <div class="nMain" role="main">
@@ -151,4 +139,21 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   {{#constant}}
     <div id="fb-root"></div>
   {{/constant}}
+</template>
+
+<template name="moveControls">
+  <div class="nMoveControlsContainer">
+    <button type="button" class="btn nMoveControlButton nUndoButton"
+        disabled="disabled">
+      <i class="icon-undo nMoveControlIcon"></i>Undo
+    </button>
+    <button type="button" class="btn nMoveControlButton nRedoButton"
+        disabled="disabled">
+      <i class="icon-repeat nMoveControlIcon"></i>Redo
+    </button>
+    <button type="button" class="btn nMoveControlButton nSubmitButton"
+        disabled="disabled">
+      <i class="icon-signout nMoveControlIcon"></i>Submit
+    </button>
+  </div>
 </template>
