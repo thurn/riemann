@@ -90,6 +90,8 @@ facebookInviteCallback = (inviteResponse) ->
 handleSendFacebookInviteClick = (e) ->
   values = $(".nFacebookFriendSelect").select2("val")
   die("expected a single value") if values.length != 1
+  # Safe to turn scaling back on now:
+  Session.set("disableScaling", false)
   FB.ui
     method: "apprequests",
     title: "Invite opponent",
@@ -131,6 +133,7 @@ buildSuggestedFriends = _.once ->
       formatResult: (option) ->
         Template.facebookFriend({name: option.text, uid: option.id})
       maximumSelectionSize: 1
+      minimumInputLength: 2
       formatSelectionTooBig: (maxInvitees) ->
         people = if maxInvitees == 1 then "person" else "people"
         "You can only invite #{maxInvitees} #{people}"
@@ -228,6 +231,9 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
     $(".nGame").children().hide()
     $(".nMoveControlsContainer").hide()
     $(".nFacebookInviteMenu").show()
+    # Scaling tends to mess up on this screen, especially e.g. when the
+    # keyboard pops up on mobile.
+    Session.set("disableScaling", true)
 
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = me.ScreenObject.extend

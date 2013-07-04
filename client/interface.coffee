@@ -92,6 +92,7 @@ setInterfaceModeClass = ->
 # element and by directling applying css scaling transformation to elements
 # with the 'nScale' class.
 scaleInterface = ->
+  return if Session.get("disableScaling")
   setInterfaceModeClass()
   scale = computeScaleFactor()
   $("html").css({"font-size": "#{scale*100}%"})
