@@ -29,6 +29,8 @@ noughts.state =
 # modified accordingly. The default urlBehavior is
 # noughts.state.UrlBehavior.PUSH_URL.
 noughts.state.changeState = (newState, urlBehavior) ->
+  # TODO(dthurn): Handle a "cancle button" type of state transition which
+  # takes the current state out of history.
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
   me.state.change(newState, urlBehavior)
 
@@ -125,6 +127,8 @@ buildSuggestedFriends = _.once ->
     $(".nFacebookInviteMenu").html(
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
     $(".nSmallFacebookInviteButton").on("click", handleSendFacebookInviteClick)
+    $(".nFacebookInviteCancelButton").on "click", ->
+        noughts.state.changeState(noughts.state.NEW_GAME_MENU)
     $(".nFacebookFriendSelect").on "change", (e) ->
       setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
     $(".nFacebookFriendSelect").select2
@@ -227,6 +231,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
 
 noughts.FacebookInviteMenu = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
+    # TODO(dthurn): Log user into facebook here if they aren't yet.
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     $(".nGame").children().hide()
     $(".nMoveControlsContainer").hide()
@@ -368,6 +373,9 @@ onSubscribe = ->
   setStateFromUrl()
   $(window).on "popstate", ->
     setStateFromUrl()
+
+Template.page.games = ->
+  noughts.Games.find()
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->
