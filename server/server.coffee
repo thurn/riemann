@@ -9,6 +9,11 @@
 Meteor.publish "myGames", ->
   noughts.Games.find {players: this.userId}
 
+# TODO(dthurn): Simplify this, maybe split into two subscriptions?
 Meteor.publish "gameActions", (gameId) ->
   noughts.Actions.find
     $and: [{gameId: gameId}, {$or: [{submitted: true}, {player: this.userId}]}]
+
+Meteor.publish "gamePlayers", (gameId) ->
+  game = noughts.Games.findOne(gameId)
+  noughts.Users.find({_id: {$in: game.players}})

@@ -37,6 +37,17 @@
 #       will become active with a "redo".
 # }
 #
+# A User is defined as follows (all fields are optional):
+#
+# User {
+#   _id: (String) User ID
+#   facebookId: (String) User's Facebook ID
+#   fullName: (String) User's full name
+#   firstName: (String) User's first name
+#   gender: (String) User's gender
+#   anonymousHash: (String) SHA3 hash of user's anonymous identifier
+# }
+#
 # By convention, players[0] is the game initiator and the "x" player, while
 # players[1] is the "o" player.
 #
@@ -50,6 +61,7 @@
 
 noughts.Games = new Meteor.Collection("games")
 noughts.Actions = new Meteor.Collection("actions")
+noughts.Users = new Meteor.Collection("users")
 
 noughts.BadRequestError = (message) ->
   @error = 500
@@ -96,19 +108,32 @@ Meteor.methods
   # Validate that the user has logged in as the Facebook user with ID "userId".
   facebookAuthenticate: (userId, accessToken) ->
     if Meteor.isServer
+      # Only need to validate facebook token on the server
       result = Meteor.http.get "https://graph.facebook.com/me",
           params: {fields: "id", access_token: accessToken}
       responseUserId = JSON.parse(result.content)["id"]
       unless userId and responseUserId and responseUserId == userId
         die("Invalid access token!")
-      this.setUserId(responseUserId)
+
+    user = noughts.Users.findOne({facebookId: userId})
+    if user
+      this.setUserId(user._id)
     else
-      # No need to validate requested User ID on the client
-      this.setUserId(userId)
+      # TODO(dthurn): Store other useful fields from facebook response here
+      newUserId = noughts.Users.insert
+        facebookId: responseUserId
+      this.setUserId(newUserId)
 
   # Logs the user in based on an anonymous user ID.
   anonymousAuthenticate: (uuid) ->
-    this.setUserId(CryptoJS.SHA3(uuid, {outputLength: 256}).toString())
+    hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
+    user = noughts.Users.findOne({anonymousHash: hash})
+    if user
+      this.setUserId(user._id)
+    else
+      newUserId = noughts.Users.insert
+        anonymousHash: hash
+      this.setUserId(newUserId)
 
   # Submits the provided game's current action and swaps the current player.
   # Validates that the current action is a legal one.
