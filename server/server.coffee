@@ -6,14 +6,17 @@
 # If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 ###
 
-Meteor.publish "myGames", ->
-  noughts.Games.find {players: this.userId}
+Meteor.publish "me", ->
+  return [
+    noughts.Games.find({players: this.userId}),
+    noughts.Players.find({_id: this.userId}),
+    noughts.Actions.find({player: this.userId})
+  ]
 
-# TODO(dthurn): Simplify this, maybe split into two subscriptions?
-Meteor.publish "gameActions", (gameId) ->
-  noughts.Actions.find
-    $and: [{gameId: gameId}, {$or: [{submitted: true}, {player: this.userId}]}]
-
-Meteor.publish "gamePlayers", (gameId) ->
+Meteor.publish "game", (gameId) ->
   game = noughts.Games.findOne(gameId)
-  noughts.Users.find({_id: {$in: game.players}})
+  return [
+    noughts.Games.find({_id: gameId})
+    noughts.Players.find({_id: {$in: game.players}}),
+    noughts.Actions.find({$and: [{gameId: gameId}, {submitted: true}]})
+  ]

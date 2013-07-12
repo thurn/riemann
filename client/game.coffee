@@ -330,7 +330,7 @@ noughts.PlayScreen = me.ScreenObject.extend
       if noughts.isLegalCommand(gameId, command)
         Meteor.call("addCommand", gameId, command)
 
-    Meteor.subscribe "gameActions", gameId, (err) =>
+    Meteor.subscribe "game", gameId, (err) =>
       if err? then throw err
       Meteor.autorun =>
         this.autorun_()
@@ -360,7 +360,7 @@ Meteor.startup ->
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
     # Facebook & Melon both loaded
     buildSuggestedFriends() if Session.get("facebookConnected")
-    Meteor.subscribe("myGames", onSubscribe)
+    Meteor.subscribe("me", onSubscribe)
 
 # Callback for when the user's games are retrieved from the server. Sets up
 # some reactive functions and handles facebook ?request_ids params

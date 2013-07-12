@@ -37,14 +37,14 @@
 #       will become active with a "redo".
 # }
 #
-# A User is defined as follows (all fields are optional):
+# A Player is defined as follows (all fields are optional):
 #
-# User {
-#   _id: (String) User ID
-#   facebookId: (String) User's Facebook ID
-#   fullName: (String) User's full name
-#   firstName: (String) User's first name
-#   gender: (String) User's gender
+# Player {
+#   _id: (String) Player ID
+#   facebookId: (String) Player's Facebook ID
+#   fullName: (String) Player's full name
+#   firstName: (String) Player's first name
+#   gender: (String) Player's gender
 #   anonymousHash: (String) SHA3 hash of user's anonymous identifier
 # }
 #
@@ -61,7 +61,7 @@
 
 noughts.Games = new Meteor.Collection("games")
 noughts.Actions = new Meteor.Collection("actions")
-noughts.Users = new Meteor.Collection("users")
+noughts.Players = new Meteor.Collection("players")
 
 noughts.BadRequestError = (message) ->
   @error = 500
@@ -105,35 +105,10 @@ getAction = (actionId) ->
 # General methods, which should be simulated on the client before being invoked
 # on the server.
 Meteor.methods
-  # Validate that the user has logged in as the Facebook user with ID "userId".
-  facebookAuthenticate: (userId, accessToken) ->
-    if Meteor.isServer
-      # Only need to validate facebook token on the server
-      result = Meteor.http.get "https://graph.facebook.com/me",
-          params: {fields: "id", access_token: accessToken}
-      responseUserId = JSON.parse(result.content)["id"]
-      unless userId and responseUserId and responseUserId == userId
-        die("Invalid access token!")
-
-    user = noughts.Users.findOne({facebookId: userId})
-    if user
-      this.setUserId(user._id)
-    else
-      # TODO(dthurn): Store other useful fields from facebook response here
-      newUserId = noughts.Users.insert
-        facebookId: responseUserId
-      this.setUserId(newUserId)
-
-  # Logs the user in based on an anonymous user ID.
-  anonymousAuthenticate: (uuid) ->
-    hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
-    user = noughts.Users.findOne({anonymousHash: hash})
-    if user
-      this.setUserId(user._id)
-    else
-      newUserId = noughts.Users.insert
-        anonymousHash: hash
-      this.setUserId(newUserId)
+  # Sets the current user ID, but only on the client.
+  setClientUserId: (userId) ->
+    if Meteor.isClient
+      this.setUserId(userId)
 
   # Submits the provided game's current action and swaps the current player.
   # Validates that the current action is a legal one.
@@ -230,6 +205,34 @@ Meteor.methods
 # the data isn't in scope yet).
 if Meteor.isServer
   Meteor.methods
+    # Validate that the user has logged in as the Facebook user with ID
+    # "facebookId".
+    facebookAuthenticate: (facebookId, accessToken) ->
+      # Only need to validate facebook token on the server
+      result = Meteor.http.get "https://graph.facebook.com/me",
+          params: {fields: "id", access_token: accessToken}
+      responseUserId = JSON.parse(result.content)["id"]
+      unless facebookId and responseUserId and responseUserId == facebookId
+        die("Invalid access token!")
+
+      userId = noughts.Players.findOne({facebookId: facebookId})?._id
+      unless userId
+        # TODO(dthurn): Store other useful fields from facebook response here
+        userId = noughts.Players.insert
+          facebookId: responseUserId
+      this.setUserId(userId)
+      return userId
+
+    # Logs the user in based on an anonymous user ID.
+    anonymousAuthenticate: (uuid) ->
+      hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
+      userId = noughts.Players.findOne({anonymousHash: hash})?._id
+      unless userId
+        userId = noughts.Players.insert
+          anonymousHash: hash
+      this.setUserId(userId)
+      return userId
+
     # Given a string containing a Facebook request ID, return the ID of the game
     # to load for this request ID. Also adds the current player as a participant
     # in the game if they are not already present via addPlayerIfNotPresent.
