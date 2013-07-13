@@ -43,8 +43,8 @@
 #   _id: (String) Player ID
 #   facebookId: (String) Player's Facebook ID
 #   fullName: (String) Player's full name
-#   firstName: (String) Player's first name
-#   gender: (String) Player's gender
+#   givenName: (String) Player's given name
+#   gender: (String) Player's gender, either "male" or "female"
 #   anonymousHash: (String) SHA3 hash of user's anonymous identifier
 # }
 #
@@ -210,8 +210,11 @@ if Meteor.isServer
     facebookAuthenticate: (facebookId, accessToken) ->
       # Only need to validate facebook token on the server
       result = Meteor.http.get "https://graph.facebook.com/me",
-          params: {fields: "id", access_token: accessToken}
-      responseUserId = JSON.parse(result.content)["id"]
+          params:
+            fields: "id,name,first_name,gender"
+            access_token: accessToken
+      response = JSON.parse(result.content)
+      responseUserId = response["id"]
       unless facebookId and responseUserId and responseUserId == facebookId
         die("Invalid access token!")
 
@@ -220,6 +223,9 @@ if Meteor.isServer
         # TODO(dthurn): Store other useful fields from facebook response here
         userId = noughts.Players.insert
           facebookId: responseUserId
+          givenName: response["first_name"]
+          fullName: response["name"]
+          gender: response["gender"]
       this.setUserId(userId)
       return userId
 
