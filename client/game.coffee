@@ -199,15 +199,19 @@ noughts.NewGameMenu = me.ScreenObject.extend
           noughts.state.changeState(noughts.state.PLAY))
 
   handleFacebookInviteButtonClick_: ->
-      if Session.get("facebookConnected")
+      if Session.get("facebookProfile")
         buildSuggestedFriends()
         noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
       else
         FB.login (response) =>
           if response.authResponse
-            buildSuggestedFriends()
-            Session.set("facebookConnected", true)
-            noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
+            token = response.authResponse.accessToken
+            fbid = response.authResponse.userID
+            Meteor.call "facebookAuthenticate", fbid, token, (err, profile) ->
+              if err then throw err
+              Session.set("facebookProfile", profile)
+              buildSuggestedFriends()
+              noughts.state.changeState(noughts.state.FACEBOOK_INVITE)
         , {redirect_uri: noughts.appUrl + "facebookInvite"}
 
   init: ->
@@ -359,7 +363,7 @@ Meteor.startup ->
   window.onReady -> initialize()
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
     # Facebook & Melon both loaded
-    buildSuggestedFriends() if Session.get("facebookConnected")
+    buildSuggestedFriends() if Session.get("facebookProfile")
     Meteor.subscribe("me", onSubscribe)
 
 # Callback for when the user's games are retrieved from the server. Sets up

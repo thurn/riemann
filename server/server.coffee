@@ -9,7 +9,6 @@
 Meteor.publish "me", ->
   return [
     noughts.Games.find({players: this.userId}),
-    noughts.Players.find({_id: this.userId}),
     noughts.Actions.find({player: this.userId})
   ]
 
@@ -17,6 +16,5 @@ Meteor.publish "game", (gameId) ->
   game = noughts.Games.findOne(gameId)
   return [
     noughts.Games.find({_id: gameId})
-    noughts.Players.find({_id: {$in: game.players}}),
     noughts.Actions.find({$and: [{gameId: gameId}, {submitted: true}]})
   ]

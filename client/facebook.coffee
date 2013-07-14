@@ -24,7 +24,16 @@ Template.facebook.created = ->
       cookie: true, # set sessions cookies to allow your server to access the session?
       xfbml: true  # parse XFBML tags on this page?
     FB.getLoginStatus (response) ->
-      if response.status != 'connected'
+      if response.status == 'connected'
+        # TODO(dthurn): If there's a pre-existing anonymous cookie, upgrade
+        # all references to it to use the Facebook ID instead.
+        accessToken = response.authResponse.accessToken
+        fbid = response.authResponse.userID
+        Meteor.call "facebookAuthenticate", fbid, accessToken, (err, profile) ->
+          if err then throw err
+          Session.set("facebookProfile", profile)
+          noughts.facebookDeferred.resolve()
+      else
         requestIds = $.url().param("request_ids")
         if requestIds
           # If there's a request ID, get user to auth with facebook
@@ -35,21 +44,7 @@ Template.facebook.created = ->
           unless uuid
             uuid = Meteor.uuid()
             $.cookie("noughtsUuid", uuid, {expires: 7300})
-          Meteor.call "anonymousAuthenticate", uuid, (err, userId) ->
-            if err then throw err
-            Meteor.call "setClientUserId", userId, (err) ->
-              if err then throw err
-              noughts.facebookDeferred.resolve()
-      else
-        # TODO(dthurn): If there's a pre-existing anonymous cookie, upgrade
-        # all references to it to use the Facebook ID instead.
-        accessToken = response.authResponse.accessToken
-        fbid = response.authResponse.userID
-        Meteor.call "facebookAuthenticate", fbid, accessToken, (err, userId) ->
-          if err then throw err
-          Meteor.call "setClientUserId", userId, (err) ->
-            if err then throw err
-            Session.set("facebookConnected", true)
+          Meteor.call "anonymousAuthenticate", uuid, (err) ->
             noughts.facebookDeferred.resolve()
 
   ref = document.getElementsByTagName('script')[0]

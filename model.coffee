@@ -14,6 +14,8 @@
 # Game {
 #   _id: (String) Game ID
 #   players: ([String]) List of player IDs in this game
+#   profiles: (Map<String, Profile>) A mapping from player IDs to profile
+#       information about the player, such
 #   currentPlayer: (Integer) Index of current player in the player list
 #   actions: [String] List of action IDs of the actions in this game.
 #   currentAction: (String) ID of action currently being constructed, or null if
@@ -37,17 +39,6 @@
 #       will become active with a "redo".
 # }
 #
-# A Player is defined as follows (all fields are optional):
-#
-# Player {
-#   _id: (String) Player ID
-#   facebookId: (String) Player's Facebook ID
-#   fullName: (String) Player's full name
-#   givenName: (String) Player's given name
-#   gender: (String) Player's gender, either "male" or "female"
-#   anonymousHash: (String) SHA3 hash of user's anonymous identifier
-# }
-#
 # By convention, players[0] is the game initiator and the "x" player, while
 # players[1] is the "o" player.
 #
@@ -61,7 +52,6 @@
 
 noughts.Games = new Meteor.Collection("games")
 noughts.Actions = new Meteor.Collection("actions")
-noughts.Players = new Meteor.Collection("players")
 
 noughts.BadRequestError = (message) ->
   @error = 500
@@ -105,10 +95,32 @@ getAction = (actionId) ->
 # General methods, which should be simulated on the client before being invoked
 # on the server.
 Meteor.methods
-  # Sets the current user ID, but only on the client.
-  setClientUserId: (userId) ->
-    if Meteor.isClient
-      this.setUserId(userId)
+  # Validate that the user has logged in as the Facebook user with ID
+  # "facebookId". On the server, returns a hash of profile information about
+  # the facebook user.
+  facebookAuthenticate: (facebookId, accessToken) ->
+    if Meteor.isServer
+      # Only need to validate facebook token on the server
+      result = Meteor.http.get "https://graph.facebook.com/me",
+          params:
+            fields: "id,name,first_name,gender"
+            access_token: accessToken
+      response = JSON.parse(result.content)
+      responseUserId = response["id"]
+      unless facebookId and responseUserId and responseUserId == facebookId
+        die("Invalid access token!")
+      profile =
+        givenName: response["first_name"]
+        fullName: response["name"]
+        gender: response["gender"]
+
+    this.setUserId(facebookId)
+    if profile? then return profile
+
+  # Logs the user in based on an anonymous user ID.
+  anonymousAuthenticate: (uuid) ->
+    hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
+    this.setUserId(hash)
 
   # Submits the provided game's current action and swaps the current player.
   # Validates that the current action is a legal one.
@@ -205,40 +217,6 @@ Meteor.methods
 # the data isn't in scope yet).
 if Meteor.isServer
   Meteor.methods
-    # Validate that the user has logged in as the Facebook user with ID
-    # "facebookId".
-    facebookAuthenticate: (facebookId, accessToken) ->
-      # Only need to validate facebook token on the server
-      result = Meteor.http.get "https://graph.facebook.com/me",
-          params:
-            fields: "id,name,first_name,gender"
-            access_token: accessToken
-      response = JSON.parse(result.content)
-      responseUserId = response["id"]
-      unless facebookId and responseUserId and responseUserId == facebookId
-        die("Invalid access token!")
-
-      userId = noughts.Players.findOne({facebookId: facebookId})?._id
-      unless userId
-        # TODO(dthurn): Store other useful fields from facebook response here
-        userId = noughts.Players.insert
-          facebookId: responseUserId
-          givenName: response["first_name"]
-          fullName: response["name"]
-          gender: response["gender"]
-      this.setUserId(userId)
-      return userId
-
-    # Logs the user in based on an anonymous user ID.
-    anonymousAuthenticate: (uuid) ->
-      hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
-      userId = noughts.Players.findOne({anonymousHash: hash})?._id
-      unless userId
-        userId = noughts.Players.insert
-          anonymousHash: hash
-      this.setUserId(userId)
-      return userId
-
     # Given a string containing a Facebook request ID, return the ID of the game
     # to load for this request ID. Also adds the current player as a participant
     # in the game if they are not already present via addPlayerIfNotPresent.
