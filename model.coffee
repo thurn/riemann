@@ -110,6 +110,7 @@ Meteor.methods
       unless facebookId and responseUserId and responseUserId == facebookId
         die("Invalid access token!")
       profile =
+        facebookId: facebookId
         givenName: response["first_name"]
         fullName: response["name"]
         gender: response["gender"]
@@ -196,13 +197,18 @@ Meteor.methods
       $pop: {futureCommands: 1}
 
   # Partially create a new game with no opponent specified yet, returning the
-  # game ID.
-  newGame: ->
-    noughts.Games.insert
+  # game ID. The optional "userProfile" parameter should be the profile of the
+  # current user.
+  newGame: (userProfile) ->
+    game =
       players: [this.userId]
       currentPlayer: noughts.X_PLAYER
       actions: []
+      profiles: {}
       currentAction: null
+    if userProfile?
+      game.profiles[this.userId] = userProfile
+    noughts.Games.insert(game)
 
   # Stores a facebook request ID with a game so that somebody invited via
   # Facebook can later find the game.
@@ -219,21 +225,27 @@ if Meteor.isServer
   Meteor.methods
     # Given a string containing a Facebook request ID, return the ID of the game
     # to load for this request ID. Also adds the current player as a participant
-    # in the game if they are not already present via addPlayerIfNotPresent.
-    facebookJoinViaRequestId: (requestId) ->
+    # in the game if they are not already present via addPlayerIfNotPresent. The
+    # optional "userProfile" parameter should container a profile for the
+    # current user.
+    facebookJoinViaRequestId: (requestId, userProfile) ->
       game = noughts.Games.findOne {requestId: requestId}
       die("Game not found for requestId: " + requestId) unless game?
-      Meteor.call("addPlayerIfNotPresent", game._id)
+      Meteor.call("addPlayerIfNotPresent", game._id, userProfile)
       return game._id
 
     # If the current user is not present in game.players (and the game is not
-    # full), add her to the player list.
-    addPlayerIfNotPresent: (gameId) ->
+    # full), add her to the player list. The optional "userProfile" parameter
+    # should contain a profile for the current user.
+    addPlayerIfNotPresent: (gameId, userProfile) ->
       game = getGame(gameId)
       if (game.players.length < noughts.Config.maxPlayers and
           not _.contains(game.players, this.userId))
-        noughts.Games.update gameId,
-          $push: {players: this.userId}
+        update = {$push: {players: this.userId}}
+        if userProfile?
+          update["$set"] = {}
+          update["$set"]["profiles.#{this.userId}"] = userProfile
+        noughts.Games.update(gameId, update)
 
     # Checks that a game exists based on its ID and that the current user is a
     # participant in it.

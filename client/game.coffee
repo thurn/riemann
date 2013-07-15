@@ -78,13 +78,14 @@ displayError = (msg) ->
 
 facebookInviteCallback = (inviteResponse) ->
   return unless inviteResponse?
-  Meteor.call "newGame", (err, gameId) ->
+  Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
     invitedUser = inviteResponse.to[0]
     requestId = inviteResponse.request
     Meteor.call("facebookSetRequestId", gameId, requestId, (err) =>
       if err? then throw err
       Session.set("gameId", gameId)
       noughts.state.changeState(noughts.state.PLAY))
+
 # Will be resolved with a list of the user IDs of the current user's Facebook
 # friends, sorted first by whether or not they have the application installed
 # and then by mutual friend count. cacheSuggestedFriends() must be called to
@@ -175,8 +176,8 @@ displayNotice = (msg) -> $(".nNotification").text(msg)
 # The "new game" menu
 noughts.NewGameMenu = me.ScreenObject.extend
   handleUrlInviteButtonClick_: ->
-    Meteor.call "newGame", (err, gameId) ->
-      if err? then throw err
+    Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
+      if err? then throw er
       Session.set("gameId", gameId)
       $(".nBubble").show()
       $(".nDarkenScreen").show()
@@ -184,19 +185,6 @@ noughts.NewGameMenu = me.ScreenObject.extend
         $(".nBubble").hide()
         $(".nDarkenScreen").hide()
       noughts.state.changeState(noughts.state.PLAY)
-
-  # Creates a new game and prompts the user to pick an opponent from their
-  # Facbook friends.
-  newGameViaFacebook_: ->
-    Meteor.call "newGame", (err, gameId) =>
-      showFacebookInviteDialog (inviteResponse) =>
-        return unless inviteResponse?
-        invitedUser = inviteResponse.to[0]
-        requestId = inviteResponse.request
-        Meteor.call("facebookSetRequestId", gameId, requestId, (err) =>
-          if err? then throw err
-          Session.set("gameId", gameId)
-          noughts.state.changeState(noughts.state.PLAY))
 
   handleFacebookInviteButtonClick_: ->
       if Session.get("facebookProfile")
@@ -389,7 +377,9 @@ setStateFromUrl = ->
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
       FB.api(fullId, "delete", ->)
-    Meteor.call "facebookJoinViaRequestId", _.last(requestIds), (err, gameId) ->
+    id = _.last(requestIds)
+    profile = Session.get("facebookProfile")
+    Meteor.call "facebookJoinViaRequestId", id, profile, (err, gameId) ->
       if err? then throw err
       Session.set("gameId", gameId)
       noughts.state.changeState(noughts.state.PLAY)
@@ -409,7 +399,8 @@ setStateFromUrl = ->
       if err? then throw err
       displayError("Error: Game not found.") unless gameExists
       Session.set("gameId", path)
-      Meteor.call "addPlayerIfNotPresent", path, (err) ->
+      profile = Session.get("facebookProfile")
+      Meteor.call "addPlayerIfNotPresent", path, profile, (err) ->
         if err? then throw err
         # TODO(dthurn): Show some kind of message if the game is full and the
         # viewer is only a spectator, allowing the viewer to watch or perhaps

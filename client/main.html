@@ -37,12 +37,14 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </header>
 
       <nav class="nNavigation" role="navigation">
-        <!--<img class="nLogo" src="/images/logo300.png" />-->
+        <img class="nLogo" src="/images/logo300.png" />
         <div class="nNavigationMoveControls">
           {{> moveControls}}
         </div>
         {{#each games}}
-          Game: {{this._id}}
+          <div class="nGameListing">
+            Game: {{this._id}}
+          </div>
         {{/each}}
       </nav>
 
