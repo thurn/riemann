@@ -367,7 +367,7 @@ onSubscribe = ->
     setStateFromUrl()
 
 Template.page.games = ->
-  noughts.Games.find()
+  noughts.Games.find({}, {sort: {lastModified: -1}})
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->

@@ -150,8 +150,11 @@ Meteor.methods
     game = getGame(gameId)
     ensureIsCurrentPlayer(game)
     die("Illegal command!") unless noughts.isLegalCommand(gameId, command)
+    timestamp = new Date().toISOString()
 
     if game.currentAction?
+      noughts.Games.update gameId,
+        $set: {lastModified: timestamp}
       noughts.Actions.update game.currentAction,
         $push: {commands: command}
         $set: {futureCommands: []}
@@ -163,7 +166,7 @@ Meteor.methods
         commands: [command]
         futureCommands: []
       noughts.Games.update gameId,
-        $set: {currentAction: actionId}
+        $set: {currentAction: actionId, lastModified: timestamp}
         $push: {actions: actionId}
 
   # Un-does the last command in this game's current action.
@@ -206,6 +209,7 @@ Meteor.methods
       actions: []
       profiles: {}
       currentAction: null
+      lastModified: new Date().toISOString()
     if userProfile?
       game.profiles[this.userId] = userProfile
     noughts.Games.insert(game)
