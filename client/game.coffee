@@ -367,7 +367,23 @@ onSubscribe = ->
     setStateFromUrl()
 
 Template.page.games = ->
-  noughts.Games.find({}, {sort: {lastModified: -1}})
+  getRenderingData = (game) ->
+    notViewerId = (id) -> id != Meteor.userId()
+    opponentId = _.find(game.players, notViewerId)
+    opponentProfile = game.profiles[opponentId]
+
+    return {
+      hasOpponent: opponentId?
+      opponentId: opponentId
+      opponentHasProfile: opponentProfile?
+      opponentProfile: opponentProfile
+      opponentPhoto:
+          "https://graph.facebook.com/#{opponentId}/picture?type=square"
+      lastModified: $.timeago(new Date(game.lastModified))
+    }
+
+  return noughts.Games.find({}, {sort: {lastModified: -1}})
+      .map(getRenderingData)
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->
