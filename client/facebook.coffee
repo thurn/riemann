@@ -13,6 +13,15 @@ getOathUrl = (redirectPath) ->
 
 noughts.facebookDeferred = $.Deferred()
 
+anonymousAuthenticate = ->
+  # Otherwise, continue in the no-facebook state
+  uuid = $.cookie("noughtsUuid")
+  unless uuid
+    uuid = Meteor.uuid()
+    $.cookie("noughtsUuid", uuid, {expires: 7300})
+  Meteor.call "anonymousAuthenticate", uuid, (err) ->
+    noughts.facebookDeferred.resolve()
+
 Template.facebook.created = ->
   window.fbAsyncInit = ->
     # Init the FB JS SDK
@@ -39,13 +48,7 @@ Template.facebook.created = ->
           # If there's a request ID, get user to auth with facebook
           top.location.href = getOathUrl("?request_ids=#{requestIds}")
         else
-          # Otherwise, continue in the no-facebook state
-          uuid = $.cookie("noughtsUuid")
-          unless uuid
-            uuid = Meteor.uuid()
-            $.cookie("noughtsUuid", uuid, {expires: 7300})
-          Meteor.call "anonymousAuthenticate", uuid, (err) ->
-            noughts.facebookDeferred.resolve()
+          anonymousAuthenticate()
 
   ref = document.getElementsByTagName('script')[0]
   if document.getElementById('facebook-jssdk')
@@ -55,3 +58,11 @@ Template.facebook.created = ->
   js.async = true
   js.src = '//connect.facebook.net/en_US/all.js'
   ref.parentNode.insertBefore(js, ref)
+
+Meteor.startup ->
+  # Add a timeout in case facebook loading fails
+  facebookFallback = ->
+    unless noughts.facebookDeferred.state() == "resolved"
+      anonymousAuthenticate()
+      noughts.facebookDeferred.resolve()
+  setTimeout(facebookFallback, 5000)
