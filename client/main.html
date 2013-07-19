@@ -43,22 +43,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         </div>
         {{#each games}}
           <div class="nGameListing">
-            {{#if this.hasOpponent}}
-              {{#if this.opponentHasProfile}}
-                <img class="nGameListProfilePicture"
-                    src="{{this.opponentPhoto}}" />
-                <div class="nGameListDescription">
-                  Game vs. {{this.opponentProfile.givenName}}
-                  <div class="nGameLastModifiedTime">
-                    Updated {{this.lastModified}}
-                  </div>
-                </div>
-              {{else}}
-                anonymous opponent
-              {{/if}}
-            {{else}}
-              no opponent
-            {{/if}}
+            Game: {{this._id}}
           </div>
         {{/each}}
       </nav>
