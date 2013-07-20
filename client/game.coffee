@@ -369,6 +369,9 @@ onSubscribe = ->
 Template.page.games = ->
   noughts.Games.find({}, {sort: {lastModified: -1}})
 
+Template.page.renderGame = (game) ->
+
+
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->
   requestIds = $.url().param("request_ids")?.split(",")

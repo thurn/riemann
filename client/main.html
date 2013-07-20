@@ -43,7 +43,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         </div>
         {{#each games}}
           <div class="nGameListing">
-            Game: {{this._id}}
+            {{renderGame this}}
           </div>
         {{/each}}
       </nav>
@@ -61,6 +61,10 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
+</template>
+
+<template name="game">
+
 </template>
 
 <template name="newGamePromo">
