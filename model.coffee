@@ -150,7 +150,7 @@ Meteor.methods
     game = getGame(gameId)
     ensureIsCurrentPlayer(game)
     die("Illegal command!") unless noughts.isLegalCommand(gameId, command)
-    timestamp = new Date().toISOString()
+    timestamp = new Date().getTime()
 
     if game.currentAction?
       noughts.Games.update gameId,
@@ -209,7 +209,7 @@ Meteor.methods
       actions: []
       profiles: {}
       currentAction: null
-      lastModified: new Date().toISOString()
+      lastModified: new Date().getTime()
     if userProfile?
       game.profiles[this.userId] = userProfile
     noughts.Games.insert(game)

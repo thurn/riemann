@@ -43,7 +43,24 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         </div>
         {{#each games}}
           <div class="nGameListing">
-            {{renderGame this}}
+            {{#renderGame this}}
+              {{#if hasOpponent}}
+                {{#if opponentHasProfile}}
+                  <img class="nGameListProfilePicture"
+                      src="{{opponentPhoto}}" />
+                  <div class="nGameListDescription">
+                    Game vs. {{opponentProfile.givenName}}
+                    <div class="nGameLastModifiedTime">
+                      Updated {{lastModified}}
+                    </div>
+                  </div>
+                {{else}}
+                  anonymous opponent
+                {{/if}}
+              {{else}}
+                no opponent
+              {{/if}}
+            {{/renderGame}}
           </div>
         {{/each}}
       </nav>
@@ -61,10 +78,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
-</template>
-
-<template name="game">
-
 </template>
 
 <template name="newGamePromo">
