@@ -37,7 +37,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </header>
 
       <nav class="nNavigation" role="navigation">
-        <!-- <img class="nLogo" src="/images/logo300.png" /> -->
+        <img class="nLogo" src="/images/logo300.png" />
         <div class="nNavigationMoveControls">
           {{> moveControls}}
         </div>
@@ -58,7 +58,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
                   anonymous opponent
                 {{/if}}
               {{else}}
-                no opponent
+                <i class="icon-minus-sign icon-2x nGameListIcon"></i>
+                <div class="nGameListDescription">
+                  Game with no Opponent
+                  <div class="nGameLastModifiedTime">
+                    Updated {{lastModified}}
+                  </div>
+                </div>
               {{/if}}
             {{/renderGame}}
           </div>

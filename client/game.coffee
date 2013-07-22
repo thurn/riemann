@@ -367,7 +367,7 @@ onSubscribe = ->
     setStateFromUrl()
 
 Template.page.games = ->
-  noughts.Games.find({}, {sort: {lastModified: -1}})
+  noughts.Games.find({}, {sort: {lastModified: 1}})
 
 Template.page.renderGame = (game, options) ->
   notViewerId = (id) -> id != Meteor.userId()
