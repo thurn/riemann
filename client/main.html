@@ -49,18 +49,24 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
                   <img class="nGameListProfilePicture"
                       src="{{opponentPhoto}}" />
                   <div class="nGameListDescription">
-                    Game vs. {{opponentProfile.givenName}}
+                    <a href="/{{gameId}}">Game vs. {{opponentProfile.givenName}}</a>
                     <div class="nGameLastModifiedTime">
                       Updated {{lastModified}}
                     </div>
                   </div>
                 {{else}}
-                  anonymous opponent
+                  <span class="nGameListIcon"><i class="icon-user icon-2x"></i></span>
+                  <div class="nGameListDescription">
+                    <a href="/{{gameId}}">Game vs. Anonymous</a>
+                    <div class="nGameLastModifiedTime">
+                      Updated {{lastModified}}
+                    </div>
+                  </div>
                 {{/if}}
               {{else}}
-                <i class="icon-minus-sign icon-2x nGameListIcon"></i>
+                <span class="nGameListIcon"><i class="icon-minus-sign icon-2x"></i></span>
                 <div class="nGameListDescription">
-                  Game with no Opponent
+                  <a href="/{{gameId}}">Game - No Opponent</a>
                   <div class="nGameLastModifiedTime">
                     Updated {{lastModified}}
                   </div>
