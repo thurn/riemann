@@ -374,14 +374,15 @@ Template.page.renderGame = (game, options) ->
   opponentId = _.find(game.players, notViewerId)
   opponentProfile = game.profiles[opponentId]
   options.fn
-     gameId: game._id
-     hasOpponent: opponentId?
-     opponentId: opponentId
-     opponentHasProfile: opponentProfile?
-     opponentProfile: opponentProfile
-     opponentPhoto:
-         "https://graph.facebook.com/#{opponentId}/picture?type=square"
-     lastModified: $.timeago(new Date(game.lastModified))
+    gameId: game._id
+    isCurrentGame: game._id == Session.get("gameId")
+    hasOpponent: opponentId?
+    opponentId: opponentId
+    opponentHasProfile: opponentProfile?
+    opponentProfile: opponentProfile
+    opponentPhoto:
+        "https://graph.facebook.com/#{opponentId}/picture?type=square"
+    lastModified: $.timeago(new Date(game.lastModified))
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->

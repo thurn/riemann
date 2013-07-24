@@ -42,14 +42,18 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
           {{> moveControls}}
         </div>
         {{#each games}}
-          <div class="nGameListing">
-            {{#renderGame this}}
+          {{#renderGame this}}
+            <div class="nGameListing {{#if isCurrentGame}}nCurrentGame{{/if}}">
               {{#if hasOpponent}}
                 {{#if opponentHasProfile}}
                   <img class="nGameListProfilePicture"
                       src="{{opponentPhoto}}" />
                   <div class="nGameListDescription">
-                    <a href="/{{gameId}}">Game vs. {{opponentProfile.givenName}}</a>
+                    {{#if isCurrentGame}}
+                      <strong>Game vs. {{opponentProfile.givenName}}</strong>
+                    {{else}}
+                      <a href="/{{gameId}}">Game vs. {{opponentProfile.givenName}}</a>
+                    {{/if}}
                     <div class="nGameLastModifiedTime">
                       Updated {{lastModified}}
                     </div>
@@ -57,7 +61,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
                 {{else}}
                   <span class="nGameListIcon"><i class="icon-user icon-2x"></i></span>
                   <div class="nGameListDescription">
-                    <a href="/{{gameId}}">Game vs. Anonymous</a>
+                    {{#if isCurrentGame}}
+                      <strong>Game vs. Anonymous</strong>
+                    {{else}}
+                      <a href="/{{gameId}}">Game vs. Anonymous</a>
+                    {{/if}}
                     <div class="nGameLastModifiedTime">
                       Updated {{lastModified}}
                     </div>
@@ -66,14 +74,18 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
               {{else}}
                 <span class="nGameListIcon"><i class="icon-minus-sign icon-2x"></i></span>
                 <div class="nGameListDescription">
-                  <a href="/{{gameId}}">Game - No Opponent</a>
+                  {{#if isCurrentGame}}
+                    <strong>Game - No Opponent</strong>
+                  {{else}}
+                    <a href="/{{gameId}}">Game - No Opponent</a>
+                  {{/if}}
                   <div class="nGameLastModifiedTime">
                     Updated {{lastModified}}
                   </div>
                 </div>
               {{/if}}
-            {{/renderGame}}
-          </div>
+            </div>
+          {{/renderGame}}
         {{/each}}
       </nav>
 
