@@ -63,6 +63,7 @@ Meteor.startup ->
   # Add a timeout in case facebook loading fails
   facebookFallback = ->
     unless noughts.facebookDeferred.state() == "resolved"
+      console.log("Facebook loading FAILED")
       anonymousAuthenticate()
       noughts.facebookDeferred.resolve()
   setTimeout(facebookFallback, 5000)

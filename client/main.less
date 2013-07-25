@@ -281,13 +281,26 @@ body {
 
 .nGameListing {
   padding: 0.5rem 0 0.5rem 0.5rem;
+  cursor: pointer;
+  border-style: solid;
+  border-width: 0 0.3125rem 0 0.3125rem;
+  border-color: #f5f5f5;
+}
+
+.nGameList:hover .nCurrentGame {
+  background: #f5f5f5;
+}
+
+.nGameList:hover .nCurrentGame:hover {
+  background: #ffffff;
+}
+
+.nGameListing:hover {
+  background: #ffffff;
 }
 
 .nCurrentGame {
   background: #ffffff;
-  border-style: solid;
-  border-width: 0 0.3125rem 0 0.3125rem;
-  border-color: #f5f5f5;
 }
 
 .nGameListProfilePicture {
