@@ -366,6 +366,10 @@ onSubscribe = ->
   $(window).on "popstate", ->
     setStateFromUrl()
 
+  $(".nGameList").on "click", ".nGameListing", (event) ->
+    event.preventDefault()
+    debugger
+
 Template.page.games = ->
   noughts.Games.find({}, {sort: {lastModified: -1}})
 
