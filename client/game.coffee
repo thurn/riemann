@@ -69,6 +69,11 @@ noughts.state.back = ->
   # TODO(dthurn): Make this work inside the Facebook iframe.
   window.history.back()
 
+# Loads the game with the specified ID
+playGame = (gameId) ->
+  Session.set("gameId", gameId)
+  noughts.state.changeState(noughts.state.PLAY)
+
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
 displayError = (msg) ->
@@ -81,10 +86,9 @@ facebookInviteCallback = (inviteResponse) ->
   Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
     invitedUser = inviteResponse.to[0]
     requestId = inviteResponse.request
-    Meteor.call("facebookSetRequestId", gameId, requestId, (err) =>
+    Meteor.call "facebookSetRequestId", gameId, requestId, (err) =>
       if err? then throw err
-      Session.set("gameId", gameId)
-      noughts.state.changeState(noughts.state.PLAY))
+      playGame(gameId)
 
 # Will be resolved with a list of the user IDs of the current user's Facebook
 # friends, sorted first by whether or not they have the application installed
@@ -178,13 +182,12 @@ noughts.NewGameMenu = me.ScreenObject.extend
   handleUrlInviteButtonClick_: ->
     Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
       if err? then throw er
-      Session.set("gameId", gameId)
       $(".nBubble").show()
       $(".nDarkenScreen").show()
       $(".nOkUrlCalloutButton").on "click", ->
         $(".nBubble").hide()
         $(".nDarkenScreen").hide()
-      noughts.state.changeState(noughts.state.PLAY)
+      playGame(gameId)
 
   handleFacebookInviteButtonClick_: ->
       if Session.get("facebookProfile")
@@ -368,7 +371,7 @@ onSubscribe = ->
 
   $(".nGameList").on "click", ".nGameListing", (event) ->
     event.preventDefault()
-    debugger
+    playGame($(this).attr("gameId"))
 
 Template.page.games = ->
   noughts.Games.find({}, {sort: {lastModified: -1}})
@@ -400,8 +403,7 @@ setStateFromUrl = ->
     profile = Session.get("facebookProfile")
     Meteor.call "facebookJoinViaRequestId", id, profile, (err, gameId) ->
       if err? then throw err
-      Session.set("gameId", gameId)
-      noughts.state.changeState(noughts.state.PLAY)
+      playGame(gameId)
   else if path == "new"
     noughts.state.changeState(noughts.state.NEW_GAME_MENU,
         noughts.state.UrlBehavior.PRESERVE_URL)
