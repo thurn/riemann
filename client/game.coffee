@@ -373,10 +373,10 @@ onSubscribe = ->
     event.preventDefault()
     playGame($(this).attr("gameId"))
 
-Template.page.games = ->
+Template.gameList.games = ->
   noughts.Games.find({}, {sort: {lastModified: -1}})
 
-Template.page.renderGame = (game, options) ->
+Template.gameList.renderGame = (game, options) ->
   notViewerId = (id) -> id != Meteor.userId()
   opponentId = _.find(game.players, notViewerId)
   opponentProfile = game.profiles[opponentId]

@@ -41,53 +41,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <div class="nNavigationMoveControls">
           {{> moveControls}}
         </div>
-        <div class="nGameList">
-          {{#each games}}
-            {{#renderGame this}}
-              <div class="nGameListing {{#if isCurrentGame}}nCurrentGame{{/if}}"
-                  gameId={{gameId}}>
-                {{#if hasOpponent}}
-                  {{#if opponentHasProfile}}
-                    <img class="nGameListProfilePicture"
-                        src="{{opponentPhoto}}" />
-                  {{else}}
-                    <span class="nGameListIcon">
-                      <i class="icon-user icon-2x"></i>
-                    </span>
-                  {{/if}}
-                {{else}}
-                  <span class="nGameListIcon">
-                    <i class="icon-minus-sign icon-2x"></i>
-                  </span>
-                {{/if}}
-                <div class="nGameListDescription">
-                  {{#if isCurrentGame}}
-                    <strong>
-                  {{else}}
-                    <a href="/{{gameId}}">
-                  {{/if}}
-                  {{#if hasOpponent}}
-                    {{#if opponentHasProfile}}
-                      Game vs. {{opponentProfile.givenName}}
-                    {{else}}
-                      Game vs. Anonymous
-                    {{/if}}
-                  {{else}}
-                    Game - No Opponent
-                  {{/if}}
-                  {{#if isCurrentGame}}
-                    </strong>
-                  {{else}}
-                    </a>
-                  {{/if}}
-                  <div class="nGameLastModifiedTime">
-                    Updated {{lastModified}}
-                  </div>
-                </div>
-              </div>
-            {{/renderGame}}
-          {{/each}}
-        </div>
+        {{> gameList}}
       </nav>
 
       <div class="nMain" role="main">
@@ -103,6 +57,66 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
+</template>
+
+<template name="gameList">
+  <div class="nGameList">
+    <div class="nGameListing">
+      <span class="nGameListIcon">
+        <i class="icon-play icon-2x"></i>
+      </span>
+      <div class="nGameListDescription nGameListingOneLine">
+        <a href="/new">New Game</a>
+      </div>
+    </div>
+    {{#each games}}
+      {{#renderGame this}}
+        <div class="nGameListing {{#if isCurrentGame}}nCurrentGame{{/if}}"
+            gameId={{gameId}}>
+          {{#if hasOpponent}}
+            {{#if opponentHasProfile}}
+              <img class="nGameListProfilePicture"
+                  src="{{opponentPhoto}}" />
+            {{else}}
+              <span class="nGameListIcon">
+                <i class="icon-user icon-2x"></i>
+              </span>
+            {{/if}}
+          {{else}}
+            <span class="nGameListIcon">
+              <i class="icon-minus-sign icon-2x"></i>
+            </span>
+          {{/if}}
+          <div class="nGameListDescription">
+            {{#if isCurrentGame}}
+              <strong>
+            {{else}}
+              <a href="/{{gameId}}">
+            {{/if}}
+            {{#if hasOpponent}}
+              {{#if opponentHasProfile}}
+                Game vs. {{opponentProfile.givenName}}
+              {{else}}
+                Game vs. Anonymous
+              {{/if}}
+            {{else}}
+              Game - No Opponent
+            {{/if}}
+            {{#if isCurrentGame}}
+              </strong>
+            {{else}}
+              </a>
+            {{/if}}
+            <div class="nGameLastModifiedTime">
+              Updated {{lastModified}}
+            </div>
+          </div>
+          <i class="icon-remove nResignGameButton"></i>
+          <span class="nResignTooltip">Leave Game</span>
+        </div>
+      {{/renderGame}}
+    {{/each}}
+  </div>
 </template>
 
 <template name="newGamePromo">

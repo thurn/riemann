@@ -228,6 +228,12 @@ body {
   padding-left: 0;
 }
 
+.nNavNewGameButton {
+  border: 0;
+  box-shadow: none;
+  margin-bottom: 1rem;
+}
+
 .nNewGameMenu {
   display: none;
   .centeredBlock(@navigationWidth, @menuButtonHeight * 6);
@@ -292,11 +298,17 @@ body {
 
 .nGameListing {
   padding: 0.5rem 0 0.5rem 0.5rem;
+  margin: 0.5rem 0 0.5rem 0;
   cursor: pointer;
   border-style: solid;
   border-width: 0 0.3125rem 0 0.3125rem;
   border-color: #f5f5f5;
   transition: background 0.3s;
+  height: 3.125rem;
+}
+
+.nGameListingOneLine {
+  line-height: 3.125rem;
 }
 
 .nGameListing a {
@@ -311,7 +323,7 @@ body {
   background: #ffffff;
 }
 
-.nGameListing:hover a {
+.nGameListDescription:hover a {
   color: #005580;
   text-decoration: underline;
 }
@@ -337,6 +349,29 @@ body {
   vertical-align: top;
 }
 
+.nResignGameButton {
+  position: absolute;
+  right: 0;
+  height: 3.125rem;
+  width: 2rem;
+}
+
+nav .nResignGameButton {
+  opacity: 0;
+}
+
+.nCurrentGame .nResignGameButton {
+  opacity: 1;
+}
+
+.nGameList:hover .nResignGameButton {
+  opacity: 0;
+}
+
+.nGameListing:hover .nResignGameButton {
+  opacity: 1;
+}
+
 .nGameListDescription {
   display: inline-block;
   margin-left: 0.5rem;
@@ -346,6 +381,39 @@ body {
   font-size: @smallFontSize;
   color: #666;
   font-style: italic
+}
+
+span.nResignTooltip {
+  background: #ccc;
+  border-radius: 3px;
+  box-shadow: rgba(0, 0, 0, 0.01) 1px 1px 2px 0px;
+  display: none;
+  font-size: @smallFontSize;
+  height: 2rem;
+  line-height: 2rem;
+  margin-top: 2.5rem;
+  padding: 0px;
+  position: absolute;
+  right: 0.3125rem;
+  text-align: center;
+  text-shadow: rgba(0, 0, 0, 0.01) 1px 1px 1px;
+  width: 10rem;
+}
+
+span.nResignTooltip:after {
+  border-color: transparent transparent #CCC transparent;
+  border-style: solid;
+  border-width: 0.6rem;
+  content: "";
+  height: 0;
+  left: 8.4rem;
+  position: absolute;
+  top: -1rem;
+  width: 0;
+}
+
+.nResignGameButton:hover + .nResignTooltip {
+  display: inline;
 }
 
 // Mobile-only styles

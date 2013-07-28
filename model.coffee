@@ -211,7 +211,7 @@ Meteor.methods
       currentAction: null
       lastModified: new Date().getTime()
     if userProfile?
-      game.profiles[this.userId] = userProfile
+      game.profiles[userProfile.facebookId] = userProfile
     noughts.Games.insert(game)
 
   # Stores a facebook request ID with a game so that somebody invited via
