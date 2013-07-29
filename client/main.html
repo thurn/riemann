@@ -41,7 +41,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <div class="nNavigationMoveControls">
           {{> moveControls}}
         </div>
-        {{> gameList}}
+        {{> navBody}}
       </nav>
 
       <div class="nMain" role="main">
@@ -57,21 +57,39 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
+  <div class="modal hide fade nResignConfirmModal" tabindex="-1" role="dialog"
+      aria-hidden="true">
+    <div class="modal-header">
+      <h3>Confirm Leaving</h3>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to leave this game?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">
+        Cancel
+      </button>
+      <button class="btn btn-danger nResignConfirmButton">
+        Leave game
+      </button>
+    </div>
+  </div>
 </template>
 
-<template name="gameList">
-  <div class="nGameList">
-    <div class="nGameListing">
+<template name="navBody">
+  <div class="nNavBody">
+    <div class="nNavItem">
       <span class="nGameListIcon">
         <i class="icon-play icon-2x"></i>
       </span>
-      <div class="nGameListDescription nGameListingOneLine">
+      <div class="nGameListDescription nNavNewGameDescription">
         <a href="/new">New Game</a>
       </div>
     </div>
     {{#each games}}
       {{#renderGame this}}
-        <div class="nGameListing {{#if isCurrentGame}}nCurrentGame{{/if}}"
+        <div class="nNavItem nGameListing
+            {{#if isCurrentGame}}nCurrentGame{{/if}}"
             gameId={{gameId}}>
           {{#if hasOpponent}}
             {{#if opponentHasProfile}}
@@ -111,7 +129,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
               Updated {{lastModified}}
             </div>
           </div>
-          <i class="icon-remove nResignGameButton"></i>
+          <i class="icon-remove nResignGameButton" gameId={{gameId}}></i>
           <span class="nResignTooltip">Leave Game</span>
         </div>
       {{/renderGame}}

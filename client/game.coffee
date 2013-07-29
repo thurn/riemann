@@ -369,14 +369,25 @@ onSubscribe = ->
   $(window).on "popstate", ->
     setStateFromUrl()
 
-  $(".nGameList").on "click", ".nGameListing", (event) ->
+  $(".nNavBody").on "click", ".nResignGameButton", (event) ->
+    # Don't navigate to the game in question:
+    event.stopPropagation()
+    # The resign confirm button basically stores whatever gameId was associated
+    # with the last click on a resign button:
+    $(".nResignConfirmButton").attr("gameId", $(this).attr("gameId"))
+    $(".nResignConfirmModal").modal("show")
+
+  $(".nResignConfirmButton").on "click", (event) ->
+    debugger
+
+  $(".nNavBody").on "click", ".nGameListing", (event) ->
     event.preventDefault()
     playGame($(this).attr("gameId"))
 
-Template.gameList.games = ->
+Template.navBody.games = ->
   noughts.Games.find({}, {sort: {lastModified: -1}})
 
-Template.gameList.renderGame = (game, options) ->
+Template.navBody.renderGame = (game, options) ->
   notViewerId = (id) -> id != Meteor.userId()
   opponentId = _.find(game.players, notViewerId)
   opponentProfile = game.profiles[opponentId]
