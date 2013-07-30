@@ -285,7 +285,7 @@ noughts.PlayScreen = me.ScreenObject.extend
     noughts.Actions.find({gameId: gameId}).forEach (action) =>
       for command in action.commands
         tile = @mainLayer_.layerData[command.column][command.row]
-        isX = action.player == game.players[noughts.X_PLAYER]
+        isX = action.playerNumber == noughts.X_PLAYER
         image = if isX then @xImg_ else @oImg_
         sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
         me.game.add(sprite, SPRITE_Z_INDEX)

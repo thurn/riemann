@@ -13,10 +13,16 @@
 #
 # Game {
 #   _id: (String) Game ID
-#   players: ([String]) List of player IDs in this game
+#   players: ([String]) An array of players in the game. The indices in this
+#       array are the player numbers of the different players. A player who
+#       leaves the game will have her entry in this array replaced with "null".
 #   profiles: (Map<String, Profile>) A mapping from player IDs to profile
 #       information about the player, such
-#   currentPlayer: (Integer) Index of current player in the player list
+#   currentPlayerNumber: (Integer) The number of the player whose turn it is,
+#       that is, their index within the players array.
+#   resignedPlayers: ([String]) An array of players who were previously in the
+#       game, but who have subsequently left the game. They might still have
+#       in-game Actions associated with their playerId.
 #   actions: [String] List of action IDs of the actions in this game.
 #   currentAction: (String) ID of action currently being constructed, or null if
 #       no action is under construction. Should never point to a submitted
@@ -28,13 +34,15 @@
 #
 # Action {
 #   _id: (String) Action ID
-#   player: (String) Owner player ID
-#   gameId: (String) Owning game ID
+#   player: (String) The ID of the player who performed this action.
+#   playerNumber: (Integer) The player number within the game of the owning
+#       player.
+#   gameId: (String) The ID of the game in which this action occurred.
 #   submitted: (Boolean) Whether this Action has been submitted. Submitted
 #       actions are visible to all players, un-submitted actions are only
 #       visible to their owner.
 #   commands: [Command] Chronological list of commands making up this action.
-#   futureCommands: [Command] List of commands that have been undone, from
+#   futureCommands: [Command] Array of commands that have been undone, from
 #       oldest to newest, so that the LAST command in this list is the one which
 #       will become active with a "redo".
 # }
@@ -73,8 +81,8 @@ die = (msg) ->
 
 # Returns true if the current user is the current player in the provided game.
 isCurrentPlayer = (game) ->
-  game.currentPlayer? and Meteor.userId() and
-      Meteor.userId() == game.players[game.currentPlayer]
+  game.currentPlayerNumber? and Meteor.userId()? and
+      Meteor.userId() == game.players[game.currentPlayerNumber]
 
 # Ensures that the current user is the current player in the provided game.
 ensureIsCurrentPlayer = (game) ->
@@ -132,8 +140,8 @@ Meteor.methods
     unless noughts.isCurrentActionLegal(gameId)
       die("Illegal action!")
 
-    newPlayerId =
-      if game.currentPlayer == noughts.X_PLAYER
+    newPlayerNumber =
+      if game.currentPlayerNumber == noughts.X_PLAYER
         noughts.O_PLAYER
       else
         noughts.X_PLAYER
@@ -141,7 +149,7 @@ Meteor.methods
     noughts.Actions.update game.currentAction,
       $set: {submitted: true}
     noughts.Games.update gameId,
-      $set: {currentPlayer: newPlayerId, currentAction: null}
+      $set: {currentPlayerNumber: newPlayerNumber, currentAction: null}
 
   # Adds the provided command to the current action's command list. If there is
   # no current action, creates one. Any commands beyond the current location in
@@ -161,6 +169,7 @@ Meteor.methods
     else # Create a new current action for this game
       actionId = noughts.Actions.insert
         player: this.userId
+        playerNumber: game.currentPlayerNumber
         submitted: false
         gameId: gameId
         commands: [command]
@@ -205,7 +214,8 @@ Meteor.methods
   newGame: (userProfile) ->
     game =
       players: [this.userId]
-      currentPlayer: noughts.X_PLAYER
+      currentPlayerNumber: noughts.X_PLAYER
+      resignedPlayers: []
       actions: []
       profiles: {}
       currentAction: null
@@ -222,6 +232,9 @@ Meteor.methods
     die("game is full") if game.players.length >= noughts.Config.maxPlayers
     noughts.Games.update gameId,
       $set: {requestId: requestId}
+
+  # Leave a game.
+  resignGame: (gameId) ->
 
 # Server-only methods (generally, things which won't work on the client because
 # the data isn't in scope yet).
