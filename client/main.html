@@ -38,14 +38,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
       <nav class="nNavigation" role="navigation">
         <img class="nLogo" src="/images/logo300.png" />
-        <div class="nNavigationMoveControls">
-          {{> moveControls}}
-        </div>
         {{> navBody}}
       </nav>
 
       <div class="nMain" role="main">
-        <div class="nNotification"></div>
+        <div class="nDesktopHeader">
+          {{> moveControls}}
+        </div>
         <div class="nGame" id="nIdGame">
           <div class="nLoading">
             Loading...
@@ -54,6 +53,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
           {{> newGameMenu}}
           <div class="nFacebookInviteMenu"></div>
         </div> <!--/nGame-->
+        <div class="nNotification"></div>
       </div> <!--/nMain-->
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
@@ -86,9 +86,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <a href="/new">New Game</a>
       </div>
     </div>
-    <div class="">
-      <span class="nNavigationSectionHeader">Your Move:</span>
-    </div>
+    <div class="nNavigationSectionHeader">Your Move:</div>
     {{#each games}}
       {{#renderGame this}}
         <div class="nNavItem nGameListing
@@ -231,15 +229,15 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   <div class="nMoveControlsContainer">
     <button type="button" class="btn nMoveControlButton nUndoButton"
         disabled="disabled">
-      <i class="icon-undo nMoveControlIcon"></i>Undo
+      <i class="icon-undo"></i>
     </button>
     <button type="button" class="btn nMoveControlButton nRedoButton"
         disabled="disabled">
-      <i class="icon-repeat nMoveControlIcon"></i>Redo
+      <i class="icon-repeat"></i>
     </button>
     <button type="button" class="btn nMoveControlButton nSubmitButton"
         disabled="disabled">
-      <i class="icon-signout nMoveControlIcon"></i>Submit
+      <i class="icon-signout nSubmitIcon"></i>Submit
     </button>
   </div>
 </template>

@@ -137,6 +137,11 @@ body {
   display: none;
 }
 
+.nDesktopHeader {
+  position: absolute;
+  right: 1.1rem;
+}
+
 .nMain {
   background: #fff;
 }
@@ -270,7 +275,7 @@ body {
   margin-right: 0.5rem;
 }
 
-.nMoveControlIcon {
+.nSubmitIcon {
   margin-right: 0.5rem;
 }
 
@@ -394,11 +399,11 @@ nav .nResignGameButton {
 }
 
 .nNavigationSectionHeader {
-  padding: 0 1rem 0 4.85rem;
+  padding: 0 1rem 0 1rem;
+  margin: 0 0.5rem 0.5rem 0.5rem;
   border-width: 0 0 1px 0;
   border-style: solid;
   border-color: #ccc;
-  font-weight: bold;
 }
 
 span.nResignTooltip {
@@ -453,10 +458,6 @@ span.nResignTooltip:after {
     left: -70%;
   }
 
-  .nNavigationMoveControls {
-    display: none;
-  }
-
   .nContainer {
     left: 70%;
   }
@@ -465,6 +466,10 @@ span.nResignTooltip:after {
     position: absolute;
     top: 0;
     left: 0;
+  }
+
+  .nDesktopHeader {
+    display: none;
   }
 
   .nHeader {
