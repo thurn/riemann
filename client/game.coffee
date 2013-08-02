@@ -299,7 +299,7 @@ noughts.PlayScreen = me.ScreenObject.extend
         displayNotice("Sorry, you lose!")
     else if noughts.isDraw(gameId)
       displayNotice("The game is over, and it was a draw!")
-    else if game.players[game.currentPlayer] == Meteor.userId()
+    else if game.players[game.currentPlayerNumber] == Meteor.userId()
       displayNotice("It's your turn. Select a square to make your move.")
     else
       displayNotice("") # Clear any previous note
@@ -382,6 +382,7 @@ onSubscribe = ->
 
   $(".nNavBody").on "click", ".nGameListing", (event) ->
     event.preventDefault()
+    debugger
     playGame($(this).attr("gameId"))
 
 Template.navBody.games = ->
@@ -394,6 +395,7 @@ Template.navBody.renderGame = (game, options) ->
   options.fn
     gameId: game._id
     isCurrentGame: game._id == Session.get("gameId")
+    isMyTurn: game.players[game.currentPlayerNumber] == Meteor.userId()
     hasOpponent: opponentId?
     opponentId: opponentId
     opponentHasProfile: opponentProfile?
