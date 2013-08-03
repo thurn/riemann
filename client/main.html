@@ -86,20 +86,20 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <a href="/new">New Game</a>
       </div>
     </div>
-    <div class="nNavigationSectionHeader">Your Move:</div>
-    {{#each games}}
+    {{#if games.myTurn}}
+      <div class="nNavigationSectionHeader">Your Move:</div>
+    {{/if}}
+    {{#each games.myTurn}}
       {{#renderGame this}}
-        {{#if isMyTurn}}
-          {{> gameListing}}
-        {{/if}}
+        {{> gameListing}}
       {{/renderGame}}
     {{/each}}
-    <div class="nNavigationSectionHeader">Their Move:</div>
-    {{#each games}}
+    {{#if games.theirTurn}}
+      <div class="nNavigationSectionHeader">Their Move:</div>
+    {{/if}}
+    {{#each games.theirTurn}}
       {{#renderGame this}}
-        {{#unless isMyTurn}}
-          {{> gameListing}}
-        {{/unless}}
+        {{> gameListing}}
       {{/renderGame}}
     {{/each}}
   </div>
