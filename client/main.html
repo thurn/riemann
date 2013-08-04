@@ -90,17 +90,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       <div class="nNavigationSectionHeader">Your Move:</div>
     {{/if}}
     {{#each games.myTurn}}
-      {{#renderGame this}}
-        {{> gameListing}}
-      {{/renderGame}}
+      {{> gameListing}}
     {{/each}}
     {{#if games.theirTurn}}
       <div class="nNavigationSectionHeader">Their Move:</div>
     {{/if}}
     {{#each games.theirTurn}}
-      {{#renderGame this}}
-        {{> gameListing}}
-      {{/renderGame}}
+      {{> gameListing}}
     {{/each}}
   </div>
 </template>

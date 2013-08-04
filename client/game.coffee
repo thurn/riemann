@@ -373,12 +373,31 @@ onSubscribe = ->
     debugger
 
 Template.navBody.games = ->
-  games = noughts.Games.find({}, {sort: {lastModified: -1}}).fetch()
+  getGameInfo = (game) ->
+    notViewerId = (id) -> id != Meteor.userId()
+    opponentId = _.find(game.players, notViewerId)
+    opponentProfile = game.profiles[opponentId]
+    return {
+      gameId: game._id
+      players: game.players
+      currentPlayerNumber: game.currentPlayerNumber
+      isCurrentGame: game._id == Session.get("gameId")
+      hasOpponent: opponentId?
+      opponentId: opponentId
+      opponentHasProfile: opponentProfile?
+      opponentProfile: opponentProfile
+      opponentPhoto:
+          "https://graph.facebook.com/#{opponentId}/picture?type=square"
+      lastModified: $.timeago(new Date(game.lastModified))
+    }
+
+  games = noughts.Games.find({}, {sort: {lastModified: -1}}).map(getGameInfo)
   myTurn = (game) -> game.players[game.currentPlayerNumber] == Meteor.userId()
-  return {
+  result = {
     myTurn: _.filter(games, myTurn)
     theirTurn: _.filter(games, (game) -> !myTurn(game))
   }
+  return result
 
 Template.navBody.events {
   "click .nResignGameButton": (event) ->
@@ -390,21 +409,6 @@ Template.navBody.events {
     event.preventDefault()
     playGame($(this).attr("gameId"))
 }
-
-Template.navBody.renderGame = (game, options) ->
-  notViewerId = (id) -> id != Meteor.userId()
-  opponentId = _.find(game.players, notViewerId)
-  opponentProfile = game.profiles[opponentId]
-  options.fn
-    gameId: game._id
-    isCurrentGame: game._id == Session.get("gameId")
-    hasOpponent: opponentId?
-    opponentId: opponentId
-    opponentHasProfile: opponentProfile?
-    opponentProfile: opponentProfile
-    opponentPhoto:
-        "https://graph.facebook.com/#{opponentId}/picture?type=square"
-    lastModified: $.timeago(new Date(game.lastModified))
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = ->
