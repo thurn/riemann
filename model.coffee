@@ -23,11 +23,13 @@
 #   resignedPlayers: ([String]) An array of players who were previously in the
 #       game, but who have subsequently left the game. They might still have
 #       in-game Actions associated with their playerId.
-#   actions: [String] List of action IDs of the actions in this game.
 #   currentAction: (String) ID of action currently being constructed, or null if
 #       no action is under construction. Should never point to a submitted
 #       action.
 #   requestId: (String) Facebook request ID associated with this game
+#   victors: ([String]) List of IDs of the players who won this game. In the
+#       case of a draw, it should contain all of the drawing players. This field
+#       should not be present if the game is still in progress.
 # }
 #
 # An Action is defined as follows:
@@ -145,7 +147,6 @@ Meteor.methods
         noughts.O_PLAYER
       else
         noughts.X_PLAYER
-
     noughts.Actions.update game.currentAction,
       $set: {submitted: true}
     noughts.Games.update gameId,
@@ -176,7 +177,6 @@ Meteor.methods
         futureCommands: []
       noughts.Games.update gameId,
         $set: {currentAction: actionId, lastModified: timestamp}
-        $push: {actions: actionId}
 
   # Un-does the last command in this game's current action.
   undoCommand: (gameId) ->
@@ -216,7 +216,6 @@ Meteor.methods
       players: [this.userId]
       currentPlayerNumber: noughts.X_PLAYER
       resignedPlayers: []
-      actions: []
       profiles: {}
       currentAction: null
       lastModified: new Date().getTime()
@@ -273,15 +272,16 @@ if Meteor.isServer
 # by [column][row], so e.g. table[0][2] is the bottom-left square's action.
 makeActionTable = (gameId) ->
   result = [[], [], []]
-  noughts.Actions.find({gameId: gameId}).forEach (action) ->
-    return unless action.submitted
+  noughts.Actions.find({gameId: gameId, submitted: true}).forEach (action) ->
     for command in action.commands
       result[command.column][command.row] = action
   result
 
 # Checks if somebody has won this game. If they have, returns the winner's
-# user ID. Otherwise, returns false.
-noughts.checkForVictory = (gameId) ->
+# user ID. Otherwise, returns false. If the optional addCurrentAction parameter
+# is passed and set to "true", the check will be made as if the current action
+# were submitted.
+noughts.checkForVictory = (gameId, addCurrentAction) ->
   actionTable = makeActionTable(gameId)
 
   # All possible winning lines in [column, row] format
@@ -298,10 +298,11 @@ noughts.checkForVictory = (gameId) ->
       return action1.player
   false
 
-# Returns true if this game is a draw, otherwise false.
-noughts.isDraw = (gameId) ->
-  game = getGame(gameId)
-  game.actions.length == 9
+# Returns true if this game is a draw, otherwise false. If the optional
+# addCurrentAction parameter is passed and set to "true", the check will
+# be made as if the current action were submitted.
+noughts.isDraw = (gameId, addCurrentAction) ->
+  return noughts.Actions.find({gameId: gameId, submitted: true}).count() == 9
 
 # Checks if the provided command could be legally added to the current action.
 noughts.isLegalCommand = (gameId, command) ->
