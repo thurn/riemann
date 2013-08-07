@@ -19,17 +19,19 @@
 #   profiles: (Map<String, Profile>) A mapping from player IDs to profile
 #       information about the player, such
 #   currentPlayerNumber: (Integer) The number of the player whose turn it is,
-#       that is, their index within the players array.
+#       that is, their index within the players array. Null when the game is not
+#       in progress.
 #   resignedPlayers: ([String]) An array of players who were previously in the
 #       game, but who have subsequently left the game. They might still have
 #       in-game Actions associated with their playerId.
 #   currentAction: (String) ID of action currently being constructed, or null if
-#       no action is under construction. Should never point to a submitted
-#       action.
+#       no action is under construction (or the game is over). Should never
+#       point to a submitted action. Null when the game is not in progress.
 #   requestId: (String) Facebook request ID associated with this game
 #   victors: ([String]) List of IDs of the players who won this game. In the
-#       case of a draw, it should contain all of the drawing players. This field
-#       should not be present if the game is still in progress.
+#       case of a draw, it should contain all of the drawing players. In the
+#       case of a "nobody wins" situation, an empty list should be present. This
+#       field cannot be present on a game which is still in progress.
 # }
 #
 # An Action is defined as follows:
@@ -133,7 +135,8 @@ Meteor.methods
     hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
     this.setUserId(hash)
 
-  # Submits the provided game's current action and swaps the current player.
+  # Submits the provided game's current action. If this ends the game,
+  # populates the "victors" array. Otherwise, changes the current player.
   # Validates that the current action is a legal one.
   submitCurrentAction: (gameId) ->
     game = getGame(gameId)
@@ -142,15 +145,24 @@ Meteor.methods
     unless noughts.isCurrentActionLegal(gameId)
       die("Illegal action!")
 
-    newPlayerNumber =
-      if game.currentPlayerNumber == noughts.X_PLAYER
-        noughts.O_PLAYER
-      else
-        noughts.X_PLAYER
+    isXPlayer = game.currentPlayerNumber == noughts.X_PLAYER
+    newPlayerNumber = if isXPlayer then noughts.O_PLAYER else noughts.X_PLAYER
+
     noughts.Actions.update game.currentAction,
       $set: {submitted: true}
-    noughts.Games.update gameId,
-      $set: {currentPlayerNumber: newPlayerNumber, currentAction: null}
+
+    victors = noughts.getVictors(game)
+
+    if victors == null
+      noughts.Games.update gameId,
+          $set: {currentPlayerNumber: newPlayerNumber, currentAction: null}
+    else
+      # Game over!
+      noughts.Games.update gameId,
+          $set:
+            currentPlayerNumber: null,
+            currentAction: null,
+            victors: victors
 
   # Adds the provided command to the current action's command list. If there is
   # no current action, creates one. Any commands beyond the current location in
@@ -270,7 +282,7 @@ if Meteor.isServer
 
 # Returns a 2-dimensional array of *submitted* game actions spatially indexed
 # by [column][row], so e.g. table[0][2] is the bottom-left square's action.
-makeActionTable = (gameId) ->
+makeActionTable = (gameId, currentActionId) ->
   result = [[], [], []]
   noughts.Actions.find({gameId: gameId, submitted: true}).forEach (action) ->
     for command in action.commands
@@ -298,9 +310,34 @@ noughts.checkForVictory = (gameId, addCurrentAction) ->
       return action1.player
   false
 
-# Returns true if this game is a draw, otherwise false. If the optional
-# addCurrentAction parameter is passed and set to "true", the check will
-# be made as if the current action were submitted.
+# Builds the "victors" array for the game. If the game is over, a list will be
+# returned containing the victorious or drawing players (which may be empty to
+# indicate that "nobody wins"). Otherwise, null is returned.
+noughts.getVictors = (game) ->
+  actionTable = makeActionTable(game._id)
+
+  # All possible winning lines in [column, row] format
+  victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
+      [[0,2], [1,2], [2,2]], [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]],
+      [[2,0], [2,1], [2,2]], [[0,0], [1,1], [2,2]], [[2,0], [1,1], [0,2]] ]
+
+  # Check for winner
+  for line in victoryLines
+    action1 = actionTable[line[0][0]][line[0][1]]
+    action2 = actionTable[line[1][0]][line[1][1]]
+    action3 = actionTable[line[2][0]][line[2][1]]
+    continue unless action1? and action2? and action3?
+    if action1.player == action2.player and action2.player == action3.player
+      return [action1.player]
+
+  # Check for draw
+  if noughts.Actions.find({gameId: game._id, submitted: true}).count() == 9
+    return game.players
+
+  # Game is not ending.
+  return null
+
+# Returns true if this game is a draw, otherwise false.
 noughts.isDraw = (gameId, addCurrentAction) ->
   return noughts.Actions.find({gameId: gameId, submitted: true}).count() == 9
 
