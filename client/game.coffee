@@ -291,13 +291,12 @@ noughts.PlayScreen = me.ScreenObject.extend
         me.game.add(sprite, SPRITE_Z_INDEX)
     me.game.sort()
 
-    winner = noughts.checkForVictory(gameId)
-    if winner
-      if winner == Meteor.userId()
+    if game.victors?.length == 1
+      if game.victors[0] == Meteor.userId()
         displayNotice("Hooray! You win!")
       else
         displayNotice("Sorry, you lose!")
-    else if noughts.isDraw(gameId)
+    else if game.victors?.length == 2
       displayNotice("The game is over, and it was a draw!")
     else if game.players[game.currentPlayerNumber] == Meteor.userId()
       displayNotice("It's your turn. Select a square to make your move.")

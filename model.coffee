@@ -32,6 +32,7 @@
 #       case of a draw, it should contain all of the drawing players. In the
 #       case of a "nobody wins" situation, an empty list should be present. This
 #       field cannot be present on a game which is still in progress.
+#   gameOver: (Boolean) True if this game has ended.
 # }
 #
 # An Action is defined as follows:
@@ -135,9 +136,9 @@ Meteor.methods
     hash = CryptoJS.SHA3(uuid, {outputLength: 256}).toString()
     this.setUserId(hash)
 
-  # Submits the provided game's current action. If this ends the game,
-  # populates the "victors" array. Otherwise, changes the current player.
-  # Validates that the current action is a legal one.
+  # Submits the provided game's current action, if it is a legal one. If this
+  # ends the game: populates the "victors" array and sets the "gameOver"
+  # bit. Otherwise, updates the current player.
   submitCurrentAction: (gameId) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game)
@@ -163,6 +164,7 @@ Meteor.methods
             currentPlayerNumber: null,
             currentAction: null,
             victors: victors
+            gameOver: true
 
   # Adds the provided command to the current action's command list. If there is
   # no current action, creates one. Any commands beyond the current location in
@@ -289,27 +291,6 @@ makeActionTable = (gameId, currentActionId) ->
       result[command.column][command.row] = action
   result
 
-# Checks if somebody has won this game. If they have, returns the winner's
-# user ID. Otherwise, returns false. If the optional addCurrentAction parameter
-# is passed and set to "true", the check will be made as if the current action
-# were submitted.
-noughts.checkForVictory = (gameId, addCurrentAction) ->
-  actionTable = makeActionTable(gameId)
-
-  # All possible winning lines in [column, row] format
-  victoryLines = [ [[0,0], [1,0], [2,0]], [[0,1], [1,1], [2,1]],
-      [[0,2], [1,2], [2,2]], [[0,0], [0,1], [0,2]], [[1,0], [1,1], [1,2]],
-      [[2,0], [2,1], [2,2]], [[0,0], [1,1], [2,2]], [[2,0], [1,1], [0,2]] ]
-
-  for line in victoryLines
-    action1 = actionTable[line[0][0]][line[0][1]]
-    action2 = actionTable[line[1][0]][line[1][1]]
-    action3 = actionTable[line[2][0]][line[2][1]]
-    continue unless action1? and action2? and action3?
-    if action1.player == action2.player and action2.player == action3.player
-      return action1.player
-  false
-
 # Builds the "victors" array for the game. If the game is over, a list will be
 # returned containing the victorious or drawing players (which may be empty to
 # indicate that "nobody wins"). Otherwise, null is returned.
@@ -337,15 +318,11 @@ noughts.getVictors = (game) ->
   # Game is not ending.
   return null
 
-# Returns true if this game is a draw, otherwise false.
-noughts.isDraw = (gameId, addCurrentAction) ->
-  return noughts.Actions.find({gameId: gameId, submitted: true}).count() == 9
-
 # Checks if the provided command could be legally added to the current action.
 noughts.isLegalCommand = (gameId, command) ->
   game = getGame(gameId)
   return false unless isCurrentPlayer(game)
-  return false if noughts.checkForVictory(gameId) or noughts.isDraw(gameId)
+  return false if game.gameOver
   if game.currentAction?
     action = noughts.Actions.findOne(game.currentAction)
     return false if action.commands.length != 0
