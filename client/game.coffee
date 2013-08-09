@@ -371,15 +371,33 @@ onSubscribe = ->
   $(".nResignConfirmButton").on "click", (event) ->
     debugger
 
+# Builds a string which describes the state of the game, including when it was
+# last modified and whether or not it's in-progress or over, who won, etc.
+gameStateSummary = (game, lastModified) ->
+  lastModified = $.timeago(new Date(game.lastModified))
+  if not game.gameOver
+    return "Updated " + lastModified
+  else if game.victors.length == 2
+    return "Draw " + lastModified
+  else if game.victors[0] == Meteor.userId()
+    return "You won " + lastModified
+  opponentId = game.victors[0]
+  opponentProfile = game.profiles[opponentId]
+  if opponentProfile? and opponentProfile.gender == "male"
+    return "He won " + lastModified
+  else if opponentProfile? and opponentProfile.gender == "female"
+    return "She won " + lastModified
+  else
+    return "They won " + lastModified
+
+
 Template.navBody.games = ->
   getGameInfo = (game) ->
     notViewerId = (id) -> id != Meteor.userId()
     opponentId = _.find(game.players, notViewerId)
     opponentProfile = game.profiles[opponentId]
-    return {
+    return $.extend({}, game, {
       gameId: game._id
-      players: game.players
-      currentPlayerNumber: game.currentPlayerNumber
       isCurrentGame: game._id == Session.get("gameId")
       hasOpponent: opponentId?
       opponentId: opponentId
@@ -387,14 +405,16 @@ Template.navBody.games = ->
       opponentProfile: opponentProfile
       opponentPhoto:
           "https://graph.facebook.com/#{opponentId}/picture?type=square"
-      lastModified: $.timeago(new Date(game.lastModified))
-    }
+      gameStateSummary: gameStateSummary(game)
+    })
 
   games = noughts.Games.find({}, {sort: {lastModified: -1}}).map(getGameInfo)
   myTurn = (game) -> game.players[game.currentPlayerNumber] == Meteor.userId()
+  inProgressGames = _.filter(games, (game) -> !game.gameOver)
   result = {
-    myTurn: _.filter(games, myTurn)
-    theirTurn: _.filter(games, (game) -> !myTurn(game))
+    gameOver: _.filter(games, (game) -> game.gameOver)
+    myTurn: _.filter(inProgressGames, myTurn)
+    theirTurn: _.filter(inProgressGames, (game) -> !myTurn(game))
   }
   return result
 

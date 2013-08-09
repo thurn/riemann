@@ -98,6 +98,12 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
     {{#each games.theirTurn}}
       {{> gameListing}}
     {{/each}}
+    {{#if games.gameOver}}
+      <div class="nNavigationSectionHeader">Game Over:</div>
+    {{/if}}
+    {{#each games.gameOver}}
+      {{> gameListing}}
+    {{/each}}
   </div>
 </template>
 
@@ -135,8 +141,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       {{#unless isCurrentGame}}
         </a>
       {{/unless}}
-      <div class="nGameLastModifiedTime">
-        Updated {{lastModified}}
+      <div class="nGameStateSummary">
+        {{gameStateSummary}}
       </div>
     </div>
     <i class="icon-remove nResignGameButton" gameId={{gameId}}></i>

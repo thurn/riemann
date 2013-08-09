@@ -233,6 +233,7 @@ Meteor.methods
       profiles: {}
       currentAction: null
       lastModified: new Date().getTime()
+      gameOver: false
     if userProfile?
       game.profiles[userProfile.facebookId] = userProfile
     noughts.Games.insert(game)
