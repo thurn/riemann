@@ -37,7 +37,9 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </header>
 
       <nav class="nNavigation" role="navigation">
-        <img class="nLogo" src="/images/logo300.png" />
+        <a href="/">
+          <img class="nLogo" src="/images/logo300.png" />
+        </a>
         {{> navBody}}
       </nav>
 
@@ -78,7 +80,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 <template name="navBody">
   <div class="nNavBody">
-    <div class="nNavItem">
+    <div class="nNavItem nGameListNewGameButton">
       <span class="nGameListIcon nGameListNewGameIcon">
         <i class="icon-play icon-large"></i>
       </span>

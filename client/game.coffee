@@ -177,6 +177,9 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
+clearCurrentGame = () ->
+  Session.set("gameId", null)
+
 # The "new game" menu
 noughts.NewGameMenu = me.ScreenObject.extend
   handleUrlInviteButtonClick_: ->
@@ -219,6 +222,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
 
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/new", urlBehavior)
+    clearCurrentGame()
     $(".nGame").children().hide()
     $(".nMoveControlsContainer").hide()
     $(".nNewGameMenu").show()
@@ -228,6 +232,7 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
+    clearCurrentGame()
     $(".nGame").children().hide()
     $(".nMoveControlsContainer").hide()
     $(".nFacebookInviteMenu").show()
@@ -243,6 +248,7 @@ noughts.InitialPromo = me.ScreenObject.extend
 
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/", urlBehavior)
+    clearCurrentGame()
     $(".nGame").children().hide()
     $(".nMoveControlsContainer").hide()
     $(".nGame").css({border: ""})
@@ -390,7 +396,6 @@ gameStateSummary = (game, lastModified) ->
   else
     return "They won " + lastModified
 
-
 Template.navBody.games = ->
   getGameInfo = (game) ->
     notViewerId = (id) -> id != Meteor.userId()
@@ -418,6 +423,12 @@ Template.navBody.games = ->
   }
   return result
 
+Template.page.events {
+  "click .nLogo": (event) ->
+    event.preventDefault()
+    noughts.state.changeState(noughts.state.INITIAL_PROMO)
+}
+
 Template.navBody.events {
   "click .nResignGameButton": (event) ->
     event.stopPropagation()
@@ -427,6 +438,10 @@ Template.navBody.events {
   "click .nGameListing": (event) ->
     event.preventDefault()
     playGame($(this).attr("gameId"))
+
+  "click .nGameListNewGameButton": (event) ->
+    event.preventDefault()
+    noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 }
 
 # Inspects the URL and sets the initial game state accordingly.
