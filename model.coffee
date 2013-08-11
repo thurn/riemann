@@ -21,9 +21,6 @@
 #   currentPlayerNumber: (Integer) The number of the player whose turn it is,
 #       that is, their index within the players array. Null when the game is not
 #       in progress.
-#   resignedPlayers: ([String]) An array of players who were previously in the
-#       game, but who have subsequently left the game. They might still have
-#       in-game Actions associated with their playerId.
 #   currentAction: (String) ID of action currently being constructed, or null if
 #       no action is under construction (or the game is over). Should never
 #       point to a submitted action. Null when the game is not in progress.
@@ -88,6 +85,11 @@ die = (msg) ->
 isCurrentPlayer = (game) ->
   game.currentPlayerNumber? and Meteor.userId()? and
       Meteor.userId() == game.players[game.currentPlayerNumber]
+
+# Ensures that the current user is a player in the provided game.
+ensureIsPlayer = (game) ->
+  return if Meteor.userId()? and _.contains(game.players, Meteor.userId())
+  die("Unauthorized user: '#{Meteor.userId()}'")
 
 # Ensures that the current user is the current player in the provided game.
 ensureIsCurrentPlayer = (game) ->
@@ -247,8 +249,16 @@ Meteor.methods
     noughts.Games.update gameId,
       $set: {requestId: requestId}
 
-  # Leave a game.
+  # Leave a game. In a 2-player game, this means that your opponent wins.
+  # More complex behavior might be supported for more than 2 players.
   resignGame: (gameId) ->
+    game = getGame(gameId)
+    ensureIsPlayer(game)
+    noughts.Games.update gameId,
+      $set:
+        gameOver: true
+        victors: [noughts.getOpponentId(game)]
+        lastModified: new Date().getTime()
 
 # Server-only methods (generally, things which won't work on the client because
 # the data isn't in scope yet).
@@ -360,3 +370,7 @@ noughts.canRedo = (gameId) ->
     action.futureCommands.length > 0
   else
     false
+
+noughts.getOpponentId = (game) ->
+  notViewerId = (id) -> id != Meteor.userId()
+  return _.find(game.players, notViewerId)

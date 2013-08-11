@@ -69,6 +69,14 @@ noughts.state.back = ->
   # TODO(dthurn): Make this work inside the Facebook iframe.
   window.history.back()
 
+# Displays a short message to the user. The optional duration parameter controls
+# how many milliseconds the message appears for.
+noughts.displayToast = (text, duration) ->
+  $(".nToast").text(text)
+  $(".nToast").css({top: 0})
+  duration ||= 3000
+  setTimeout((-> $(".nToast").css({top: "-5rem"})), duration)
+
 # Loads the game with the specified ID
 playGame = (gameId) ->
   Session.set("gameId", gameId)
@@ -375,7 +383,10 @@ onSubscribe = ->
     setStateFromUrl()
 
   $(".nResignConfirmButton").on "click", (event) ->
-    debugger
+    Meteor.call "resignGame", $(this).attr("gameId"), (err) ->
+      if err then throw err
+      $(".nResignConfirmModal").modal("hide")
+      noughts.displayToast("You left the game.")
 
 # Builds a string which describes the state of the game, including when it was
 # last modified and whether or not it's in-progress or over, who won, etc.
@@ -398,8 +409,7 @@ gameStateSummary = (game, lastModified) ->
 
 Template.navBody.games = ->
   getGameInfo = (game) ->
-    notViewerId = (id) -> id != Meteor.userId()
-    opponentId = _.find(game.players, notViewerId)
+    opponentId = noughts.getOpponentId(game)
     opponentProfile = game.profiles[opponentId]
     return $.extend({}, game, {
       gameId: game._id
