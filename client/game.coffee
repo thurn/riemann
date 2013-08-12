@@ -266,7 +266,9 @@ noughts.InitialPromo = me.ScreenObject.extend
 noughts.PlayScreen = me.ScreenObject.extend
   init: ->
     $(".nSubmitButton").on "click", ->
-      Meteor.call("submitCurrentAction", Session.get("gameId"))
+      Meteor.call "submitCurrentAction", Session.get("gameId"), (err) ->
+        if err then throw err
+        noughts.displayToast("Move submitted")
     $(".nUndoButton").on "click", ->
       Meteor.call("undoCommand", Session.get("gameId"))
     $(".nRedoButton").on "click", ->
