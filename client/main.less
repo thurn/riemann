@@ -98,7 +98,7 @@ html {
 
 body {
   height: 100%;
-  position: relative;
+  position: absolute;
   width: 100%;
   background-color: white;
 }
@@ -114,7 +114,7 @@ body {
 .nWrapper {
   height: 100%;
   overflow: hidden;
-  position: relative;
+  position: absolute;
   width: 100%;
   .nDefaultFont();
 }
@@ -122,7 +122,7 @@ body {
 .nNavigation {
   background-color: #f5f5f5;
   overflow: hidden;
-  position: relative;
+  position: absolute;
   width: 100%;
   z-index: 200;
 }
@@ -160,7 +160,7 @@ body {
   cursor: pointer;
   font-size: 2.5rem;
   left: 0.65rem;
-  position: relative;
+  position: absolute;
   top: 0.2rem;
 }
 
@@ -169,7 +169,7 @@ body {
   border: solid 1px #aaa;
   display: block;
   left: 50%;
-  position: relative;
+  position: absolute;
   top: 50%;
 }
 
@@ -189,13 +189,13 @@ body {
 
 .nNewGamePromo {
   .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
-  position: relative;
+  position: absolute;
   display: none;
 }
 
 .nLoading {
   .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
-  position: relative;
+  position: absolute;
   text-align: center;
 }
 
@@ -270,13 +270,13 @@ body {
 .nNewGameMenu {
   display: none;
   .centeredBlock(@navigationWidth, @menuButtonHeight * 6);
-  position: relative;
+  position: absolute;
   margin-top: -18.5rem; // Perfect vertical centering looks strange here.
 }
 
 .nFacebookInviteMenu {
   display: none;
-  position: relative;
+  position: absolute;
   .centeredBlock(33.4rem, 35rem);
 }
 
@@ -502,7 +502,7 @@ span.nResignTooltip:after {
     z-index: 100;
     color: #000;
     background: #f5f5f5;
-    position: relative;
+    position: absolute;
   }
 
   .nLogo {
