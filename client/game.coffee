@@ -77,6 +77,39 @@ noughts.displayToast = (text, duration) ->
   duration ||= 3000
   setTimeout((-> $(".nToast").css({top: "-5rem"})), duration)
 
+# Displays a modal dialog over the game.
+#
+# title {string} - The title text of the dialog
+# body {string} - The body text of the dialog
+# showCloseButton {boolean} - Whether or not to render a close button on the
+#     modal dialog. Optional parameter, default is false (do not show).
+# actionButtonLabel {string} - Label for the dialog's primary action button.
+#     Optional parameter, default is "OK".
+# actionButtonClass {string} - Class to apply to the action button, e.g.
+#     btn-danger. Optional parameter, default is btn-primary.
+# callback {function} - Callback to invoke when the primary action button is
+#     clicked. Clicking either button will close the modal. Optional paramter.
+noughts.displayModal = (title, body, showCloseButton, actionButtonLabel,
+    actionButtonClass, callback) ->
+  actionButtonLabel ||= "OK"
+  actionButtonClass ||= "btn-primary"
+  $(".nGameMessageAction").off("click") # Remove all previous click handlers
+  $(".nGameMessageHeader").text(title)
+  $(".nGameMessageBody").text(body)
+  if showCloseButton?
+    $(".nGameMessageClose").show()
+  else
+    $(".nGameMessageClose").hide()
+  $(".nGameMessageAction").text(actionButtonLabel)
+  $(".nGameMessageAction").removeClass(). # Strip previous classes for safety
+      addClass("btn #{actionButtonClass} nGameMessageAction")
+  $(".nGameMessage").modal("show")
+
+  $(".nGameMessageAction").one "click", (event) ->
+    $(".nGameMessage").modal("hide")
+    callback() if callback?
+  null
+
 # Loads the game with the specified ID
 playGame = (gameId) ->
   Session.set("gameId", gameId)

@@ -283,9 +283,9 @@ if Meteor.isServer
       if (game.players.length < noughts.Config.maxPlayers and
           not _.contains(game.players, this.userId))
         update = {$push: {players: this.userId}}
-        if userProfile?
+        if userProfile? and userProfile.facebookId?
           update["$set"] = {}
-          update["$set"]["profiles.#{this.userId}"] = userProfile
+          update["$set"]["profiles.#{userProfile.facebookId}"] = userProfile
         noughts.Games.update(gameId, update)
 
     # Checks that a game exists based on its ID and that the current user is a
