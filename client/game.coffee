@@ -31,12 +31,15 @@ noughts.state =
 noughts.state.changeState = (newState, urlBehavior) ->
   # TODO(dthurn): Handle a "cancle button" type of state transition which
   # takes the current state out of history.
+  debugger
+  if me.state.currentStateConstant() != -1 and me.state.current().onExitState?
+    me.state.current().onExitState()
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
   me.state.change(newState, urlBehavior)
 
 # What a new state should do to the browser URL when entered.
 noughts.state.UrlBehavior =
-  # Change the current URL and add it to the browser history stack.
+  # Change the current URL and add the old one to the browser history stack.
   # The default behavior.
   PUSH_URL: 1
 
@@ -44,8 +47,12 @@ noughts.state.UrlBehavior =
   # determining the initial state from the URL on page load.
   PRESERVE_URL: 2
 
+  # Change the current URL and do not add the previous URL to the history stack.
+  # Used to e.g. implement a redirect.
+  REPLACE_URL: 3
+
 # Stores the initial length of the browser history. Used to figure out if
-# invoking noguhts.state.back() will take us off-site.
+# invoking noughts.state.back() will take us off-site.
 noughts.state.initialHistoryLength = window.history.length
 
 # Returns true if there's a previous state in the state history to go back to.
@@ -59,6 +66,8 @@ noughts.state.updateUrl = (path, urlBehavior) ->
   # TODO(dthurn): No point in doing this if we're inside the Facebook iframe
   if urlBehavior == noughts.state.UrlBehavior.PUSH_URL
     window.history.pushState({}, "", path)
+  if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
+    window.history.replaceState({}, "", path)
   # state.UrlBehavior.PRESERVE_URL is a no-op.
 
 # Navigates back in the browser history, but throws an error if the navigation
@@ -349,8 +358,8 @@ noughts.PlayScreen = me.ScreenObject.extend
       displayNotice("The game is over, and it was a draw!")
     else if game.players[game.currentPlayerNumber] == Meteor.userId()
       displayNotice("It's your turn. Select a square to make your move.")
-    else
-      displayNotice("") # Clear any previous note
+    else if _.contains(game.players, Meteor.userId())
+      displayNotice("It's your opponent's turn.")
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -359,6 +368,7 @@ noughts.PlayScreen = me.ScreenObject.extend
     noughts.state.updateUrl("/#{gameId}", urlBehavior)
     $(".nGame").children().hide()
     $(".nMoveControlsContainer").show()
+    $(".nNotification").show()
     $(".nGame").css({border: "none"})
     $(".nMain canvas").show()
 
@@ -377,6 +387,15 @@ noughts.PlayScreen = me.ScreenObject.extend
       if err? then throw err
       Meteor.autorun =>
         this.autorun_()
+
+  onExitState: ->
+    # TODO(dthurn) Design a real component lifecycle system so this isn't
+    # necessary.
+    $(".nNotification").hide()
+    $(".nMoveControlsContainer").hide()
+    $(".nGame").css({border: ""})
+    $(".nMain canvas").hide()
+    clearCurrentGame()
 
 noughts.melonDeferred = $.Deferred()
 
@@ -468,12 +487,6 @@ Template.navBody.games = ->
   }
   return result
 
-Template.page.events {
-  "click .nLogo": (event) ->
-    event.preventDefault()
-    noughts.state.changeState(noughts.state.INITIAL_PROMO)
-}
-
 Template.navBody.events {
   "click .nResignGameButton": (event) ->
     event.stopPropagation()
@@ -509,10 +522,16 @@ setStateFromUrl = ->
     noughts.state.changeState(noughts.state.FACEBOOK_INVITE,
         noughts.state.UrlBehavior.PRESERVE_URL)
   else if path == ""
-    # TODO(dthurn): If the user is logged in, display their game list instead
-    # of the new game promo
-    noughts.state.changeState(noughts.state.INITIAL_PROMO,
-        noughts.state.UrlBehavior.PRESERVE_URL)
+    if noughts.Games.find().count() > 0
+      cursor = noughts.Games.find({}, {sort: {lastModified: -1}, limit: 1})
+      game = cursor.fetch()[0]
+      Session.set("gameId", game._id)
+      # Redirect to the the URL of the most recently modified game.
+      noughts.state.changeState(noughts.state.PLAY,
+          noughts.state.UrlBehavior.REPLACE_URL)
+    else
+      noughts.state.changeState(noughts.state.INITIAL_PROMO,
+          noughts.state.UrlBehavior.PRESERVE_URL)
   else # For simplicity, assume any unrecognized path is a game id
     Meteor.call "validateGameId", path, (err, gameExists) ->
       if err? then throw err

@@ -67,3 +67,9 @@ Meteor.startup ->
       anonymousAuthenticate()
       noughts.facebookDeferred.resolve()
   setTimeout(facebookFallback, 5000)
+
+  ##### DEBUG ######
+  if $.cookie("dereksMacbook")
+    normal = -> $("html").addClass("normalOpacity")
+    setTimeout(normal, 1000)
+  ##### END DEBUG ######
