@@ -17,7 +17,7 @@
 #       array are the player numbers of the different players. A player who
 #       leaves the game will have her entry in this array replaced with "null".
 #   profiles: (Map<String, Profile>) A mapping from player IDs to profile
-#       information about the player, such
+#       information about the player. See Profile below.
 #   currentPlayerNumber: (Integer) The number of the player whose turn it is,
 #       that is, their index within the players array. Null when the game is not
 #       in progress.
@@ -51,6 +51,15 @@
 #
 # By convention, players[0] is the game initiator and the "x" player, while
 # players[1] is the "o" player.
+#
+# A Profile is defined as follows:
+#
+# Profile {
+#   facebookId: (String) The user's Facebook ID.
+#   givenName: (String) The user's given (first) name.
+#   fullName: (String) The user's full name (given name + surname).
+#   gender: (String) The user's gender.
+# }
 #
 # Security:
 # There are a few intentionally insecure aspects of the system:
@@ -225,19 +234,28 @@ Meteor.methods
       $pop: {futureCommands: 1}
 
   # Partially create a new game with no opponent specified yet, returning the
-  # game ID. The optional "userProfile" parameter should be the profile of the
-  # current user.
-  newGame: (userProfile) ->
+  # game ID.
+  #
+  # userProfile {object} - Optionally, the Facebook profile of the current user.
+  # opponentProfile {string} - Optionally, the Facebook profile of the
+  #     opponent for this game.
+  newGame: (userProfile, opponentProfile) ->
     game =
       players: [this.userId]
       currentPlayerNumber: noughts.X_PLAYER
-      resignedPlayers: []
       profiles: {}
       currentAction: null
       lastModified: new Date().getTime()
       gameOver: false
+
     if userProfile?
       game.profiles[userProfile.facebookId] = userProfile
+
+    if opponentProfile?
+      opponentFacebookId = opponentProfile.facebookId
+      game.players.push(opponentFacebookId)
+      game.profiles[opponentFacebookId] = opponentProfile
+
     noughts.Games.insert(game)
 
   # Stores a facebook request ID with a game so that somebody invited via
@@ -245,7 +263,7 @@ Meteor.methods
   facebookSetRequestId: (gameId, requestId) ->
     game = getGame(gameId)
     ensureIsCurrentPlayer(game)
-    die("game is full") if game.players.length >= noughts.Config.maxPlayers
+    die("game is full") if game.players.length > noughts.Config.maxPlayers
     noughts.Games.update gameId,
       $set: {requestId: requestId}
 
@@ -257,6 +275,8 @@ Meteor.methods
     noughts.Games.update gameId,
       $set:
         gameOver: true
+        currentAction: null
+        currentPlayerNumber: null
         victors: [noughts.getOpponentId(game)]
         lastModified: new Date().getTime()
 

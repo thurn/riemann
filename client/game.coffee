@@ -29,9 +29,8 @@ noughts.state =
 # modified accordingly. The default urlBehavior is
 # noughts.state.UrlBehavior.PUSH_URL.
 noughts.state.changeState = (newState, urlBehavior) ->
-  # TODO(dthurn): Handle a "cancle button" type of state transition which
+  # TODO(dthurn): Handle a "cancel button" type of state transition which
   # takes the current state out of history.
-  debugger
   if me.state.currentStateConstant() != -1 and me.state.current().onExitState?
     me.state.current().onExitState()
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
@@ -64,9 +63,10 @@ noughts.state.hasPreviousState = ->
 # noughts.state.UrlBehavior).
 noughts.state.updateUrl = (path, urlBehavior) ->
   # TODO(dthurn): No point in doing this if we're inside the Facebook iframe
+  displayError("Invalid path: #{path}!") unless path?
   if urlBehavior == noughts.state.UrlBehavior.PUSH_URL
     window.history.pushState({}, "", path)
-  if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
+  else if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
     window.history.replaceState({}, "", path)
   # state.UrlBehavior.PRESERVE_URL is a no-op.
 
@@ -132,13 +132,26 @@ displayError = (msg) ->
   throw new Error(msg)
 
 facebookInviteCallback = (inviteResponse) ->
-  return unless inviteResponse?
-  Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
-    invitedUser = inviteResponse.to[0]
-    requestId = inviteResponse.request
-    Meteor.call "facebookSetRequestId", gameId, requestId, (err) =>
-      if err? then throw err
-      playGame(gameId)
+  return unless inviteResponse?.to?.length == 1
+  opponentId = inviteResponse.to[0]
+  options = {params: {fields: "id,name,first_name,gender"}}
+  url = "https://graph.facebook.com/#{opponentId}"
+  Meteor.http.get url, options, (err, result) ->
+    if err? then throw err
+    response = JSON.parse(result.content)
+    opponentProfile =
+      facebookId: response["id"]
+      givenName: response["first_name"]
+      fullName: response["name"]
+      gender: response["gender"]
+
+    userProfile = Session.get("facebookProfile")
+    Meteor.call "newGame", userProfile, opponentProfile, (err, gameId) ->
+      invitedUser = inviteResponse.to[0]
+      requestId = inviteResponse.request
+      Meteor.call "facebookSetRequestId", gameId, requestId, (err) =>
+        if err? then throw err
+        playGame(gameId)
 
 # Will be resolved with a list of the user IDs of the current user's Facebook
 # friends, sorted first by whether or not they have the application installed
@@ -395,7 +408,6 @@ noughts.PlayScreen = me.ScreenObject.extend
     $(".nMoveControlsContainer").hide()
     $(".nGame").css({border: ""})
     $(".nMain canvas").hide()
-    clearCurrentGame()
 
 noughts.melonDeferred = $.Deferred()
 
@@ -440,7 +452,7 @@ onSubscribe = ->
     Meteor.call "resignGame", $(this).attr("gameId"), (err) ->
       if err then throw err
       $(".nResignConfirmModal").modal("hide")
-      noughts.displayToast("You left the game.")
+      noughts.displayToast("You resigned the game.")
 
 # Builds a string which describes the state of the game, including when it was
 # last modified and whether or not it's in-progress or over, who won, etc.
@@ -461,6 +473,12 @@ gameStateSummary = (game, lastModified) ->
   else
     return "They won " + lastModified
 
+# Returns true if it is the viewer's turn in the provided game. Returns false
+# if the game is over.
+myTurn = (game) ->
+  return false if game.gameOver
+  return game.players[game.currentPlayerNumber] == Meteor.userId()
+
 Template.navBody.games = ->
   getGameInfo = (game) ->
     opponentId = noughts.getOpponentId(game)
@@ -478,7 +496,6 @@ Template.navBody.games = ->
     })
 
   games = noughts.Games.find({}, {sort: {lastModified: -1}}).map(getGameInfo)
-  myTurn = (game) -> game.players[game.currentPlayerNumber] == Meteor.userId()
   inProgressGames = _.filter(games, (game) -> !game.gameOver)
   result = {
     gameOver: _.filter(games, (game) -> game.gameOver)
@@ -522,20 +539,25 @@ setStateFromUrl = ->
     noughts.state.changeState(noughts.state.FACEBOOK_INVITE,
         noughts.state.UrlBehavior.PRESERVE_URL)
   else if path == ""
-    if noughts.Games.find().count() > 0
-      cursor = noughts.Games.find({}, {sort: {lastModified: -1}, limit: 1})
-      game = cursor.fetch()[0]
+    # The path is the string "null" when inside the Facebook iFrame
+    games = noughts.Games.find({}, {sort: {lastModified: -1}}).fetch()
+    myTurnGames = _.filter(games, myTurn)
+    if myTurnGames.length > 0
+      # Load the most recently modified game where it's my turn.
+      game = myTurnGames[0]
       Session.set("gameId", game._id)
       # Redirect to the the URL of the most recently modified game.
       noughts.state.changeState(noughts.state.PLAY,
           noughts.state.UrlBehavior.REPLACE_URL)
     else
+      # Show the new game promo
       noughts.state.changeState(noughts.state.INITIAL_PROMO,
           noughts.state.UrlBehavior.PRESERVE_URL)
   else # For simplicity, assume any unrecognized path is a game id
     Meteor.call "validateGameId", path, (err, gameExists) ->
       if err? then throw err
-      displayError("Error: Game not found.") unless gameExists
+      unless gameExists
+        displayError("Error: Game not found: #{path}")
       Session.set("gameId", path)
       profile = Session.get("facebookProfile")
       Meteor.call "addPlayerIfNotPresent", path, profile, (err) ->

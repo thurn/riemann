@@ -69,7 +69,7 @@ Meteor.startup ->
   setTimeout(facebookFallback, 5000)
 
   ##### DEBUG ######
-  if $.cookie("dereksMacbook")
+  if $.cookie("dereksMacbook") or $.url().param("show")
     normal = -> $("html").addClass("normalOpacity")
     setTimeout(normal, 1000)
   ##### END DEBUG ######
