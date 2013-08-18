@@ -34,6 +34,7 @@ noughts.state.changeState = (newState, urlBehavior) ->
   if me.state.currentStateConstant() != -1 and me.state.current().onExitState?
     me.state.current().onExitState()
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
+  Session.set("state", newState)
   me.state.change(newState, urlBehavior)
 
 # What a new state should do to the browser URL when entered.

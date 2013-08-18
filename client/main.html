@@ -42,41 +42,58 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <img class="nLogo" src="/images/logo300.png" />
         {{> navBody}}
       </nav>
-
-      <div class="nMain" role="main">
-        <div class="nDesktopHeader">
-          {{> moveControls}}
-        </div>
-        <div class="nGame" id="nIdGame">
-          {{> gameMessageModal}}
-          <div class="nLoading">
-            Loading...
-          </div>
-          {{> newGamePromo}}
-          {{> newGameMenu}}
-          <div class="nFacebookInviteMenu"></div>
-        </div> <!--/nGame-->
-        <div class="nNotification"></div>
-      </div> <!--/nMain-->
+      {{> mainContent}}
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
-  <div class="modal hide fade nResignConfirmModal" tabindex="-1" role="dialog"
-      aria-hidden="true">
-    <div class="modal-header">
-      <h3>Confirm Leaving</h3>
-    </div>
-    <div class="modal-body">
-      <p>Are you sure you want to leave this game?</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" data-dismiss="modal" aria-hidden="true">
-        Cancel
-      </button>
-      <button class="btn btn-danger nResignConfirmButton">
-        Leave game
-      </button>
+  {{> resignConfirmModal}}
+</template>
+
+<template name="mainContent">
+  <div class="nMain" role="main">
+    {{> gameMessageModal}}
+
+    {{#if state.PLAY}}
+      {{> playScreen}}
+    {{/if}}
+
+    {{#if state.LOADING}}
+      {{> loadingScreen}}
+    {{/if}}
+
+    {{#if state.NEW_GAME_MENU}}
+      {{> newGameMenu}}
+    {{/if}}
+
+    {{#if state.INITIAL_PROMO}}
+      {{> newGamePromo}}
+    {{/if}}
+
+    {{#if state.FACEBOOK_INVITE_MENU}}
+      {{> facebookInviteMenu}}
+    {{/if}}
+  </div>
+</template>
+
+<template name="loadingScreen">
+  <div class="nGame">
+    <div class="nLoading">
+      Loading...
     </div>
   </div>
+</template>
+
+<template name="facebookInviteMenu">
+  <div class="nGame">
+    <div class="nFacebookInviteMenu"></div>
+  </div>
+</template>
+
+<template name="playScreen">
+  <div class="nDesktopHeader">
+    {{> moveControls}}
+  </div>
+  <div class="nGame" id="nIdGame"></div>
+  <div class="nNotification"></div>
 </template>
 
 <template name="navBody">
@@ -111,22 +128,24 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="gameMessageModal">
-  <div class="modal hide fade nGameMessage" data-backdrop="false">
-    <div class="modal-header">
-      <a href="#" class="close nCloseLink" data-dismiss="modal"
-          aria-hidden="true"><i class="icon-remove"></i></a>
-      <h3 class="nGameMessageHeader"></h3>
-    </div>
-    <div class="modal-body">
-      <p class="nGameMessageBody"></p>
-    </div>
-    <div class="modal-footer">
-      <a href="#" class="btn nGameMessageClose" data-dismiss="modal"
-          aria-hidden="true">
-        Close
-      </a>
-      <a href="#" class="btn btn-primary nGameMessageAction">
-      </a>
+  <div class="nGame">
+    <div class="modal hide fade nGameMessage" data-backdrop="false">
+      <div class="modal-header">
+        <a href="#" class="close nCloseLink" data-dismiss="modal"
+            aria-hidden="true"><i class="icon-remove"></i></a>
+        <h3 class="nGameMessageHeader"></h3>
+      </div>
+      <div class="modal-body">
+        <p class="nGameMessageBody"></p>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn nGameMessageClose" data-dismiss="modal"
+            aria-hidden="true">
+          Close
+        </a>
+        <a href="#" class="btn btn-primary nGameMessageAction">
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -175,55 +194,59 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="newGamePromo">
-  <div class="nNewGamePromo">
-    <div class="nGameDescription">
-      "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
-       a game for two players.
+  <div class="nGame">
+    <div class="nNewGamePromo">
+      <div class="nGameDescription">
+        "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
+         a game for two players.
+      </div>
+      <div class="nPromoButtonContainer">
+        <button type="button" class="btn nMenuButton nNewGameButton">
+          <i class="icon-play icon-large"></i>
+          <span class="nMenuButtonText">New Game</span>
+        </button>
+      </div>
     </div>
-    <div class="nPromoButtonContainer">
-      <button type="button" class="btn nMenuButton nNewGameButton">
-        <i class="icon-play icon-large"></i>
-        <span class="nMenuButtonText">New Game</span>
-      </button>
-    </div>
-  </div> <!--/nNewGamePromo-->
+  </div>
 </template>
 
 <template name="newGameMenu">
-  <div class="nNewGameMenu">
-    <div class="nNewGameMenuHeader">
-      New Game:
+  <div class="nGame">
+    <div class="nNewGameMenu">
+      <div class="nNewGameMenuHeader">
+        New Game:
+      </div>
+      <button type="button" class="btn nMenuButton nFacebookInviteButton">
+        <div class="nMenuButtonIcon">
+          <i class="icon-facebook-sign icon-large"></i>
+        </div>
+        <span class="nMenuButtonText">Invite via Facebook</span>
+      </button>
+      <button type="button" class="btn nMenuButton nVsComputerButton">
+        <div class="nMenuButtonIcon">
+          <i class="icon-laptop icon-large"></i>
+        </div>
+        <span class="nMenuButtonText">Play vs. Computer</span>
+      </button>
+      <button type="button" class="btn nMenuButton nLocalMultiplayerButton">
+        <div class="nMenuButtonIcon">
+          <i class="icon-group icon-large"></i>
+        </div>
+        <span class="nMenuButtonText">Local Multiplayer</span>
+      </button>
+      <button type="button" class="btn nMenuButton nUrlInviteButton">
+        <div class="nMenuButtonIcon">
+          <i class="icon-link icon-large"></i>
+        </div>
+        <span class="nMenuButtonText">Invite via URL</span>
+      </button>
+      <button type="button" class="btn nMenuButton nNewGameMenuCloseButton">
+        <div class="nMenuButtonIcon">
+          <i class="icon-remove icon-large"></i>
+        </div>
+        <span class="nMenuButtonText">Cancel</span>
+      </button>
     </div>
-    <button type="button" class="btn nMenuButton nFacebookInviteButton">
-      <div class="nMenuButtonIcon">
-        <i class="icon-facebook-sign icon-large"></i>
-      </div>
-      <span class="nMenuButtonText">Invite via Facebook</span>
-    </button>
-    <button type="button" class="btn nMenuButton nVsComputerButton">
-      <div class="nMenuButtonIcon">
-        <i class="icon-laptop icon-large"></i>
-      </div>
-      <span class="nMenuButtonText">Play vs. Computer</span>
-    </button>
-    <button type="button" class="btn nMenuButton nLocalMultiplayerButton">
-      <div class="nMenuButtonIcon">
-        <i class="icon-group icon-large"></i>
-      </div>
-      <span class="nMenuButtonText">Local Multiplayer</span>
-    </button>
-    <button type="button" class="btn nMenuButton nUrlInviteButton">
-      <div class="nMenuButtonIcon">
-        <i class="icon-link icon-large"></i>
-      </div>
-      <span class="nMenuButtonText">Invite via URL</span>
-    </button>
-    <button type="button" class="btn nMenuButton nNewGameMenuCloseButton">
-      <div class="nMenuButtonIcon">
-        <i class="icon-remove icon-large"></i>
-      </div>
-      <span class="nMenuButtonText">Cancel</span>
-    </button>
   </div>
 </template>
 
@@ -279,5 +302,25 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         disabled="disabled">
       <i class="icon-signout nSubmitIcon"></i>Submit
     </button>
+  </div>
+</template>
+
+<template name="resignConfirmModal">
+  <div class="modal hide fade nResignConfirmModal" tabindex="-1" role="dialog"
+      aria-hidden="true">
+    <div class="modal-header">
+      <h3>Confirm Leaving</h3>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to leave this game?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">
+        Cancel
+      </button>
+      <button class="btn btn-danger nResignConfirmButton">
+        Leave game
+      </button>
+    </div>
   </div>
 </template>
