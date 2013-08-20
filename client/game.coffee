@@ -455,6 +455,10 @@ onSubscribe = ->
       $(".nResignConfirmModal").modal("hide")
       noughts.displayToast("You resigned the game.")
 
+Template.mainContent.currentState = Session.get("state")
+
+Template.mainContent.state = noughts.state
+
 # Builds a string which describes the state of the game, including when it was
 # last modified and whether or not it's in-progress or over, who won, etc.
 gameStateSummary = (game, lastModified) ->

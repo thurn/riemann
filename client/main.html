@@ -52,25 +52,31 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   <div class="nMain" role="main">
     {{> gameMessageModal}}
 
-    {{#if state.PLAY}}
-      {{> playScreen}}
+    {{log "Text"}}
+
+    {{#if equals 1 1}}
+      blah
     {{/if}}
 
-    {{#if state.LOADING}}
-      {{> loadingScreen}}
-    {{/if}}
+    <!-- {{#is currentState 113344}} -->
+    <!--   {{> playScreen}} -->
+    <!-- {{/is}} -->
 
-    {{#if state.NEW_GAME_MENU}}
-      {{> newGameMenu}}
-    {{/if}}
+    <!-- {{#is currentState "string"}} -->
+    <!--   {{> loadingScreen}} -->
+    <!-- {{/is}} -->
 
-    {{#if state.INITIAL_PROMO}}
-      {{> newGamePromo}}
-    {{/if}}
+    <!-- {{#is currentState state.NEW_GAME_MENU}} -->
+    <!--   {{> newGameMenu}} -->
+    <!-- {{/is}} -->
 
-    {{#if state.FACEBOOK_INVITE_MENU}}
-      {{> facebookInviteMenu}}
-    {{/if}}
+    <!-- {{#is currentState state.INITIAL_PROMO}} -->
+    <!--   {{> newGamePromo}} -->
+    <!-- {{/is}} -->
+
+    <!-- {{#is currentState state.FACEBOOK_INVITE_MENU}} -->
+    <!--   {{> facebookInviteScreen}} -->
+    <!-- {{/is}} -->
   </div>
 </template>
 
@@ -82,7 +88,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   </div>
 </template>
 
-<template name="facebookInviteMenu">
+<template name="facebookInviteScreen">
   <div class="nGame">
     <div class="nFacebookInviteMenu"></div>
   </div>
