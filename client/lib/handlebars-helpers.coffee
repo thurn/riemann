@@ -7,5 +7,4 @@
 ###
 
 Handlebars.registerHelper 'equals', (a, b) ->
-  debugger;
   return (a == b);

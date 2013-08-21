@@ -23,6 +23,7 @@ noughts.state =
   INITIAL_PROMO: me.state.USER + 0 # Initial game description state
   NEW_GAME_MENU: me.state.USER + 1 # Game state for showing new game menu
   FACEBOOK_INVITE: me.state.USER + 2 # Game state for showing new game menu
+  LOADING: me.state.USER + 3 # Game loading state
 
 # Changes the current game state to 'newState'. The optional "urlBehavior"
 # parameter shoud be a noughts.state.UrlBehavior, and the browser URL will be
@@ -287,7 +288,7 @@ noughts.NewGameMenu = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/new", urlBehavior)
     clearCurrentGame()
-    $(".nGame").children().hide()
+    $(".nMain").children().hide()
     $(".nMoveControlsContainer").hide()
     $(".nNewGameMenu").show()
     $(".nGame").css({border: ""})
@@ -297,7 +298,7 @@ noughts.FacebookInviteMenu = me.ScreenObject.extend
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     clearCurrentGame()
-    $(".nGame").children().hide()
+    $(".nMain").children().hide()
     $(".nMoveControlsContainer").hide()
     $(".nFacebookInviteMenu").show()
     # Scaling tends to mess up on this screen, especially e.g. when the
@@ -412,7 +413,7 @@ noughts.PlayScreen = me.ScreenObject.extend
 
 noughts.melonDeferred = $.Deferred()
 
-# Initializer to be called after the DOM ready even to set up MelonJS.
+# Initializer to be called after the DOM ready event to set up MelonJS.
 initialize = ->
   scaleFactor = Session.get("scaleFactor")
   initialized = me.video.init("nIdGame", 600, 600, true, scaleFactor)
@@ -431,7 +432,7 @@ Meteor.startup ->
   me.state.set(noughts.state.NEW_GAME_MENU, new noughts.NewGameMenu())
   me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
   me.state.set(noughts.state.FACEBOOK_INVITE, new noughts.FacebookInviteMenu())
-  window.onReady -> initialize()
+  window.onReady(-> initialize())
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
     # Facebook & Melon both loaded
     buildSuggestedFriends() if Session.get("facebookProfile")
@@ -455,7 +456,7 @@ onSubscribe = ->
       $(".nResignConfirmModal").modal("hide")
       noughts.displayToast("You resigned the game.")
 
-Template.mainContent.currentState = Session.get("state")
+Template.mainContent.currentState = -> Session.get("state")
 
 Template.mainContent.state = noughts.state
 

@@ -51,32 +51,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 <template name="mainContent">
   <div class="nMain" role="main">
     {{> gameMessageModal}}
-
-    {{log "Text"}}
-
-    {{#if equals 1 1}}
-      blah
-    {{/if}}
-
-    <!-- {{#is currentState 113344}} -->
-    <!--   {{> playScreen}} -->
-    <!-- {{/is}} -->
-
-    <!-- {{#is currentState "string"}} -->
-    <!--   {{> loadingScreen}} -->
-    <!-- {{/is}} -->
-
-    <!-- {{#is currentState state.NEW_GAME_MENU}} -->
-    <!--   {{> newGameMenu}} -->
-    <!-- {{/is}} -->
-
-    <!-- {{#is currentState state.INITIAL_PROMO}} -->
-    <!--   {{> newGamePromo}} -->
-    <!-- {{/is}} -->
-
-    <!-- {{#is currentState state.FACEBOOK_INVITE_MENU}} -->
-    <!--   {{> facebookInviteScreen}} -->
-    <!-- {{/is}} -->
+    {{> playScreen}}
+    {{> loadingScreen}}
+    {{> newGameMenu}}
+    {{> newGamePromo}}
+    {{> facebookInviteScreen}}
   </div>
 </template>
 
@@ -134,7 +113,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="gameMessageModal">
-  <div class="nGame">
+  <div class="nGameMessageWrapper">
     <div class="modal hide fade nGameMessage" data-backdrop="false">
       <div class="modal-header">
         <a href="#" class="close nCloseLink" data-dismiss="modal"
