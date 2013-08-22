@@ -27,8 +27,9 @@ noughts.state =
 
 # Changes the current game state to 'newState'. The optional "urlBehavior"
 # parameter shoud be a noughts.state.UrlBehavior, and the browser URL will be
-# modified accordingly. The default urlBehavior is
-# noughts.state.UrlBehavior.PUSH_URL.
+# modified accordingly. The default urlBehavior is noughts.state.UrlBehavior.
+# PUSH_URL. Any additional arguments are also past through to the onResetEvent
+# of the new state.
 noughts.state.changeState = (newState, urlBehavior) ->
   # TODO(dthurn): Handle a "cancel button" type of state transition which
   # takes the current state out of history.
@@ -36,7 +37,7 @@ noughts.state.changeState = (newState, urlBehavior) ->
     me.state.current().onExitState()
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
   Session.set("state", newState)
-  me.state.change(newState, urlBehavior)
+  me.state.change.apply(null, arguments)
 
 # What a new state should do to the browser URL when entered.
 noughts.state.UrlBehavior =
@@ -123,8 +124,7 @@ noughts.displayModal = (title, body, showCloseButton, actionButtonLabel,
 
 # Loads the game with the specified ID
 playGame = (gameId) ->
-  Session.set("gameId", gameId)
-  noughts.state.changeState(noughts.state.PLAY)
+  noughts.state.changeState(noughts.state.PLAY, noughts.state.PUSH_URL, gameId)
 
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
@@ -242,11 +242,18 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
-clearCurrentGame = () ->
-  Session.set("gameId", null)
+noughts.Screen = me.ScreenObject.extend
+  onResetEvent: (urlBehavior) ->
+    debugger
+    @onEnterState.apply(this, arguments)
+
+noughts.LoadingScreen = me.ScreenObject.extend
+  onResetEvent: ->
+    $(".nMain").children().hide()
+    $(".nScreenLoading").show()
 
 # The "new game" menu
-noughts.NewGameMenu = me.ScreenObject.extend
+noughts.NewGameMenu = noughts.Screen.extend
   handleUrlInviteButtonClick_: ->
     Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
       if err? then throw er
@@ -285,22 +292,17 @@ noughts.NewGameMenu = me.ScreenObject.extend
     $(".nFacebookInviteButton").on("click",
         _.bind(this.handleFacebookInviteButtonClick_, this))
 
-  onResetEvent: (urlBehavior) ->
+  onEnterState: (urlBehavior) ->
     noughts.state.updateUrl("/new", urlBehavior)
-    clearCurrentGame()
     $(".nMain").children().hide()
-    $(".nMoveControlsContainer").hide()
-    $(".nNewGameMenu").show()
-    $(".nGame").css({border: ""})
+    $(".nScreenNewGame").show()
 
 noughts.FacebookInviteMenu = me.ScreenObject.extend
   onResetEvent: (urlBehavior) ->
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
-    clearCurrentGame()
     $(".nMain").children().hide()
-    $(".nMoveControlsContainer").hide()
-    $(".nFacebookInviteMenu").show()
+    $(".nScreenFacebookInvite").show()
     # Scaling tends to mess up on this screen, especially e.g. when the
     # keyboard pops up on mobile.
     Session.set("disableScaling", true)
@@ -313,11 +315,8 @@ noughts.InitialPromo = me.ScreenObject.extend
 
   onResetEvent: (urlBehavior) ->
     noughts.state.updateUrl("/", urlBehavior)
-    clearCurrentGame()
-    $(".nGame").children().hide()
-    $(".nMoveControlsContainer").hide()
-    $(".nGame").css({border: ""})
-    $(".nNewGamePromo").show()
+    $(".nMain").children().hide()
+    $(".nScreenInitialPromo").show()
 
 # The main screen used for actually playing the game.
 noughts.PlayScreen = me.ScreenObject.extend
@@ -343,7 +342,7 @@ noughts.PlayScreen = me.ScreenObject.extend
     me.levelDirector.loadLevel("tilemap")
     @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
 
-  # Invokes via Meteor.autorun while in the PLAY state, reactively updates the
+  # Invoked via Meteor.autorun while in the PLAY state, reactively updates the
   # UI to show the current game state.
   autorun_: ->
     gameId = Session.get("gameId")
@@ -378,14 +377,13 @@ noughts.PlayScreen = me.ScreenObject.extend
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
-  onResetEvent: (urlBehavior) ->
-    gameId = Session.get("gameId")
+  onResetEvent: (urlBehavior, gameId) ->
+    Session.set("gameId", null)
+    $(".nMain").children().hide()
+
+    Session.set("gameId", gameId)
     noughts.state.updateUrl("/#{gameId}", urlBehavior)
-    $(".nGame").children().hide()
-    $(".nMoveControlsContainer").show()
-    $(".nNotification").show()
-    $(".nGame").css({border: "none"})
-    $(".nMain canvas").show()
+    $(".nScreenPlay").show()
 
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
@@ -402,14 +400,6 @@ noughts.PlayScreen = me.ScreenObject.extend
       if err? then throw err
       Meteor.autorun =>
         this.autorun_()
-
-  onExitState: ->
-    # TODO(dthurn) Design a real component lifecycle system so this isn't
-    # necessary.
-    $(".nNotification").hide()
-    $(".nMoveControlsContainer").hide()
-    $(".nGame").css({border: ""})
-    $(".nMain canvas").hide()
 
 noughts.melonDeferred = $.Deferred()
 
@@ -432,6 +422,10 @@ Meteor.startup ->
   me.state.set(noughts.state.NEW_GAME_MENU, new noughts.NewGameMenu())
   me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
   me.state.set(noughts.state.FACEBOOK_INVITE, new noughts.FacebookInviteMenu())
+  me.state.set(noughts.state.LOADING, new noughts.LoadingScreen())
+  noughts.state.changeState(noughts.state.LOADING,
+      noughts.state.UrlBehavior.PRESERVE_URL)
+
   window.onReady(-> initialize())
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
     # Facebook & Melon both loaded
@@ -455,10 +449,6 @@ onSubscribe = ->
       if err then throw err
       $(".nResignConfirmModal").modal("hide")
       noughts.displayToast("You resigned the game.")
-
-Template.mainContent.currentState = -> Session.get("state")
-
-Template.mainContent.state = noughts.state
 
 # Builds a string which describes the state of the game, including when it was
 # last modified and whether or not it's in-progress or over, who won, etc.
@@ -489,9 +479,11 @@ Template.navBody.games = ->
   getGameInfo = (game) ->
     opponentId = noughts.getOpponentId(game)
     opponentProfile = game.profiles[opponentId]
+    isCurrentGame = (Session.get("state") == noughts.state.PLAY and
+        game._id == Session.get("gameId"))
     return $.extend({}, game, {
       gameId: game._id
-      isCurrentGame: game._id == Session.get("gameId")
+      isCurrentGame: isCurrentGame
       hasOpponent: opponentId?
       opponentId: opponentId
       opponentHasProfile: opponentProfile?
@@ -507,6 +499,7 @@ Template.navBody.games = ->
     gameOver: _.filter(games, (game) -> game.gameOver)
     myTurn: _.filter(inProgressGames, myTurn)
     theirTurn: _.filter(inProgressGames, (game) -> !myTurn(game))
+    newGameSelected: Session.get("state") == noughts.state.NEW_GAME_MENU
   }
   return result
 
@@ -551,25 +544,24 @@ setStateFromUrl = ->
     if myTurnGames.length > 0
       # Load the most recently modified game where it's my turn.
       game = myTurnGames[0]
-      Session.set("gameId", game._id)
       # Redirect to the the URL of the most recently modified game.
       noughts.state.changeState(noughts.state.PLAY,
-          noughts.state.UrlBehavior.REPLACE_URL)
+          noughts.state.UrlBehavior.REPLACE_URL, game._id)
     else
       # Show the new game promo
       noughts.state.changeState(noughts.state.INITIAL_PROMO,
           noughts.state.UrlBehavior.PRESERVE_URL)
   else # For simplicity, assume any unrecognized path is a game id
-    Meteor.call "validateGameId", path, (err, gameExists) ->
+    gameId = path
+    Meteor.call "validateGameId", gameId, (err, gameExists) ->
       if err? then throw err
       unless gameExists
-        displayError("Error: Game not found: #{path}")
-      Session.set("gameId", path)
+        displayError("Error: Game not found: #{gameId}")
       profile = Session.get("facebookProfile")
-      Meteor.call "addPlayerIfNotPresent", path, profile, (err) ->
+      Meteor.call "addPlayerIfNotPresent", gameId, profile, (err) ->
         if err? then throw err
         # TODO(dthurn): Show some kind of message if the game is full and the
         # viewer is only a spectator, allowing the viewer to watch or perhaps
         # "clone" the game.
         noughts.state.changeState(noughts.state.PLAY,
-            noughts.state.UrlBehavior.PRESERVE_URL)
+            noughts.state.UrlBehavior.PRESERVE_URL, gameId)

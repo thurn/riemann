@@ -144,10 +144,14 @@ body {
   background: #fff;
 }
 
+// Initially hide all content, the individual screens are configured to show it selectively.
+.nMain > div {
+  display: none;
+}
+
 .nGameCanvas {
   .centeredBlock(37.5rem, 37.5rem);
   border: 1px solid #aaa;
-  display: none;
   left: 50%;
   position: absolute;
   top: 50%;
@@ -193,7 +197,6 @@ body {
 .nNewGamePromo {
   .centeredBlock(@newGamePromoWidth, @newGamePromoHeight);
   position: absolute;
-  display: none;
 }
 
 .nLoading {
@@ -279,14 +282,16 @@ body {
 }
 
 .nNewGameMenu {
-  display: none;
   .centeredBlock(@navigationWidth, @menuButtonHeight * 6);
   position: absolute;
   margin-top: -18.5rem; // Perfect vertical centering looks strange here.
 }
 
+.nGameContainer {
+  border: none;
+}
+
 .nFacebookInviteMenu {
-  display: none;
   position: absolute;
   .centeredBlock(33.4rem, 35rem);
 }
@@ -302,7 +307,6 @@ body {
 .nMoveControlsContainer {
   text-align: center;
   margin: 0.5rem 0 1rem 0;
-  display: none;
 }
 
 .nHeader .nMoveControlsContainer {
@@ -359,11 +363,11 @@ body {
   transition: color 0.3s;
 }
 
-.nNavBody:hover .nCurrentGame {
+.nNavBody:hover .nCurrentNavSelection {
   background: #f5f5f5;
 }
 
-.nNavBody:hover .nCurrentGame:hover {
+.nNavBody:hover .nCurrentNavSelection:hover {
   background: #ffffff;
 }
 
@@ -376,7 +380,7 @@ body {
   background: #ffffff;
 }
 
-.nCurrentGame {
+.nCurrentNavSelection {
   background: #ffffff;
 }
 
@@ -406,7 +410,7 @@ nav .nResignGameButton {
   opacity: 0;
 }
 
-.nCurrentGame .nResignGameButton {
+.nCurrentNavSelection .nResignGameButton {
   opacity: 1;
 }
 

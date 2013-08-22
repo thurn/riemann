@@ -60,7 +60,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="loadingScreen">
-  <div class="nGame">
+  <div class="nGame nScreenLoading">
     <div class="nLoading">
       Loading...
     </div>
@@ -68,27 +68,36 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="facebookInviteScreen">
-  <div class="nGame">
+  <div class="nGame nScreenFacebookInvite">
     <div class="nFacebookInviteMenu"></div>
   </div>
 </template>
 
 <template name="playScreen">
-  <div class="nDesktopHeader">
-    {{> moveControls}}
+  <div class="nScreenPlay">
+    <div class="nDesktopHeader">
+      {{> moveControls}}
+    </div>
+    <div class="nGame nGameContainer" id="nIdGame"></div>
+    <div class="nNotification"></div>
   </div>
-  <div class="nGame" id="nIdGame"></div>
-  <div class="nNotification"></div>
 </template>
 
 <template name="navBody">
   <div class="nNavBody">
-    <div class="nNavItem nGameListNewGameButton">
+    <div class="nNavItem nGameListNewGameButton
+        {{#if games.newGameSelected}}nCurrentNavSelection{{/if}}">
       <span class="nGameListIcon nGameListNewGameIcon">
         <i class="icon-play icon-large"></i>
       </span>
       <div class="nGameListDescription nNavNewGameDescription">
-        <a href="/new">New Game</a>
+        {{#unless games.newGameSelected}}
+          <a href="/new">
+        {{/unless}}
+          New Game
+        {{#unless games.newGameSelected}}
+          </a>
+        {{/unless}}
       </div>
     </div>
     {{#if games.myTurn}}
@@ -137,7 +146,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 <template name="gameListing">
   <div class="nNavItem nGameListing
-      {{#if isCurrentGame}}nCurrentGame{{/if}}"
+      {{#if isCurrentGame}}nCurrentNavSelection{{/if}}"
       gameId={{gameId}}>
     {{#if hasOpponent}}
       {{#if opponentHasProfile}}
@@ -179,7 +188,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="newGamePromo">
-  <div class="nGame">
+  <div class="nGame nScreenInitialPromo">
     <div class="nNewGamePromo">
       <div class="nGameDescription">
         "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
@@ -196,7 +205,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="newGameMenu">
-  <div class="nGame">
+  <div class="nGame nScreenNewGame">
     <div class="nNewGameMenu">
       <div class="nNewGameMenuHeader">
         New Game:
