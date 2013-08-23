@@ -19,11 +19,11 @@ gameResources = [
 SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
 
 noughts.state =
-  PLAY: me.state.PLAY
-  INITIAL_PROMO: me.state.USER + 0 # Initial game description state
-  NEW_GAME_MENU: me.state.USER + 1 # Game state for showing new game menu
-  FACEBOOK_INVITE: me.state.USER + 2 # Game state for showing new game menu
-  LOADING: me.state.USER + 3 # Game loading state
+  PLAY: "PLAY"
+  INITIAL_PROMO: "INITIAL_PROMO" # Initial game description state
+  NEW_GAME_MENU: "NEW_GAME_MENU" # Game state for showing new game menu
+  FACEBOOK_INVITE: "FACEBOOK_INVITE" # Game state for showing new game menu
+  LOADING: "LOADING" # Game loading state
 
 # Changes the current game state to 'newState'. The optional "urlBehavior"
 # parameter shoud be a noughts.state.UrlBehavior, and the browser URL will be
@@ -37,21 +37,22 @@ noughts.state.changeState = (newState, urlBehavior) ->
     me.state.current().onExitState()
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
   Session.set("state", newState)
-  me.state.change.apply(null, arguments)
+  newScreen = noughts.state.stateMap[newState]
+  newScreen.enterState.apply(newScreen, _.rest(arguments))
 
 # What a new state should do to the browser URL when entered.
 noughts.state.UrlBehavior =
   # Change the current URL and add the old one to the browser history stack.
   # The default behavior.
-  PUSH_URL: 1
+  PUSH_URL: "PUSH_URL"
 
   # Keep the existing URL without modifying browser history. Used when e.g.
   # determining the initial state from the URL on page load.
-  PRESERVE_URL: 2
+  PRESERVE_URL: "PRESERVE_URL"
 
   # Change the current URL and do not add the previous URL to the history stack.
   # Used to e.g. implement a redirect.
-  REPLACE_URL: 3
+  REPLACE_URL: "REPLACE_URL"
 
 # Stores the initial length of the browser history. Used to figure out if
 # invoking noughts.state.back() will take us off-site.
@@ -124,7 +125,8 @@ noughts.displayModal = (title, body, showCloseButton, actionButtonLabel,
 
 # Loads the game with the specified ID
 playGame = (gameId) ->
-  noughts.state.changeState(noughts.state.PLAY, noughts.state.PUSH_URL, gameId)
+  noughts.state.changeState(noughts.state.PLAY,
+      noughts.state.UrlBehavior.PUSH_URL, gameId)
 
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
@@ -242,13 +244,12 @@ showFacebookInviteDialog = (inviteCallback) ->
 # Displays a short informative message to the user.
 displayNotice = (msg) -> $(".nNotification").text(msg)
 
-noughts.Screen = me.ScreenObject.extend
-  onResetEvent: (urlBehavior) ->
-    debugger
+noughts.Screen = Object.extend
+  enterState: ->
     @onEnterState.apply(this, arguments)
 
-noughts.LoadingScreen = me.ScreenObject.extend
-  onResetEvent: ->
+noughts.LoadingScreen = noughts.Screen.extend
+  onEnterState: ->
     $(".nMain").children().hide()
     $(".nScreenLoading").show()
 
@@ -297,8 +298,8 @@ noughts.NewGameMenu = noughts.Screen.extend
     $(".nMain").children().hide()
     $(".nScreenNewGame").show()
 
-noughts.FacebookInviteMenu = me.ScreenObject.extend
-  onResetEvent: (urlBehavior) ->
+noughts.FacebookInviteMenu = noughts.Screen.extend
+  onEnterState: (urlBehavior) ->
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     noughts.state.updateUrl("/facebookInvite", urlBehavior)
     $(".nMain").children().hide()
@@ -418,13 +419,19 @@ initialize = ->
 # Functions to run as soon as possible on startup. Defines the state map
 # and adds a melonjs callback.
 Meteor.startup ->
-  me.state.set(noughts.state.PLAY, new noughts.PlayScreen())
-  me.state.set(noughts.state.NEW_GAME_MENU, new noughts.NewGameMenu())
-  me.state.set(noughts.state.INITIAL_PROMO, new noughts.InitialPromo())
-  me.state.set(noughts.state.FACEBOOK_INVITE, new noughts.FacebookInviteMenu())
-  me.state.set(noughts.state.LOADING, new noughts.LoadingScreen())
+  noughts.state.stateMap = {
+    PLAY: new noughts.PlayScreen()
+    NEW_GAME_MENU: new noughts.NewGameMenu()
+    INITIAL_PROMO: new noughts.InitialPromo()
+    FACEBOOK_INVITE: new noughts.FacebookInviteMenu()
+    LOADING: new noughts.LoadingScreen()
+  }
+
   noughts.state.changeState(noughts.state.LOADING,
       noughts.state.UrlBehavior.PRESERVE_URL)
+
+  me.state.set(me.state.PLAY, new me.ScreenObject())
+  me.state.change(me.state.PLAY)
 
   window.onReady(-> initialize())
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
