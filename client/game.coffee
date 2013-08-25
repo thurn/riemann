@@ -18,6 +18,8 @@ gameResources = [
 
 SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
 
+noughts.inIframe = -> return window != window.top
+
 noughts.state =
   PLAY: "PLAY"
   INITIAL_PROMO: "INITIAL_PROMO" # Initial game description state
@@ -25,22 +27,46 @@ noughts.state =
   FACEBOOK_INVITE: "FACEBOOK_INVITE" # Game state for showing new game menu
   LOADING: "LOADING" # Game loading state
 
+noughts.state.stateHistory = []
+
 # Changes the current game state to 'newState'. The optional "urlBehavior"
 # parameter shoud be a noughts.state.UrlBehavior, and the browser URL will be
 # modified accordingly. The default urlBehavior is noughts.state.UrlBehavior.
 # PUSH_URL. Any additional arguments are also past through to the onEnterState
 # of the new state.
 noughts.state.changeState = (newState, urlBehavior) ->
-  # TODO(dthurn): Handle a "cancel button" type of state transition which
-  # takes the current state out of history.
-  if me.state.currentStateConstant() != -1 and me.state.current().onExitState?
-    me.state.current().onExitState()
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
+  additionalArguments = _.toArray(arguments).slice(2)
+  noughts.state.stateMap[Session.get("state")]?.onExitState?()
+
+  if urlBehavior != noughts.state.UrlBehavior.PUSH_URL
+    # Pop is a no-op on an empty array
+    pop = noughts.state.stateHistory.pop()
+
+  noughts.state.stateHistory.push
+    state: newState
+    additionalArguments: additionalArguments
+
+  # Arguments should be [urlBehavior, args[2], args[3], etc]
   Session.set("state", newState)
   newScreen = noughts.state.stateMap[newState]
-  # Arguments should be [urlBehavior, args[2], args[3], etc]
-  newArgs = [urlBehavior].concat(_.toArray(arguments).slice(2))
+  newArgs = [urlBehavior].concat(additionalArguments)
   newScreen.enterState.apply(newScreen, newArgs)
+
+# Navigates back in the state history (and browser history). If the user has
+# no previous state, calls the provided noStateCallback instead.
+noughts.state.back = (noStateCallback) ->
+  if noughts.state.hasPreviousState()
+    if noughts.inIframe()
+      pop = noughts.state.stateHistory.pop()
+      target = _.last(noughts.state.stateHistory)
+      changeStateArgs = [target.state, noughts.state.UrlBehavior.REPLACE_URL].
+          concat(target.additionalArguments)
+      noughts.state.changeState.apply(null, changeStateArgs)
+    else
+      window.history.back()
+  else
+    noStateCallback()
 
 # What a new state should do to the browser URL when entered.
 noughts.state.UrlBehavior =
@@ -56,39 +82,27 @@ noughts.state.UrlBehavior =
   # Used to e.g. implement a redirect.
   REPLACE_URL: "REPLACE_URL"
 
-# Stores the initial length of the browser history. Used to figure out if
-# invoking noughts.state.back() will take us off-site.
-noughts.state.initialHistoryLength = window.history.length
-
 # Returns true if there's a previous state in the state history to go back to.
-noughts.state.hasPreviousState = ->
-  window.history.length > noughts.state.initialHistoryLength
+noughts.state.hasPreviousState = -> return noughts.state.stateHistory.length > 1
 
 # Possibly modifies the current browser URL to the to provided path, based on
 # the behavior requested in the 'urlBehavior' parameter (a
 # noughts.state.UrlBehavior).
 noughts.state.updateUrl = (urlBehavior, path) ->
-  # TODO(dthurn): No point in doing this if we're inside the Facebook iframe
+  # No point in doing this if we're inside an iframe:
+  return if noughts.inIframe()
   if urlBehavior == noughts.state.UrlBehavior.PUSH_URL
     window.history.pushState({}, "", path)
   else if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
     window.history.replaceState({}, "", path)
   # state.UrlBehavior.PRESERVE_URL is a no-op.
 
-# Navigates back in the browser history, but throws an error if the navigation
-# would take you off-site.
-noughts.state.back = ->
-  unless noughts.state.hasPreviousState()
-    displayError("Tried to invoke state.back() with no more states available")
-  # TODO(dthurn): Make this work inside the Facebook iframe.
-  window.history.back()
-
 # Displays a short message to the user. The optional duration parameter controls
 # how many milliseconds the message appears for.
 noughts.displayToast = (text, duration) ->
+  duration ||= 3000
   $(".nToast").text(text)
   $(".nToast").css({top: 0})
-  duration ||= 3000
   setTimeout((-> $(".nToast").css({top: "-5rem"})), duration)
 
 # Displays a modal dialog over the game.
@@ -200,7 +214,7 @@ buildSuggestedFriends = _.once ->
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
     $(".nSmallFacebookInviteButton").on("click", handleSendFacebookInviteClick)
     $(".nFacebookInviteCancelButton").on "click", ->
-        noughts.state.changeState(noughts.state.NEW_GAME_MENU)
+        noughts.state.back(-> setStateFromPath("new"))
     $(".nFacebookFriendSelect").on "change", (e) ->
       setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
     $(".nFacebookFriendSelect").select2
@@ -263,7 +277,7 @@ noughts.NewGameMenu = noughts.Screen.extend
   init: ->
     $(".nNewGameMenuCloseButton").on "click", =>
       if noughts.state.hasPreviousState()
-        noughts.state.back()
+        noughts.state.back(-> setStateFromPath(""))
       else
         noughts.state.changeState(noughts.state.INITIAL_PROMO)
 
@@ -455,6 +469,7 @@ onSubscribe = ->
 
   setStateFromUrl()
   $(window).on "popstate", ->
+    noughts.state.stateHistory.pop()
     setStateFromUrl()
 
   $(".nResignConfirmButton").on "click", (event) ->
@@ -532,9 +547,8 @@ Template.navBody.events {
 }
 
 # Inspects the URL and sets the initial game state accordingly.
-setStateFromUrl = ->
+setStateFromUrl = () ->
   requestIds = $.url().param("request_ids")?.split(",")
-  path = $.url().segment(1)
   if requestIds
     for requestId in requestIds
       fullId = "#{requestId}_#{Meteor.userId()}"
@@ -544,7 +558,14 @@ setStateFromUrl = ->
     Meteor.call "facebookJoinViaRequestId", id, profile, (err, gameId) ->
       if err? then throw err
       playGame(gameId)
-  else if path == "new"
+  else
+    setStateFromPath($.url().segment(1))
+
+# Sets the initial game state based on the request path (specifically the
+# first segment after the domain). Does not handle e.g. ?request_ids=
+# parameters.
+setStateFromPath = (path) ->
+  if path == "new"
     noughts.state.changeState(noughts.state.NEW_GAME_MENU,
         noughts.state.UrlBehavior.PRESERVE_URL)
   else if path == "facebookInvite"
