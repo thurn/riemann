@@ -275,16 +275,16 @@ noughts.LoadingScreen = noughts.Screen.extend
 # The "new game" menu
 noughts.NewGameMenu = noughts.Screen.extend
   init: ->
-    $(".nNewGameMenuCloseButton").on "click", =>
-      if noughts.state.hasPreviousState()
-        noughts.state.back(-> setStateFromPath(""))
-      else
-        noughts.state.changeState(noughts.state.INITIAL_PROMO)
-
-    $(".nUrlInviteButton").on("click",
-        _.bind(this.handleUrlInviteButtonClick_, this))
-    $(".nFacebookInviteButton").on("click",
-        _.bind(this.handleFacebookInviteButtonClick_, this))
+    Template.newGameMenu.events
+      "click .nNewGameMenuCloseButton": =>
+        if noughts.state.hasPreviousState()
+          noughts.state.back(-> setStateFromPath(""))
+        else
+          setStateFromPath("")
+      "click .nUrlInviteButton":
+          _.bind(this.handleUrlInviteButtonClick_, this)
+      "click .nFacebookInviteButton":
+          _.bind(this.handleFacebookInviteButtonClick_, this)
 
   onEnterState: (updateUrl) ->
     updateUrl("/new")
@@ -330,8 +330,9 @@ noughts.FacebookInviteMenu = noughts.Screen.extend
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = noughts.Screen.extend
   init: ->
-    $(".nNewGameButton").on "click", =>
-      noughts.state.changeState(noughts.state.NEW_GAME_MENU)
+    Template.newGamePromo.events
+      "click .nNewGameButton": =>
+        noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 
   onEnterState: (updateUrl) ->
     updateUrl("/")
@@ -436,17 +437,18 @@ initialize = ->
     noughts.melonDeferred.resolve()
   me.loader.preload(gameResources)
 
-# Functions to run as soon as possible on startup. Defines the state map
-# and adds a melonjs callback.
-Meteor.startup ->
-  noughts.state.stateMap = {
-    PLAY: new noughts.PlayScreen()
-    NEW_GAME_MENU: new noughts.NewGameMenu()
-    INITIAL_PROMO: new noughts.InitialPromo()
-    FACEBOOK_INVITE: new noughts.FacebookInviteMenu()
-    LOADING: new noughts.LoadingScreen()
-  }
 
+noughts.state.stateMap = {
+  PLAY: new noughts.PlayScreen()
+  NEW_GAME_MENU: new noughts.NewGameMenu()
+  INITIAL_PROMO: new noughts.InitialPromo()
+  FACEBOOK_INVITE: new noughts.FacebookInviteMenu()
+  LOADING: new noughts.LoadingScreen()
+}
+
+# Functions to run as soon as possible on startup. Switches to the loading state
+# and sets up some melonjs initialization.
+Meteor.startup ->
   noughts.state.changeState(noughts.state.LOADING,
       noughts.state.UrlBehavior.PRESERVE_URL)
 
