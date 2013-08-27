@@ -355,9 +355,7 @@ noughts.PlayScreen = noughts.Screen.extend
   onEnterState: (updateUrl, gameId) ->
     updateUrl("/#{gameId}")
     Session.set("gameId", gameId)
-    # Wait a litle bit before showing to give Meteor a chance to render
-    showFn = => @showScreen(".nScreenPlay")
-    setTimeout(showFn, 50)
+    @showScreen(".nScreenPlay")
 
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
