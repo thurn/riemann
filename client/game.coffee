@@ -54,8 +54,8 @@ noughts.state.changeState = (newState, urlBehavior) ->
   newScreen.enterState.apply(newScreen, newArgs)
 
 # Navigates back in the state history (and browser history). If the user has
-# no previous state, calls the provided noStateCallback instead.
-noughts.state.back = (noStateCallback) ->
+# no previous state, sets the state via loadDefaultState()
+noughts.state.back = () ->
   if noughts.state.hasPreviousState()
     if noughts.inIframe()
       pop = noughts.state.stateHistory.pop()
@@ -66,7 +66,7 @@ noughts.state.back = (noStateCallback) ->
     else
       window.history.back()
   else
-    noStateCallback()
+    loadDefaultState()
 
 # What a new state should do to the browser URL when entered.
 noughts.state.UrlBehavior =
@@ -213,8 +213,7 @@ buildSuggestedFriends = _.once ->
     $(".nFacebookInviteMenu").html(
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
     $(".nSmallFacebookInviteButton").on("click", handleSendFacebookInviteClick)
-    $(".nFacebookInviteCancelButton").on "click", ->
-        noughts.state.back(-> setStateFromPath("new"))
+    $(".nFacebookInviteCancelButton").on "click", -> noughts.state.back()
     $(".nFacebookFriendSelect").on "change", (e) ->
       setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
     $(".nFacebookFriendSelect").select2
@@ -276,11 +275,7 @@ noughts.LoadingScreen = noughts.Screen.extend
 noughts.NewGameMenu = noughts.Screen.extend
   init: ->
     Template.newGameMenu.events
-      "click .nNewGameMenuCloseButton": =>
-        if noughts.state.hasPreviousState()
-          noughts.state.back(-> setStateFromPath(""))
-        else
-          setStateFromPath("")
+      "click .nNewGameMenuCloseButton": => noughts.state.back()
       "click .nUrlInviteButton":
           _.bind(this.handleUrlInviteButtonClick_, this)
       "click .nFacebookInviteButton":
@@ -341,14 +336,15 @@ noughts.InitialPromo = noughts.Screen.extend
 # The main screen used for actually playing the game.
 noughts.PlayScreen = noughts.Screen.extend
   init: ->
-    $(".nSubmitButton").on "click", =>
-      Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
-        if err then throw err
-        noughts.displayToast("Move submitted")
-    $(".nUndoButton").on "click", =>
-      Meteor.call("undoCommand", Session.get("gameId"))
-    $(".nRedoButton").on "click", =>
-      Meteor.call("redoCommand", Session.get("gameId"))
+    Template.playScreen.events
+      "click .nSubmitButton": =>
+        Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
+          if err then throw err
+          noughts.displayToast("Move submitted")
+      "click .nUndoButton": =>
+        Meteor.call("undoCommand", Session.get("gameId"))
+      "click .nRedoButton": =>
+        Meteor.call("redoCommand", Session.get("gameId"))
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -572,18 +568,7 @@ setStateFromPath = (path) ->
     noughts.state.changeState(noughts.state.FACEBOOK_INVITE,
         noughts.state.UrlBehavior.PRESERVE_URL)
   else if path == ""
-    games = noughts.Games.find({}, {sort: {lastModified: -1}}).fetch()
-    myTurnGames = _.filter(games, myTurn)
-    if myTurnGames.length > 0
-      # Load the most recently modified game where it's my turn.
-      game = myTurnGames[0]
-      # Redirect to the the URL of the most recently modified game.
-      noughts.state.changeState(noughts.state.PLAY,
-          noughts.state.UrlBehavior.REPLACE_URL, game._id)
-    else
-      # Show the new game promo
-      noughts.state.changeState(noughts.state.INITIAL_PROMO,
-          noughts.state.UrlBehavior.PRESERVE_URL)
+    loadDefaultState()
   else # For simplicity, assume any unrecognized path is a game id
     gameId = path
     Meteor.call "validateGameId", gameId, (err, gameExists) ->
@@ -598,3 +583,20 @@ setStateFromPath = (path) ->
         # "clone" the game.
         noughts.state.changeState(noughts.state.PLAY,
             noughts.state.UrlBehavior.PRESERVE_URL, gameId)
+
+# Switches to the default state for the game, which is either a game where it's
+# the user's turn or the "create a new game" promo screen. Implemented like a
+# redirect, so the current URL is always replaced with that of the new screen.
+loadDefaultState = ->
+  games = noughts.Games.find({}, {sort: {lastModified: -1}}).fetch()
+  myTurnGames = _.filter(games, myTurn)
+  if myTurnGames.length > 0
+    # Load the most recently modified game where it's my turn.
+    game = myTurnGames[0]
+    # Redirect to the the URL of the most recently modified game.
+    noughts.state.changeState(noughts.state.PLAY,
+        noughts.state.UrlBehavior.REPLACE_URL, game._id)
+  else
+    # Show the new game promo
+    noughts.state.changeState(noughts.state.INITIAL_PROMO,
+        noughts.state.UrlBehavior.REPLACE_URL)
