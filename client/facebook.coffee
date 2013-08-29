@@ -28,7 +28,7 @@ Template.facebook.created = ->
     FB.init
       appId: noughts.ClientConfig.appId, # App ID from the App Dashboard
       frictionlessRequests: true # Don't require authorization for each request
-      channelUrl: noughts.ClientConfig.appUrl + '/fb/channel.html',
+      channelUrl: noughts.ClientConfig.appUrl + 'channel.html',
       status: true, # check the login status upon init?
       cookie: true, # set sessions cookies to allow your server to access the session?
       xfbml: true  # parse XFBML tags on this page?

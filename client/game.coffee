@@ -154,7 +154,7 @@ facebookInviteCallback = (inviteResponse) ->
   opponentId = inviteResponse.to[0]
   options = {params: {fields: "id,name,first_name,gender"}}
   url = "https://graph.facebook.com/#{opponentId}"
-  Meteor.http.get url, options, (err, result) ->
+  HTTP.get url, options, (err, result) ->
     if err? then throw err
     response = JSON.parse(result.content)
     opponentProfile =

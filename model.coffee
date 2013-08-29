@@ -125,7 +125,7 @@ Meteor.methods
   facebookAuthenticate: (facebookId, accessToken) ->
     if Meteor.isServer
       # Only need to validate facebook token on the server
-      result = Meteor.http.get "https://graph.facebook.com/me",
+      result = HTTP.get "https://graph.facebook.com/me",
           params:
             fields: "id,name,first_name,gender"
             access_token: accessToken
