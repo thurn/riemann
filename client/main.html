@@ -49,8 +49,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="mainContent">
+  {{> gameMessageModal}}
   <div class="nMain" role="main">
-    {{> gameMessageModal}}
     {{> playScreen}}
     {{> loadingScreen}}
     {{> newGameMenu}}
@@ -101,19 +101,19 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       </div>
     </div>
     {{#if games.myTurn}}
-      <div class="nNavigationSectionHeader">Your Move:</div>
+      <div class="nNavigationSectionHeader">Games - Your Move:</div>
     {{/if}}
     {{#each games.myTurn}}
       {{> gameListing}}
     {{/each}}
     {{#if games.theirTurn}}
-      <div class="nNavigationSectionHeader">Their Move:</div>
+      <div class="nNavigationSectionHeader">Games - Their Move:</div>
     {{/if}}
     {{#each games.theirTurn}}
       {{> gameListing}}
     {{/each}}
     {{#if games.gameOver}}
-      <div class="nNavigationSectionHeader">Game Over:</div>
+      <div class="nNavigationSectionHeader">Games - Game Over:</div>
     {{/if}}
     {{#each games.gameOver}}
       {{> gameListing}}
@@ -168,12 +168,12 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       {{/unless}}
       {{#if hasOpponent}}
         {{#if opponentHasProfile}}
-          Game vs. {{opponentProfile.givenName}}
+          vs. {{opponentProfile.givenName}}
         {{else}}
-          Game vs. Anonymous
+          vs. Anonymous
         {{/if}}
       {{else}}
-        Game - No Opponent
+        vs. (No Opponent)
       {{/if}}
       {{#unless isCurrentGame}}
         </a>
