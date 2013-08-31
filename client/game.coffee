@@ -222,13 +222,13 @@ buildSuggestedFriends = _.once ->
       formatResult: (option) ->
         Template.facebookFriend({name: option.text, uid: option.id})
       maximumSelectionSize: 1
-      minimumInputLength: 2
       formatSelectionTooBig: (maxInvitees) ->
         people = if maxInvitees == 1 then "person" else "people"
         "You can only invite #{maxInvitees} #{people}"
       formatSelection: (option, container) ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
+    $(".nFacebookFriendSelect").select2("open")
   null
 
 # If 'enabled' is true, removes the 'disabled' attribute on the provided
