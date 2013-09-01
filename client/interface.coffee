@@ -17,12 +17,8 @@ noughts.openNav = (event) ->
 Meteor.startup ->
   $(".nMenuToggleButton").on(noughts.util.clickEvent, noughts.openNav)
 
-isiPhone = ->
-  ua = navigator.userAgent
-  ~ua.indexOf('iPhone') || ~ua.indexOf('iPod')
-
 iPhoneHideNavbar = ->
-  if isiPhone()
+  if noughts.util.isiOSPhone
     height = $(window).height() + 60
     $("body").css(height: height + 'px')
     setTimeout((-> window.scrollTo(0, 0)), 1)
@@ -30,7 +26,8 @@ iPhoneHideNavbar = ->
 widthAndHeight = ->
   width = $(window).width()
   height = $(window).height()
-  height += 60 if isiPhone() # Compensate for the hidden navigation bar on iPhones
+  # Compensate for the hidden navigation bar on iPhones
+  height += 60 if noughts.util.isiOSPhone
   return {width: width, height: height}
 
 # Possible UI mode CSS classes
@@ -114,7 +111,7 @@ Meteor.startup ->
   # Touch events on mobile Safari seem to have strange effects, such as
   # flashing the last button you touched. Stopping "touchstart" on buttons
   # seems empirically to solve the problem, although I don't really know why.
-  if isiPhone()
+  if noughts.util.isiOS
     $('button').on 'touchstart', (e) ->
       e.preventDefault();
 

@@ -6,7 +6,6 @@
 preserve-inputs
 coffeescript
 less
-force-ssl
 accounts-base
 http
 appcache

@@ -13,7 +13,7 @@
 #
 # Game {
 #   _id: (String) Game ID
-#   players: (Map<Integer, String>) A map from player numbers to player IDs in
+#   players: (Map<Integer, String>) A bimap from player numbers to player IDs in
 #       the game. A player who leaves the game will have her entry in this map
 #       replaced with "null".
 #   profiles: (Map<String, Profile>) A mapping from player IDs to profile
@@ -94,7 +94,7 @@ die = (msg) ->
   throw new noughts.BadRequestError(msg)
 
 # Returns true if the current user is the current player in the provided game.
-isCurrentPlayer = (game) ->
+noughts.isCurrentPlayer = (game) ->
   return false if game.gameOver
   game.currentPlayerNumber? and Meteor.userId()? and
       Meteor.userId() == game.players[game.currentPlayerNumber]
@@ -110,7 +110,7 @@ ensureIsPlayer = (game) ->
 
 # Ensures that the current user is the current player in the provided game.
 ensureIsCurrentPlayer = (game) ->
-  unless isCurrentPlayer(game)
+  unless noughts.isCurrentPlayer(game)
     die("Unauthorized user: '#{Meteor.userId()}'")
 
 # Returns the game with ID gameId, or throws an exception if it doesn't exist.
@@ -386,7 +386,7 @@ noughts.getVictors = (game) ->
 # Checks if the provided command could be legally added to the current action.
 noughts.isLegalCommand = (gameId, command) ->
   game = getGame(gameId)
-  return false unless isCurrentPlayer(game)
+  return false unless noughts.isCurrentPlayer(game)
   return false if game.gameOver
   if game.currentAction?
     action = noughts.Actions.findOne(game.currentAction)
@@ -398,7 +398,7 @@ noughts.isLegalCommand = (gameId, command) ->
 noughts.isCurrentActionLegal = (gameId) ->
   # TODO(dthurn): Is this still necessary with isLegalCommand?
   game = getGame(gameId)
-  return false unless game.currentAction? and isCurrentPlayer(game)
+  return false unless game.currentAction? and noughts.isCurrentPlayer(game)
   action = noughts.Actions.findOne(game.currentAction)
   return false if action.commands.length != 1
   command = action.commands[0]
@@ -411,7 +411,7 @@ noughts.isSquareAvailable = (gameId, column, row) ->
 
 noughts.canUndo = (gameId) ->
   game = getGame(gameId)
-  if game.currentAction? and isCurrentPlayer(game)
+  if game.currentAction? and noughts.isCurrentPlayer(game)
     action = noughts.Actions.findOne(game.currentAction)
     action.commands.length > 0
   else
@@ -419,12 +419,21 @@ noughts.canUndo = (gameId) ->
 
 noughts.canRedo = (gameId) ->
   game = getGame(gameId)
-  if game.currentAction? and isCurrentPlayer(game)
+  if game.currentAction? and noughts.isCurrentPlayer(game)
     action = noughts.Actions.findOne(game.currentAction)
     action.futureCommands.length > 0
   else
     false
 
+noughts.canSubmit = (gameId) ->
+  return noughts.isCurrentActionLegal(gameId)
+
+# Gets the ID of your opponent (in a 2-player game)
 noughts.getOpponentId = (game) ->
   notViewerId = (id) -> id != Meteor.userId()
   return _.find(game.players, notViewerId)
+
+# Gets the current player's player number in a game, returning -1 if the current
+# player is not a participant in the game.
+noughts.getPlayerNumber = (game) ->
+  return _.indexOf(game.players, Meteor.userId())

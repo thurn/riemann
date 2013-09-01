@@ -7,6 +7,7 @@
 ###
 
 isLocalhost = window.location.href.indexOf("localhost") != -1
+# TODO(dthurn): Use Meteor.rootUrl() here
 devUrl = "http://localhost:3000/"
 prodUrl = "https://apps.facebook.com/noughts/"
 
@@ -24,6 +25,24 @@ noughts.util.inIframe = window != window.top
 
 noughts.util.isTouch = "ontouchstart" of window
 
-noughts.util.clickString = if noughts.util.isTouch then "tap" else "click"
+noughts.util.isAndroid = /Android/.test(navigator.userAgent)
 
-noughts.util.clickEvent = if noughts.util.isTouch then "touchend" else "click"
+noughts.util.isiOS = /iP(ad|hone|od)/.test(navigator.userAgent)
+
+noughts.util.isiOSPhone = /iP(hone|od)/.test(navigator.userAgent)
+
+noughts.util.isChrome = /Chrome\/[0-9]+/.test(navigator.userAgent)
+
+# Checks if the device is known to have a reasonable implementation of the
+# "click" event (no 300ms delay)
+goodClicks = ->
+	unless noughts.util.isTouch
+    return true
+  # Chrome does it right with user-scalable=no
+  return true if noughts.util.isChrome
+  # Most other touch devices do it wrong
+	return false
+
+noughts.util.clickString = if goodClicks() then "click" else "tap"
+
+noughts.util.clickEvent = if goodClicks() then "click" else "touchend"

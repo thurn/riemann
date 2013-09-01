@@ -8,14 +8,6 @@
 
 # Project Riemann web client
 
-# Array of game assets in melonjs format
-gameResources = [
-  {name: "square", type: "image", src: "/tilemaps/square.jpg"},
-  {name: "x", type: "image", src: "/images/x.png"},
-  {name: "o", type: "image", src: "/images/o.png"},
-  {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
-]
-
 noughts.clickMap = (eventMap) ->
   events = {}
   for key,value of eventMap
@@ -238,7 +230,7 @@ buildSuggestedFriends = _.once ->
       focus = -> $(".nSmallFacebookInviteButton").focus()
       # Need to do this on a timeout because select2 is dumb and is sending
       # its own focus event
-      setTimeout(focus, 1)
+      setTimeout(focus, 100)
     if Session.get("state") != noughts.state.FACEBOOK_INVITE
       $("#select2-drop").hide()
   null
@@ -369,17 +361,32 @@ noughts.PlayScreen = noughts.Screen.extend
         if err then throw err
         toastr.success("Move submitted")
 
+    # An SVG asset to show a helpful outline of the move on hover
+    @hoverAsset = null
+
     events = noughts.clickMap
       ".nSubmitButton": submitFn
       ".nUndoButton": undoFn
       ".nRedoButton": redoFn
     Template.playScreen.events(events)
-    Template.playScreen.rendered = ->
-      unless noughts.util.isTouch
-        $(".nUndoButton").tooltip(
-            {title: "Undo", placement: "bottom", container: "body"})
-        $(".nRedoButton").tooltip(
-            {title: "Redo", placement: "bottom", container: "body"})
+
+    Template.playScreen.rendered = =>
+      @onRender()
+
+  # Called when the play screen template is rendered.
+  onRender: ->
+    @canvas = Raphael($(".nGameContainer").get(0), "600px", "600px")
+    @assets = noughts.assets.get(@canvas)
+
+    # Clear hover when mouse is not over the SVG canvas
+    $("svg").on "mouseleave", =>
+      @hoverAsset?.remove()
+
+    unless noughts.util.isTouch
+      $(".nUndoButton").tooltip(
+          {title: "Undo", placement: "bottom", container: "body"})
+      $(".nRedoButton").tooltip(
+          {title: "Redo", placement: "bottom", container: "body"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -389,16 +396,12 @@ noughts.PlayScreen = noughts.Screen.extend
     Session.set("gameId", gameId)
     $(".nMobileHeader .nMoveControlsContainer").show()
 
-    @xImg_ = me.loader.getImage("x")
-    @oImg_ = me.loader.getImage("o")
-    this.loadMainLayer_()
-
-    me.input.registerMouseEvent "mouseup", me.game.viewport, (event) =>
-      touch = me.input.touches[0]
-      tile = @mainLayer_.getTile(touch.x, touch.y)
-      command = {column: tile.col, row: tile.row}
-      if noughts.isLegalCommand(gameId, command)
-        Meteor.call("addCommand", gameId, command)
+    Meteor.autorun =>
+      scaleFactor = Session.get("scaleFactor")
+      if scaleFactor?
+        newSize = 600 * scaleFactor
+        @canvas.setSize(newSize, newSize)
+        @canvas.setViewBox(0, 0, 600, 600)
 
     Meteor.subscribe "game", gameId, (err) =>
       if err? then throw err
@@ -412,37 +415,48 @@ noughts.PlayScreen = noughts.Screen.extend
 
   # Enables/disables the three move control buttons (undo, redo, submit) based
   # on whether or not they are currently applicable.
-  toggleMoveControls_: (gameId) ->
-    setElementEnabled($(".nSubmitButton"), noughts.isCurrentActionLegal(gameId))
-    setElementEnabled($(".nUndoButton"), noughts.canUndo(gameId))
-    setElementEnabled($(".nRedoButton"), noughts.canRedo(gameId))
+  toggleMoveControls_: (game) ->
+    setElementEnabled($(".nSubmitButton"), noughts.canSubmit(game._id))
+    setElementEnabled($(".nUndoButton"), noughts.canUndo(game._id))
+    setElementEnabled($(".nRedoButton"), noughts.canRedo(game._id))
 
-  # Helper method to get the game's main layer stored in @mainLayer_
-  loadMainLayer_: ->
-    me.levelDirector.loadLevel("tilemap")
-    @mainLayer_ = me.game.currentLevel.getLayerByName("mainLayer")
+  # Draws the basic game grid and attaches event listeners.
+  drawGrid_: (game) ->
+    isXPlayer = noughts.getPlayerNumber(game) == noughts.X_PLAYER
+    hoverAssetName = if isXPlayer then "x" else "o"
+    showHover = (noughts.isCurrentPlayer(game) and
+        not noughts.canSubmit(game._id))
+    _.each [0..2], (x) =>
+      _.each [0..2], (y) =>
+        box = @assets.drawAt("box", 200*x, 200*y)
 
-  # Invoked via Meteor.autorun while in the PLAY state, reactively updates the
-  # UI to show the current game state.
-  autorun_: ->
-    gameId = Session.get("gameId")
-    game = noughts.Games.findOne gameId
-    return unless game?
-    me.game.removeAll()
-    this.loadMainLayer_()
+        onMouseOver = =>
+          @hoverAsset?.remove()
+          return unless showHover
+          return unless noughts.isLegalCommand(
+              game._id, {column: x, row: y})
+          @hoverAsset = @assets.drawAt(
+              hoverAssetName, 200*x, 200*y, {opacity: 0.2})
 
-    this.toggleMoveControls_(gameId)
+          # This is needed because SVG is dumb and lacks event bubbling
+          @hoverAsset.click(onClick)
 
-    # Redraw all previous moves
-    noughts.Actions.find({gameId: gameId}).forEach (action) =>
+        onClick = =>
+          command = {column: x, row: y}
+          if noughts.isLegalCommand(game._id, command)
+            Meteor.call("addCommand", game._id, command)
+
+        box.hover(onMouseOver) unless noughts.util.isTouch
+        box.click(onClick)
+
+  # Draws all of the moves so far in the game
+  drawMoves_: (game) ->
+    noughts.Actions.find({gameId: game._id}).forEach (action) =>
       for command in action.commands
-        tile = @mainLayer_.layerData[command.column][command.row]
-        isX = action.playerNumber == noughts.X_PLAYER
-        image = if isX then @xImg_ else @oImg_
-        sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
-        me.game.add(sprite, 2)
-    me.game.sort()
+        assetName = if action.playerNumber == noughts.X_PLAYER then "x" else "o"
+        @assets.drawAt(assetName, command.column * 200, command.row * 200)
 
+  displayGameStatusMessage_: (game) ->
     if not _.contains(game.players, Meteor.userId())
       displayNotice("Observing this game.")
     else if game.victors?.length == 1
@@ -453,24 +467,25 @@ noughts.PlayScreen = noughts.Screen.extend
     else if game.victors?.length == 2
       displayNotice("The game is over, and it was a draw!")
     else if game.players[game.currentPlayerNumber] == Meteor.userId()
-      displayNotice("It's your turn. Select a square to make your move.")
+      if noughts.canSubmit(game._id)
+        displayNotice("Looks good, hit 'Submit' to send your move.")
+      else
+        displayNotice("It's your turn. Select a square to make your move.")
     else if _.contains(game.players, Meteor.userId())
       displayNotice("It's your opponent's turn.")
 
-noughts.melonDeferred = $.Deferred()
 
-# Initializer to be called after the DOM ready event to set up MelonJS.
-initialize = ->
-  scaleFactor = Session.get("scaleFactor")
-  initialized = me.video.init("nIdGame", 600, 600, true, scaleFactor)
-  $(".nGame canvas").addClass("nGameCanvas")
-  if not initialized
-    displayError("Sorry, your browser doesn't support HTML 5 canvas!")
-    return
-  me.loader.onload = ->
-    noughts.melonDeferred.resolve()
-  me.loader.preload(gameResources)
+  # Invoked via Meteor.autorun while in the PLAY state, reactively updates the
+  # UI to show the current game state.
+  autorun_: ->
+    game = noughts.Games.findOne(Session.get("gameId"))
+    return unless game?
 
+    @toggleMoveControls_(game)
+    @canvas.clear()
+    @drawGrid_(game)
+    @drawMoves_(game)
+    @displayGameStatusMessage_(game)
 
 noughts.state.stateMap = {
   PLAY: new noughts.PlayScreen()
@@ -486,8 +501,8 @@ Meteor.startup ->
   noughts.state.changeState(noughts.state.LOADING,
       noughts.state.UrlBehavior.PRESERVE_URL)
 
-  me.state.set(me.state.PLAY, new me.ScreenObject())
-  me.state.change(me.state.PLAY)
+  #me.state.set(me.state.PLAY, new me.ScreenObject())
+  #me.state.change(me.state.PLAY)
 
   if noughts.isMobile()
     toastPosition = "toast-top-left"
@@ -498,8 +513,9 @@ Meteor.startup ->
     timeOut: 2000
     positionClass: toastPosition
 
-  window.onReady(-> initialize())
-  $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
+  #window.onReady(-> initialize())
+  #$.when(noughts.melonDeferred, noughts.facebookDeferred).done ->
+  $.when(noughts.facebookDeferred).done ->
     # Facebook & Melon both loaded
     buildSuggestedFriends() if Session.get("facebookProfile")
     Meteor.subscribe("me", onSubscribe)
@@ -508,9 +524,9 @@ Meteor.startup ->
 # some reactive functions and handles facebook ?request_ids params
 onSubscribe = ->
   # Update game scale when scaleFactor changes
-  Meteor.autorun ->
-    scaleFactor = Session.get("scaleFactor")
-    if scaleFactor? then me.video.updateDisplaySize(scaleFactor, scaleFactor)
+  #Meteor.autorun ->
+    #scaleFactor = Session.get("scaleFactor")
+    #if scaleFactor? then me.video.updateDisplaySize(scaleFactor, scaleFactor)
 
   setStateFromUrl()
   $(window).on "popstate", ->

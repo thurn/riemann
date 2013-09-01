@@ -13,6 +13,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @mainWidth: 40rem;
 @mainHeight: @containerHeight;
 @navigationWidth: 25rem;
+@gameHeightAndWidth: 37.5rem;
 @mobileNavigationWidth: 30rem;
 @navigationHeight: @containerHeight;
 @defaultFontSize: 1.625rem;
@@ -201,14 +202,6 @@ body.modal-open {
   opacity: 1;
 }
 
-.nGameCanvas {
-  .centeredBlock(37.5rem, 37.5rem);
-  border: 1px solid #aaa;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-}
-
 .nCloseLink, .nDesktopMode .nCloseLink:hover {
   text-decoration: none;
   color: #000;
@@ -225,11 +218,15 @@ body.modal-open {
 }
 
 .nGame {
-  .centeredBlock(37.5rem, 37.5rem);
+  .centeredBlock(@gameHeightAndWidth, @gameHeightAndWidth);
   border: solid 1px #aaa;
   left: 50%;
   position: absolute;
   top: 50%;
+}
+
+.nGameContainer {
+  border: none;
 }
 
 .nLogo {
