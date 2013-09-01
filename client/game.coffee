@@ -213,7 +213,9 @@ buildSuggestedFriends = _.once ->
     $(".nFacebookInviteMenu").html(
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
     $(".nSmallFacebookInviteButton").on("click", handleSendFacebookInviteClick)
-    $(".nFacebookInviteCancelButton").on "click", -> noughts.state.back()
+    $(".nFacebookInviteCancelLink").on "click", (e) ->
+      e.preventDefault()
+      noughts.state.back()
     $(".nFacebookFriendSelect").on "change", (e) ->
       setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
     $(".nFacebookFriendSelect").select2
@@ -229,6 +231,8 @@ buildSuggestedFriends = _.once ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
     $(".nFacebookFriendSelect").select2("open")
+    if Session.get("state") != noughts.state.FACEBOOK_INVITE
+      $("#select2-drop").hide()
   null
 
 # If 'enabled' is true, removes the 'disabled' attribute on the provided
@@ -316,6 +320,7 @@ noughts.FacebookInviteMenu = noughts.Screen.extend
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     updateUrl("/facebookInvite")
     @showScreen(".nScreenFacebookInvite")
+    $(".nFacebookFriendSelect").select2("open")
 
     # Scaling tends to mess up on this screen, especially e.g. when the
     # keyboard pops up on mobile.
