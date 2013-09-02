@@ -131,11 +131,11 @@ body {
   z-index: 200;
 }
 
-.nHeader {
+.nMobileHeader {
   display: none;
 }
 
-.nDesktopHeader {
+.nDesktopMoveControls {
   position: absolute;
   right: 1.1rem;
 }
@@ -324,7 +324,7 @@ u
   margin: 0.5rem 0 1rem 0;
 }
 
-.nHeader .nMoveControlsContainer {
+.nMobileHeader .nMoveControlsContainer {
   float: right;
   margin-right: 0.5rem;
 }
@@ -512,6 +512,10 @@ span.nResignTooltip:after {
     left: -70%;
   }
 
+  .nNavItem {
+    border: 0;
+  }
+
   .nContainer {
     left: 70%;
   }
@@ -522,17 +526,19 @@ span.nResignTooltip:after {
     left: 0;
   }
 
-  .nDesktopHeader {
+  .nDesktopMoveControls {
     display: none;
   }
 
-  .nHeader {
+  .nMobileHeader {
     display: block;
     height: @mobileHeaderHeight;
     z-index: 100;
     color: #000;
     background: #f5f5f5;
     position: absolute;
+    left: 0;
+    right: 0;
   }
 
   .nLogo {
@@ -557,14 +563,6 @@ span.nResignTooltip:after {
 }
 
 .nPortraitMode {
-  .nGame {
-    margin-top: -17.25rem; // Compensate for top header
-  }
-
-  .nMain canvas {
-    margin-top: -17.25rem; // Compensate for top header
-  }
-
   .nNotification {
     width: 100%;
     margin-bottom: 0.4rem;
@@ -573,7 +571,7 @@ span.nResignTooltip:after {
 }
 
 .nLandscapeMode {
-  .nHeader {
+  .nMobileHeader {
     height: 100%;
     width: @mobileHeaderWidth;
   }
