@@ -2,12 +2,14 @@ closeNav = (event) ->
   event.stopPropagation()
   $("body").removeClass("nNavOpen");
   $(".nHeader, .nMain").off("click")
+  $(".nMenuToggleButton").off("click")
   $(".nMenuToggleButton").on("click", openNav)
 
 openNav = (event) ->
   event.stopPropagation()
   $("body").addClass("nNavOpen")
   $(".nMenuToggleButton").off("click")
+  $(".nMenuToggleButton").on("click", closeNav)
   $(".nHeader, .nMain").on("click", closeNav)
 
 Meteor.startup ->

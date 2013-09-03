@@ -225,7 +225,7 @@ u
   text-align: center;
   width: 100%;
   top: -5rem;
-  transition: top 0.3s;
+  .transition(top 0.3s);
 }
 
 .nGameMessage {
@@ -366,7 +366,7 @@ u
   border-style: solid;
   border-width: 0 0.3125rem 0 0.3125rem;
   border-color: #f5f5f5;
-  transition: background 0.3s;
+  .transition(background 0.3s);
   height: 3.125rem;
 }
 
@@ -375,7 +375,7 @@ u
 }
 
 .nNavItem a {
-  transition: color 0.3s;
+  .transition(color 0.3s);
 }
 
 .nNavBody:hover .nCurrentNavSelection {
@@ -504,16 +504,25 @@ span.nResignTooltip:after {
   .nNavigation {
     position: absolute;
     top: 0;
-    padding-top: 5.25em;
     height: 100%;
     width: 70%;
     background: #f5f5f5;
-    .box-shadow(inset -1.5em 0 1.5em -0.75em rgba(0, 0, 0, 0.25));
-    left: -70%;
+    .transition(box-shadow 0.2s);
+    left: 0;
+    .transform(translate3d(-100%, 0, 0));
+  }
+
+  .nNavOpen {
+    .nNavigation {
+      .box-shadow(1.5rem 0 1.5rem 0 rgba(0, 0, 0, 0.25));
+    }
   }
 
   .nNavItem {
     border: 0;
+  }
+
+  .nCurrentNavSelection {
   }
 
   .nContainer {
@@ -541,19 +550,13 @@ span.nResignTooltip:after {
     right: 0;
   }
 
-  .nLogo {
-    display: none;
-  }
-
   .nNavigation {
-    left: 0;
-    .transform(translate3d(-100%, 0, 0));
   }
 
   .nContainer {
     left: 0 !important;
     .transform(translate3d(0, 0, 0));
-    .transition(-webkit-transform, 500ms, ease);
+    .transition(-webkit-transform, 0.5s, ease);
   }
 
   .nNavOpen .nContainer {
