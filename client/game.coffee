@@ -357,6 +357,7 @@ noughts.PlayScreen = noughts.Screen.extend
     updateUrl("/#{gameId}")
     Session.set("gameId", gameId)
     @showScreen(".nScreenPlay")
+    $(".nMobileHeader .nMoveControlsContainer").show()
 
     @xImg_ = me.loader.getImage("x")
     @oImg_ = me.loader.getImage("o")
@@ -375,6 +376,7 @@ noughts.PlayScreen = noughts.Screen.extend
         this.autorun_()
 
   onExitState: ->
+    $(".nMobileHeader .nMoveControlsContainer").hide()
     Session.set("gameId", null)
 
   # Enables/disables the three move control buttons (undo, redo, submit) based
@@ -535,15 +537,18 @@ Template.navBody.games = ->
 Template.navBody.events {
   "click .nResignGameButton": (event) ->
     event.stopPropagation()
+    noughts.closeNav()
     $(".nResignConfirmButton").attr("gameId", $(this).attr("gameId"))
     $(".nResignConfirmModal").modal("show")
 
   "click .nGameListing": (event) ->
     event.preventDefault()
+    noughts.closeNav()
     playGame($(this).attr("gameId"))
 
   "click .nGameListNewGameButton": (event) ->
     event.preventDefault()
+    noughts.closeNav()
     noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 }
 
