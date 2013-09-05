@@ -342,7 +342,7 @@ noughts.InitialPromo = noughts.Screen.extend
 noughts.PlayScreen = noughts.Screen.extend
   init: ->
     Template.playScreen.events
-      "click .nSubmitButton": =>
+      "tap .nSubmitButton": =>
         Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
           if err then throw err
           noughts.displayToast("Move submitted")

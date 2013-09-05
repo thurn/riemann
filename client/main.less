@@ -13,6 +13,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @mainWidth: 40rem;
 @mainHeight: @containerHeight;
 @navigationWidth: 25rem;
+@mobileNavigationWidth: 28rem;
 @navigationHeight: @containerHeight;
 @defaultFontSize: 1.625rem;
 @smallFontSize: 1.3rem;
@@ -24,7 +25,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @promoButtonContainerTopMargin: 6.25rem;
 @menuButtonTextLeftMargin: 0.625rem;
 @mobileHeaderWidth: 4.75rem;
-@mobileHeaderHeight: 3.25rem;
+@mobileHeaderHeight: 3.4rem;
 
 
 ////////// DEBUG //////////
@@ -133,11 +134,6 @@ body {
 
 .nMobileHeader {
   display: none;
-}
-
-.nDesktopMoveControls {
-  position: absolute;
-  right: 1.1rem;
 }
 
 .nMain {
@@ -316,13 +312,9 @@ u
 }
 
 .nMoveControlsContainer {
-  text-align: center;
-  margin: 0.5rem 0 1rem 0;
-}
-
-.nMobileHeader .nMoveControlsContainer {
-  float: right;
-  margin-right: 0.5rem;
+  position: absolute;
+  right: 1rem;
+  z-index: 999;
 }
 
 .nSubmitIcon {
@@ -331,6 +323,7 @@ u
 
 .nMoveControlButton {
   font-size: @smallFontSize;
+  height: 3rem;
 }
 
 .nFacebookFriendSelect {
@@ -372,6 +365,10 @@ u
 
 .nNavItem a {
   .transition(color 0.3s);
+}
+
+.nNavBody {
+  font-size: @smallFontSize;
 }
 
 .nNavBody:hover .nCurrentNavSelection {
@@ -436,7 +433,6 @@ nav .nResignGameButton {
 .nGameListDescription {
   display: inline-block;
   margin-left: 0.5rem;
-  font-size: @smallFontSize;
 }
 
 .nGameStateSummary {
@@ -461,7 +457,6 @@ span.nResignTooltip {
   border-radius: 3px;
   box-shadow: rgba(0, 0, 0, 0.01) 1px 1px 2px 0px;
   display: none;
-  font-size: @smallFontSize;
   height: 2rem;
   line-height: 2rem;
   margin-top: 2.5rem;
@@ -501,7 +496,7 @@ span.nResignTooltip:after {
     position: absolute;
     top: 0;
     height: 100%;
-    width: @navigationWidth;
+    width: @mobileNavigationWidth;
     background: #f5f5f5;
     .transition(box-shadow 0.2s);
     left: 0;
@@ -518,11 +513,15 @@ span.nResignTooltip:after {
     border: 0;
   }
 
+  .nNavBody {
+    font-size: @defaultFontSize;
+  }
+
   .nCurrentNavSelection {
   }
 
   .nContainer {
-    left: @navigationWidth;
+    left: @mobileNavigationWidth;
   }
 
   .nMain {
@@ -531,8 +530,8 @@ span.nResignTooltip:after {
     left: 0;
   }
 
-  .nDesktopMoveControls {
-    display: none;
+  .nMoveControlsContainer {
+    top: 0.125rem;
   }
 
   .nMobileHeader {
@@ -544,10 +543,6 @@ span.nResignTooltip:after {
     position: absolute;
     left: 0;
     right: 0;
-
-    .nMoveControlsContainer {
-      display: none;
-    }
   }
 
   .nNavigation {
@@ -560,7 +555,7 @@ span.nResignTooltip:after {
   }
 
   .nNavOpen .nContainer {
-    .transform(translate3d(@navigationWidth, 0, 0), scale3d(1, 1, 1));
+    .transform(translate3d(@mobileNavigationWidth, 0, 0), scale3d(1, 1, 1));
   }
 
 }
