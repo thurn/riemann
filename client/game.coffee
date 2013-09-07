@@ -218,11 +218,13 @@ buildSuggestedFriends = _.once ->
       noughts.state.back()
     $(".nFacebookFriendSelect").on "change", (e) ->
       setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
+    isMobile = $("html").hasClass("nMobile")
     $(".nFacebookFriendSelect").select2
       allowClear: true
       placeholder: "Enter opponent's name"
       formatResult: (option) ->
         Template.facebookFriend({name: option.text, uid: option.id})
+      minimumInputLength: if isMobile then 2 else 0
       maximumSelectionSize: 1
       formatSelectionTooBig: (maxInvitees) ->
         people = if maxInvitees == 1 then "person" else "people"
@@ -230,7 +232,8 @@ buildSuggestedFriends = _.once ->
       formatSelection: (option, container) ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
-    $(".nFacebookFriendSelect").select2("open")
+    unless isMobile
+      $(".nFacebookFriendSelect").select2("open")
     if Session.get("state") != noughts.state.FACEBOOK_INVITE
       $("#select2-drop").hide()
   null
