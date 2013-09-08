@@ -18,6 +18,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 @defaultFontSize: 1.625rem;
 @smallFontSize: 1.3rem;
 @largeFontSize: 2rem;
+@largeFontSize: 2rem;
 @newGamePromoWidth: 25rem;
 @newGamePromoHeight: 25rem;
 @gameDescriptionLeftMargin: 1.5rem;
@@ -221,13 +222,16 @@ u
   text-align: center;
   width: 100%;
   top: -5rem;
-  .transition(top 0.3s);
+  .transition(top);
 }
 
 .nGameMessage {
   position: absolute;
-  width: 35rem;
   margin-top: 5rem;
+}
+
+.nGameMessageHeader {
+  font-size: @largeFontSize;
 }
 
 .nGameMessageWrapper {
@@ -355,8 +359,8 @@ u
   border-style: solid;
   border-width: 0 0.3125rem 0 0.3125rem;
   border-color: #f5f5f5;
-  .transition(background 0.3s);
-  height: 3.125rem;
+  .transition(background);
+  height: 4.125rem;
 }
 
 .nNavNewGameDescription {
@@ -364,7 +368,7 @@ u
 }
 
 .nNavItem a {
-  .transition(color 0.3s);
+  .transition(color);
 }
 
 .nNavBody {
@@ -498,7 +502,7 @@ span.nResignTooltip:after {
     height: 100%;
     width: @mobileNavigationWidth;
     background: #f5f5f5;
-    .transition(box-shadow 0.2s);
+    .transition(box-shadow);
     left: 0;
     .transform(translate3d(-100%, 0, 0));
   }
@@ -551,7 +555,7 @@ span.nResignTooltip:after {
   .nContainer {
     left: 0 !important;
     .transform(translate3d(0, 0, 0));
-    .transition(-webkit-transform, 0.5s, ease);
+    .transition(-webkit-transform);
   }
 
   .nNavOpen .nContainer {

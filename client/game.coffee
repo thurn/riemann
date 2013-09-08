@@ -380,6 +380,7 @@ noughts.PlayScreen = noughts.Screen.extend
 
   onExitState: ->
     $(".nMobileHeader .nMoveControlsContainer").hide()
+    $(".nGameMessage").modal("hide")
     Session.set("gameId", null)
 
   # Enables/disables the three move control buttons (undo, redo, submit) based

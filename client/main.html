@@ -24,7 +24,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   <div class="nWrapper">
     <div class="nBubble">
       <p>Simply send this URL to your opponent!</p>
-      <p><button class="btn nOkUrlCalloutButton">OK</button></p>
+      <p><button class="btn btn-default nOkUrlCalloutButton">OK</button></p>
     </div>
 
       <div class="alert nToast">
@@ -120,22 +120,27 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 <template name="gameMessageModal">
   <div class="nGameMessageWrapper">
-    <div class="modal hide fade nGameMessage" data-backdrop="false">
-      <div class="modal-header">
-        <a href="#" class="close nCloseLink" data-dismiss="modal"
-            aria-hidden="true"><i class="icon-remove"></i></a>
-        <h3 class="nGameMessageHeader"></h3>
-      </div>
-      <div class="modal-body">
-        <p class="nGameMessageBody"></p>
-      </div>
-      <div class="modal-footer">
-        <a href="#" class="btn nGameMessageClose" data-dismiss="modal"
-            aria-hidden="true">
-          Close
-        </a>
-        <a href="#" class="btn btn-primary nGameMessageAction">
-        </a>
+    <div class="modal fade nGameMessage" data-backdrop="false" tabindex="-1"
+        role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <a href="#" class="close nCloseLink" data-dismiss="modal"
+                aria-hidden="true"><i class="icon-remove"></i></a>
+            <strong class="nGameMessageHeader"></strong>
+          </div>
+          <div class="modal-body">
+            <p class="nGameMessageBody"></p>
+          </div>
+          <div class="modal-footer">
+            <a href="#" class="btn btn-default nGameMessageClose" data-dismiss="modal"
+                aria-hidden="true">
+              Close
+            </a>
+            <a href="#" class="btn btn-primary nGameMessageAction">
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -192,7 +197,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
          a game for two players.
       </div>
       <div class="nPromoButtonContainer">
-        <button type="button" class="btn nMenuButton nNewGameButton">
+        <button type="button" class="btn btn-default nMenuButton nNewGameButton">
           <i class="icon-play icon-large"></i>
           <span class="nMenuButtonText">New Game</span>
         </button>
@@ -207,31 +212,31 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       <div class="nNewGameMenuHeader">
         New Game:
       </div>
-      <button type="button" class="btn nMenuButton nFacebookInviteButton">
+      <button type="button" class="btn btn-default nMenuButton nFacebookInviteButton">
         <div class="nMenuButtonIcon">
           <i class="icon-facebook-sign icon-large"></i>
         </div>
         <span class="nMenuButtonText">Invite via Facebook</span>
       </button>
-      <button type="button" class="btn nMenuButton nVsComputerButton">
+      <button type="button" class="btn btn-default nMenuButton nVsComputerButton">
         <div class="nMenuButtonIcon">
           <i class="icon-laptop icon-large"></i>
         </div>
         <span class="nMenuButtonText">Play vs. Computer</span>
       </button>
-      <button type="button" class="btn nMenuButton nLocalMultiplayerButton">
+      <button type="button" class="btn btn-default nMenuButton nLocalMultiplayerButton">
         <div class="nMenuButtonIcon">
           <i class="icon-group icon-large"></i>
         </div>
         <span class="nMenuButtonText">Local Multiplayer</span>
       </button>
-      <button type="button" class="btn nMenuButton nUrlInviteButton">
+      <button type="button" class="btn btn-default nMenuButton nUrlInviteButton">
         <div class="nMenuButtonIcon">
           <i class="icon-link icon-large"></i>
         </div>
         <span class="nMenuButtonText">Invite via URL</span>
       </button>
-      <button type="button" class="btn nMenuButton nNewGameMenuCloseButton">
+      <button type="button" class="btn btn-default nMenuButton nNewGameMenuCloseButton">
         <div class="nMenuButtonIcon">
           <i class="icon-remove icon-large"></i>
         </div>
@@ -252,7 +257,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
     {{/each}}
   </select>
   <span class="nFacebookInviteButtons">
-    <button type="button" class="btn nSmallButton nSmallFacebookInviteButton"
+    <button type="button" class="btn btn-default nSmallButton nSmallFacebookInviteButton"
         disabled="disabled">
       <i class="icon-facebook-sign"></i>
       <span class="nMenuButtonText">Invite</span>
@@ -278,15 +283,15 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 <template name="moveControls">
   <div class="nMoveControlsContainer">
-    <button type="button" class="btn nMoveControlButton nUndoButton"
+    <button type="button" class="btn btn-default nMoveControlButton nUndoButton"
         disabled="disabled">
       <i class="icon-undo"></i>
     </button>
-    <button type="button" class="btn nMoveControlButton nRedoButton"
+    <button type="button" class="btn btn-default nMoveControlButton nRedoButton"
         disabled="disabled">
       <i class="icon-repeat"></i>
     </button>
-    <button type="button" class="btn nMoveControlButton nSubmitButton"
+    <button type="button" class="btn btn-default nMoveControlButton nSubmitButton"
         disabled="disabled">
       <i class="icon-signout nSubmitIcon"></i>
         <span class="nSubmitButonLabel">Submit</span>
@@ -295,7 +300,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="resignConfirmModal">
-  <div class="modal hide fade nResignConfirmModal" tabindex="-1" role="dialog"
+  <div class="modal fade nResignConfirmModal" tabindex="-1" role="dialog"
       aria-hidden="true">
     <div class="modal-header">
       <h3>Confirm Leaving</h3>
@@ -304,7 +309,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       <p>Are you sure you want to leave this game?</p>
     </div>
     <div class="modal-footer">
-      <button class="btn" data-dismiss="modal" aria-hidden="true">
+      <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">
         Cancel
       </button>
       <button class="btn btn-danger nResignConfirmButton">
