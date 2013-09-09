@@ -27,8 +27,8 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       <p><button class="btn btn-default nOkUrlCalloutButton">OK</button></p>
     </div>
 
-      <div class="alert nToast">
-      </div>
+    <div class="alert nToast">
+    </div>
 
     <div class="nContainer">
       <header class="nMobileHeader" role="banner">
@@ -44,7 +44,6 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       {{> mainContent}}
     </div> <!--/nContainer-->
   </div> <!--/nWrapper-->
-  {{> resignConfirmModal}}
 </template>
 
 <template name="mainContent">
@@ -119,27 +118,25 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="gameMessageModal">
-  <div class="nGameMessageWrapper">
-    <div class="modal fade nGameMessage" data-backdrop="false" tabindex="-1"
-        role="dialog">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <a href="#" class="close nCloseLink" data-dismiss="modal"
-                aria-hidden="true"><i class="icon-remove"></i></a>
-            <strong class="nGameMessageHeader"></strong>
-          </div>
-          <div class="modal-body">
-            <p class="nGameMessageBody"></p>
-          </div>
-          <div class="modal-footer">
-            <a href="#" class="btn btn-default nGameMessageClose" data-dismiss="modal"
-                aria-hidden="true">
-              Close
-            </a>
-            <a href="#" class="btn btn-primary nGameMessageAction">
-            </a>
-          </div>
+  <div class="modal fade nGameMessage" data-backdrop="false" tabindex="-1"
+      role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <a href="#" class="close nCloseLink" data-dismiss="modal"
+              aria-hidden="true"><i class="icon-remove"></i></a>
+          <strong class="nGameMessageHeader"></strong>
+        </div>
+        <div class="modal-body">
+          <p class="nGameMessageBody"></p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-default nGameMessageClose" data-dismiss="modal"
+              aria-hidden="true">
+            Close
+          </a>
+          <a href="#" class="btn btn-primary nGameMessageAction">
+          </a>
         </div>
       </div>
     </div>
@@ -296,25 +293,5 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
       <i class="icon-signout nSubmitIcon"></i>
         <span class="nSubmitButonLabel">Submit</span>
     </button>
-  </div>
-</template>
-
-<template name="resignConfirmModal">
-  <div class="modal fade nResignConfirmModal" tabindex="-1" role="dialog"
-      aria-hidden="true">
-    <div class="modal-header">
-      <h3>Confirm Leaving</h3>
-    </div>
-    <div class="modal-body">
-      <p>Are you sure you want to leave this game?</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">
-        Cancel
-      </button>
-      <button class="btn btn-danger nResignConfirmButton">
-        Leave game
-      </button>
-    </div>
   </div>
 </template>

@@ -479,12 +479,6 @@ onSubscribe = ->
     noughts.state.stateHistory.pop()
     setStateFromUrl()
 
-  $(".nResignConfirmButton").on "click", (event) ->
-    Meteor.call "resignGame", $(this).attr("gameId"), (err) ->
-      if err then throw err
-      $(".nResignConfirmModal").modal("hide")
-      noughts.displayToast("You resigned the game.")
-
 # Builds a string which describes the state of the game, including when it was
 # last modified and whether or not it's in-progress or over, who won, etc.
 gameStateSummary = (game, lastModified) ->
@@ -542,8 +536,18 @@ Template.navBody.events {
   "click .nResignGameButton": (event) ->
     event.stopPropagation()
     noughts.closeNav()
-    $(".nResignConfirmButton").attr("gameId", $(this).attr("gameId"))
-    $(".nResignConfirmModal").modal("show")
+    gameId = $(this).attr("gameId")
+    resignCallback = ->
+      Meteor.call "resignGame", gameId, (err) ->
+        if err then throw err
+        noughts.displayToast("You resigned the game.")
+
+    noughts.displayModal("Confirm Leaving",
+        "Are you sure you want to leave this game?",
+        true, # showCloseButton
+        "Leave Game",
+        "btn-danger",
+        resignCallback)
 
   "click .nGameListing": (event) ->
     event.preventDefault()

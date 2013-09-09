@@ -31,13 +31,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 ////////// DEBUG //////////
 
-// html {
-//   opacity: 0.1 !important;
-// }
+html {
+  opacity: 0.1 !important;
+}
 
-// .normalOpacity {
-//   opacity: 1 !important;
-// }
+.normalOpacity {
+  opacity: 1 !important;
+}
 
 ////////// END DEBUG //////////
 
@@ -109,6 +109,11 @@ body {
   background-color: white;
 }
 
+body.modal-open {
+  margin: 0 !important;
+  overflow: inherit !important;
+}
+
 .btn {
   .nDefaultFont();
 }
@@ -130,7 +135,7 @@ body {
   overflow: hidden;
   position: absolute;
   width: 100%;
-  z-index: 9999;
+  z-index: 5;
 }
 
 .nMobileHeader {
@@ -217,7 +222,7 @@ u
 }
 
 .nToast {
-  z-index: 999999;
+  z-index: 6;
   position: absolute;
   text-align: center;
   width: 100%;
@@ -226,20 +231,13 @@ u
 }
 
 .nGameMessage {
-  position: absolute;
-  margin-top: 5rem;
+  // Bootstrap seems to be adding a scroll-well when not needed on small
+  // screens.
+  overflow-y: hidden;
 }
 
 .nGameMessageHeader {
   font-size: @largeFontSize;
-}
-
-.nGameMessageWrapper {
-  width: @mainWidth;
-  height: @mainHeight;
-  position: absolute;
-  top: 0;
-  right: 0;
 }
 
 .nToast .nCloseToast, .nToast .nCloseToast:hover {
@@ -318,7 +316,7 @@ u
 .nMoveControlsContainer {
   position: absolute;
   right: 1rem;
-  z-index: 999;
+  z-index: 4;
 }
 
 .nSubmitIcon {
@@ -541,7 +539,7 @@ span.nResignTooltip:after {
   .nMobileHeader {
     display: block;
     height: @mobileHeaderHeight;
-    z-index: 100;
+    z-index: 2;
     color: #000;
     background: #f5f5f5;
     position: absolute;
@@ -653,7 +651,7 @@ span.nResignTooltip:after {
   border: #aaa solid 1px;
   top: 20px;
   left: 10%;
-  z-index: 99999;
+  z-index: 6;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
@@ -689,7 +687,7 @@ span.nResignTooltip:after {
 }
 
 .nDarkenScreen {
-  z-index: 500;
+  z-index: 3;
   height: 100%;
   width: 100%;
   position: fixed;
