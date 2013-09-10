@@ -98,12 +98,18 @@ noughts.state.updateUrl = (urlBehavior, path) ->
   # state.UrlBehavior.PRESERVE_URL is a no-op.
 
 # Displays a short message to the user. The optional duration parameter controls
-# how many milliseconds the message appears for.
-noughts.displayToast = (text, duration) ->
+# how many milliseconds the message appears for. The optional alertClass
+# parameter will be applied to the alert, e.g. alert-success or alert-warning.
+noughts.displayToast = (text, duration, alertClass) ->
   duration ||= 3000
-  $(".nToast").text(text)
+  alertClass ||= "alert-success"
   $(".nToast").css({top: 0})
-  setTimeout((-> $(".nToast").css({top: "-5rem"})), duration)
+  $(".nToast").removeClass().addClass("alert nToast #{alertClass}")
+  $(".nToast").text(text)
+
+  hideFn = ->
+    $(".nToast").css({top: "-5rem"})
+  setTimeout(hideFn, duration)
 
 # Displays a modal dialog over the game.
 #
@@ -267,7 +273,7 @@ displayNotice = (msg) -> $(".nNotification").text(msg)
 noughts.Screen = Object.extend
   # Shows a specific screen (a child of nMain) matching the provided selector.
   showScreen: (selector) ->
-    $(".nMain").children().not(selector).hide()
+    $(".nMain > div").not(selector).hide()
     $(selector).show()
 
   enterState: (urlBehavior) ->
