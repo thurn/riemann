@@ -108,7 +108,7 @@ noughts.displayToast = (text, duration, alertClass) ->
   $(".nToast").text(text)
 
   hideFn = ->
-    $(".nToast").css({top: "-5rem"})
+    $(".nToast").css({top: "-6rem"})
   setTimeout(hideFn, duration)
 
 # Displays a modal dialog over the game.
@@ -356,9 +356,15 @@ noughts.PlayScreen = noughts.Screen.extend
           if err then throw err
           noughts.displayToast("Move submitted")
       "click .nUndoButton": =>
+        $(".nUndoButton").tooltip("hide")
         Meteor.call("undoCommand", Session.get("gameId"))
       "click .nRedoButton": =>
+        $(".nRedoButton").tooltip("hide")
         Meteor.call("redoCommand", Session.get("gameId"))
+
+    Template.playScreen.rendered = ->
+      $(".nUndoButton").tooltip({title: "Undo"})
+      $(".nRedoButton").tooltip({title: "Redo"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
