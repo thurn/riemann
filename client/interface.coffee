@@ -4,7 +4,8 @@ noughts.closeNav = (event) ->
   $("body").removeClass("nNavOpen");
   $(".nHeader, .nMain").off("click")
   $(".nMenuToggleButton").off("click")
-  $(".nMenuToggleButton").on("click", noughts.openNav)
+  #$(".nMenuToggleButton").on("click", noughts.openNav)
+  $(".nMenuToggleButton").tappable(noughts.openNav)
 
 noughts.openNav = (event) ->
   return if $("body").hasClass("nNavOpen");
@@ -15,7 +16,7 @@ noughts.openNav = (event) ->
   $(".nHeader, .nMain").on("click", noughts.closeNav)
 
 Meteor.startup ->
-  $(".nMenuToggleButton").on("click", noughts.openNav)
+  $(".nMenuToggleButton").tappable(noughts.openNav)
 
 isiPhone = ->
   ua = navigator.userAgent

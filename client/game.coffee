@@ -20,6 +20,11 @@ SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
 
 noughts.inIframe = -> return window != window.top
 
+noughts.isTouchDevice = ->
+  return !!('ontouchstart' in window) or !!('onmsgesturechange' in window)
+
+CLICK = if noughts.isTouchDevice() then "tap" else "click"
+
 noughts.state =
   PLAY: "PLAY"
   INITIAL_PROMO: "INITIAL_PROMO" # Initial game description state
@@ -350,19 +355,17 @@ noughts.InitialPromo = noughts.Screen.extend
 # The main screen used for actually playing the game.
 noughts.PlayScreen = noughts.Screen.extend
   init: ->
-    Template.playScreen.events
-      "tap .nSubmitButton": =>
+    Template.playScreen.rendered = ->
+      $(".nSubmitButton").tappable ->
         Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
           if err then throw err
           noughts.displayToast("Move submitted")
-      "click .nUndoButton": =>
-        $(".nUndoButton").tooltip("hide")
+      $(".nUndoButton").tappable ->
         Meteor.call("undoCommand", Session.get("gameId"))
-      "click .nRedoButton": =>
-        $(".nRedoButton").tooltip("hide")
+        $(".nUndoButton").tooltip("hide")
+      $(".nRedoButton").tappable ->
         Meteor.call("redoCommand", Session.get("gameId"))
-
-    Template.playScreen.rendered = ->
+        $(".nRedoButton").tooltip("hide")
       $(".nUndoButton").tooltip({title: "Undo"})
       $(".nRedoButton").tooltip({title: "Redo"})
 
@@ -571,6 +574,9 @@ Template.navBody.events {
     noughts.closeNav()
     noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 }
+
+Template.navBody.rendered = ->
+  $(".nResignGameButton").tooltip({title: "Leave Game"})
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = () ->
