@@ -20,10 +20,15 @@ SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
 
 noughts.inIframe = -> return window != window.top
 
-noughts.isTouchDevice = ->
-  return !!('ontouchstart' in window) or !!('onmsgesturechange' in window)
+noughts.isTouchDevice = -> "ontouchstart" of window
 
 CLICK = if noughts.isTouchDevice() then "tap" else "click"
+
+noughts.clickMap = (eventMap) ->
+  events = {}
+  for key,value of eventMap
+    events["#{CLICK} #{key}"] = _.debounce(value, 10, true)
+  return events
 
 noughts.state =
   PLAY: "PLAY"
@@ -355,19 +360,38 @@ noughts.InitialPromo = noughts.Screen.extend
 # The main screen used for actually playing the game.
 noughts.PlayScreen = noughts.Screen.extend
   init: ->
-    Template.playScreen.rendered = ->
-      $(".nSubmitButton").tappable ->
-        Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
-          if err then throw err
-          noughts.displayToast("Move submitted")
-      $(".nUndoButton").tappable ->
-        Meteor.call("undoCommand", Session.get("gameId"))
-        $(".nUndoButton").tooltip("hide")
-      $(".nRedoButton").tappable ->
-        Meteor.call("redoCommand", Session.get("gameId"))
-        $(".nRedoButton").tooltip("hide")
-      $(".nUndoButton").tooltip({title: "Undo"})
-      $(".nRedoButton").tooltip({title: "Redo"})
+    undoFn = =>
+      Meteor.call("undoCommand", Session.get("gameId"))
+      $(".nUndoButton").tooltip("hide")
+
+    redoFn = =>
+      Meteor.call("redoCommand", Session.get("gameId"))
+      $(".nRedoButton").tooltip("hide")
+
+    submitFn = =>
+      Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
+        if err then throw err
+        noughts.displayToast("Move submitted")
+
+    events = noughts.clickMap
+      ".nSubmitButton": submitFn
+      ".nUndoButton": undoFn
+      ".nRedoButton": redoFn
+    Template.playScreen.events(events)
+
+#   Template.playScreen.rendered = ->
+#     $(".nSubmitButton").tappable ->
+#       Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
+#         if err then throw err
+#         noughts.displayToast("Move submitted")
+#     $(".nUndoButton").tappable ->
+#       Meteor.call("undoCommand", Session.get("gameId"))
+#       $(".nUndoButton").tooltip("hide")
+#     $(".nRedoButton").tappable ->
+#       Meteor.call("redoCommand", Session.get("gameId"))
+#       $(".nRedoButton").tooltip("hide")
+#     $(".nUndoButton").tooltip({title: "Undo"})
+#     $(".nRedoButton").tooltip({title: "Redo"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
