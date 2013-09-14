@@ -233,8 +233,10 @@ body.modal-open {
   position: absolute;
   text-align: center;
   width: @mainWidth;
-  top: -6rem;
-  .transition(top);
+  top: 0;
+  opacity: 0;
+  .transition-property(top, opacity);
+  .transition-duration();
 }
 
 .nGameMessage {

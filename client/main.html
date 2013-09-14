@@ -8,7 +8,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1 user-scalable=0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1 user-scalable=no"/>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <title>Project Riemann</title>
@@ -46,15 +46,17 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 <template name="mainContent">
   {{> gameMessageModal}}
   <div class="nMain" role="main">
-    <span class="alert nToast alert-success">
-      Toast!
-    </span>
+    {{> toast}}
     {{> playScreen}}
     {{> loadingScreen}}
     {{> newGameMenu}}
     {{> newGamePromo}}
     {{> facebookInviteScreen}}
   </div>
+</template>
+
+<template name="toast">
+  <span class="alert nToast alert-success"></span>
 </template>
 
 <template name="loadingScreen">

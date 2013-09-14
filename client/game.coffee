@@ -16,18 +16,10 @@ gameResources = [
   {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
 ]
 
-SPRITE_Z_INDEX = 2 # The Z-Index to add new sprites at
-
-noughts.inIframe = -> return window != window.top
-
-noughts.isTouchDevice = -> "ontouchstart" of window
-
-CLICK = if noughts.isTouchDevice() then "tap" else "click"
-
 noughts.clickMap = (eventMap) ->
   events = {}
   for key,value of eventMap
-    events["#{CLICK} #{key}"] = _.debounce(value, 10, true)
+    events["#{noughts.util.clickString} #{key}"] = _.debounce(value, 10, true)
   return events
 
 noughts.state =
@@ -67,7 +59,7 @@ noughts.state.changeState = (newState, urlBehavior) ->
 # no previous state, sets the state via loadDefaultState()
 noughts.state.back = () ->
   if noughts.state.hasPreviousState()
-    if noughts.inIframe()
+    if noughts.util.inIframe
       pop = noughts.state.stateHistory.pop()
       target = _.last(noughts.state.stateHistory)
       changeStateArgs = [target.state, noughts.state.UrlBehavior.REPLACE_URL].
@@ -100,7 +92,7 @@ noughts.state.hasPreviousState = -> return noughts.state.stateHistory.length > 1
 # noughts.state.UrlBehavior).
 noughts.state.updateUrl = (urlBehavior, path) ->
   # No point in doing this if we're inside an iframe:
-  return if noughts.inIframe()
+  return if noughts.util.inIframe
   if urlBehavior == noughts.state.UrlBehavior.PUSH_URL
     window.history.pushState({}, "", path)
   else if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
@@ -113,13 +105,24 @@ noughts.state.updateUrl = (urlBehavior, path) ->
 noughts.displayToast = (text, duration, alertClass) ->
   duration ||= 3000
   alertClass ||= "alert-success"
-  $(".nToast").css({top: 0})
-  $(".nToast").removeClass().addClass("alert nToast #{alertClass}")
-  $(".nToast").text(text)
 
-  hideFn = ->
-    $(".nToast").css({top: "-6rem"})
-  setTimeout(hideFn, duration)
+  # A lot of setTimeout hackery is needed here to make the animation work. I
+  # don't really know why, but without it the toast just pops into existence
+  # in the final destination.
+  $(".nToast").css({opacity: 1})
+  showFn = ->
+    $(".nToast").
+      css({top: "5rem"}).
+      removeClass().
+      addClass("alert nToast #{alertClass}").
+      text(text)
+  setTimeout(showFn, 1)
+  moveUpFn = ->
+    $(".nToast").css({top: 0})
+    hideFn = ->
+      $(".nToast").css({opacity: 0})
+    setTimeout(hideFn, 1)
+  setTimeout(moveUpFn, duration)
 
 # Displays a modal dialog over the game.
 #
@@ -137,7 +140,8 @@ noughts.displayModal = (title, body, showCloseButton, actionButtonLabel,
     actionButtonClass, callback) ->
   actionButtonLabel ||= "OK"
   actionButtonClass ||= "btn-primary"
-  $(".nGameMessageAction").off("click") # Remove all previous click handlers
+  # Remove all previous click handlers
+  $(".nGameMessageAction").off(noughts.util.clickEvent)
   $(".nGameMessageHeader").text(title)
   $(".nGameMessageBody").text(body)
   if showCloseButton?
@@ -149,7 +153,7 @@ noughts.displayModal = (title, body, showCloseButton, actionButtonLabel,
       addClass("btn #{actionButtonClass} nGameMessageAction")
   $(".nGameMessage").modal("show")
 
-  $(".nGameMessageAction").one "click", (event) ->
+  $(".nGameMessageAction").one noughts.util.clickEvent, (event) ->
     $(".nGameMessage").modal("hide")
     callback() if callback?
   null
@@ -228,8 +232,9 @@ buildSuggestedFriends = _.once ->
     suggestedFriends = installed.concat(notInstalled)
     $(".nFacebookInviteMenu").html(
         Template.facebookInviteMenu({suggestedFriends: suggestedFriends}))
-    $(".nSmallFacebookInviteButton").on("click", handleSendFacebookInviteClick)
-    $(".nFacebookInviteCancelLink").on "click", (e) ->
+    $(".nSmallFacebookInviteButton").on(noughts.util.clickEvent,
+        handleSendFacebookInviteClick)
+    $(".nFacebookInviteCancelLink").on noughts.util.clickEvent, (e) ->
       e.preventDefault()
       noughts.state.back()
     $(".nFacebookFriendSelect").on "change", (e) ->
@@ -297,12 +302,13 @@ noughts.LoadingScreen = noughts.Screen.extend
 # The "new game" menu
 noughts.NewGameMenu = noughts.Screen.extend
   init: ->
-    Template.newGameMenu.events
-      "click .nNewGameMenuCloseButton": => noughts.state.back()
-      "click .nUrlInviteButton":
+    events = noughts.clickMap
+      ".nNewGameMenuCloseButton": => noughts.state.back()
+      ".nUrlInviteButton":
           _.bind(this.handleUrlInviteButtonClick_, this)
-      "click .nFacebookInviteButton":
+      ".nFacebookInviteButton":
           _.bind(this.handleFacebookInviteButtonClick_, this)
+    Template.newGameMenu.events(events)
 
   onEnterState: (updateUrl) ->
     updateUrl("/new")
@@ -313,7 +319,7 @@ noughts.NewGameMenu = noughts.Screen.extend
       if err? then throw er
       $(".nBubble").show()
       $(".nDarkenScreen").show()
-      $(".nOkUrlCalloutButton").on "click", ->
+      $(".nOkUrlCalloutButton").on noughts.util.clickEvent, ->
         $(".nBubble").hide()
         $(".nDarkenScreen").hide()
       playGame(gameId)
@@ -349,9 +355,10 @@ noughts.FacebookInviteMenu = noughts.Screen.extend
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = noughts.Screen.extend
   init: ->
-    Template.newGamePromo.events
-      "click .nNewGameButton": =>
+    events = noughts.clickMap
+      ".nNewGameButton": =>
         noughts.state.changeState(noughts.state.NEW_GAME_MENU)
+    Template.newGamePromo.events(events)
 
   onEnterState: (updateUrl) ->
     updateUrl("/")
@@ -452,7 +459,7 @@ noughts.PlayScreen = noughts.Screen.extend
         isX = action.playerNumber == noughts.X_PLAYER
         image = if isX then @xImg_ else @oImg_
         sprite = new me.SpriteObject(tile.pos.x, tile.pos.y, image)
-        me.game.add(sprite, SPRITE_Z_INDEX)
+        me.game.add(sprite, 2)
     me.game.sort()
 
     if game.victors?.length == 1
@@ -571,8 +578,8 @@ Template.navBody.games = ->
   }
   return result
 
-Template.navBody.events {
-  "click .nResignGameButton": (event) ->
+navBodyEvents = noughts.clickMap
+  ".nResignGameButton": (event) ->
     event.stopPropagation()
     noughts.closeNav()
     gameId = $(this).attr("gameId")
@@ -588,16 +595,17 @@ Template.navBody.events {
         "btn-danger",
         resignCallback)
 
-  "click .nGameListing": (event) ->
+  ".nGameListing": (event) ->
     event.preventDefault()
     noughts.closeNav()
     playGame($(this).attr("gameId"))
 
-  "click .nGameListNewGameButton": (event) ->
+  ".nGameListNewGameButton": (event) ->
     event.preventDefault()
     noughts.closeNav()
     noughts.state.changeState(noughts.state.NEW_GAME_MENU)
-}
+
+Template.navBody.events(navBodyEvents)
 
 Template.navBody.rendered = ->
   $(".nResignGameButton").tooltip({title: "Leave Game"})

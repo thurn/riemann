@@ -17,3 +17,13 @@ noughts.ClientConfig = {
   appId: if isLocalhost then 143448845819008 else 419772734774541
   appUrl: if isLocalhost then devUrl else prodUrl
 }
+
+noughts.util = {}
+
+noughts.util.inIframe = window != window.top
+
+noughts.util.isTouch = "ontouchstart" of window
+
+noughts.util.clickString = if noughts.util.isTouch then "tap" else "click"
+
+noughts.util.clickEvent = if noughts.util.isTouch then "touchend" else "click"
