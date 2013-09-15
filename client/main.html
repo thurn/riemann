@@ -46,17 +46,12 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 <template name="mainContent">
   {{> gameMessageModal}}
   <div class="nMain" role="main">
-    {{> toast}}
     {{> playScreen}}
     {{> loadingScreen}}
     {{> newGameMenu}}
     {{> newGamePromo}}
     {{> facebookInviteScreen}}
   </div>
-</template>
-
-<template name="toast">
-  <span class="alert nToast alert-success"></span>
 </template>
 
 <template name="loadingScreen">

@@ -87,6 +87,18 @@ html {
   box-shadow: @arguments;
 }
 
+.nDefaultFont(@fontSize: @defaultFontSize) {
+  font-size: @fontSize;
+  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
+  line-height: 1.1;
+}
+
+// Overrides
+
+.toast-message {
+  .nDefaultFont()
+}
+
 // Common Styles
 
 @charset "UTF-8";
@@ -96,12 +108,6 @@ html {
 
 @viewport {
   width: device-width;
-}
-
-.nDefaultFont () {
-  font-size: @defaultFontSize;
-  font-family: 'Helvetica Neue', Helvetica, 'lucida grande', arial, sans-serif;
-  line-height: 1.1;
 }
 
 html {
@@ -228,17 +234,6 @@ body.modal-open {
   padding-left: 5rem;
 }
 
-.nToast {
-  z-index: 6;
-  position: absolute;
-  text-align: center;
-  width: @mainWidth;
-  top: 0;
-  opacity: 0;
-  .transition-property(top, opacity);
-  .transition-duration();
-}
-
 .nGameMessage {
   // Bootstrap seems to be adding a scroll-well when not needed on small
   // screens.
@@ -247,11 +242,6 @@ body.modal-open {
 
 .nGameMessageHeader {
   font-size: @largeFontSize;
-}
-
-.nToast .nCloseToast, .nToast .nCloseToast:hover {
-  color: #333;
-  text-decoration: none;
 }
 
 .nSmallInviteButton {

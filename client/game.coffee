@@ -16,6 +16,10 @@ gameResources = [
   {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
 ]
 
+toastr.options =
+  timeOut: 3000
+  positionClass: "toast-top-left"
+
 noughts.clickMap = (eventMap) ->
   events = {}
   for key,value of eventMap
@@ -98,31 +102,6 @@ noughts.state.updateUrl = (urlBehavior, path) ->
   else if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
     window.history.replaceState({}, "", path)
   # state.UrlBehavior.PRESERVE_URL is a no-op.
-
-# Displays a short message to the user. The optional duration parameter controls
-# how many milliseconds the message appears for. The optional alertClass
-# parameter will be applied to the alert, e.g. alert-success or alert-warning.
-noughts.displayToast = (text, duration, alertClass) ->
-  duration ||= 3000
-  alertClass ||= "alert-success"
-
-  # A lot of setTimeout hackery is needed here to make the animation work. I
-  # don't really know why, but without it the toast just pops into existence
-  # in the final destination.
-  $(".nToast").css({opacity: 1})
-  showFn = ->
-    $(".nToast").
-      css({top: "5rem"}).
-      removeClass().
-      addClass("alert nToast #{alertClass}").
-      text(text)
-  setTimeout(showFn, 1)
-  moveUpFn = ->
-    $(".nToast").css({top: 0})
-    hideFn = ->
-      $(".nToast").css({opacity: 0})
-    setTimeout(hideFn, 1)
-  setTimeout(moveUpFn, duration)
 
 # Displays a modal dialog over the game.
 #
@@ -368,37 +347,23 @@ noughts.InitialPromo = noughts.Screen.extend
 noughts.PlayScreen = noughts.Screen.extend
   init: ->
     undoFn = =>
-      Meteor.call("undoCommand", Session.get("gameId"))
       $(".nUndoButton").tooltip("hide")
+      Meteor.call("undoCommand", Session.get("gameId"))
 
     redoFn = =>
-      Meteor.call("redoCommand", Session.get("gameId"))
       $(".nRedoButton").tooltip("hide")
+      Meteor.call("redoCommand", Session.get("gameId"))
 
     submitFn = =>
       Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
         if err then throw err
-        noughts.displayToast("Move submitted")
+        toastr.success("Move submitted")
 
     events = noughts.clickMap
       ".nSubmitButton": submitFn
       ".nUndoButton": undoFn
       ".nRedoButton": redoFn
     Template.playScreen.events(events)
-
-#   Template.playScreen.rendered = ->
-#     $(".nSubmitButton").tappable ->
-#       Meteor.call "submitCurrentAction", Session.get("gameId"), (err) =>
-#         if err then throw err
-#         noughts.displayToast("Move submitted")
-#     $(".nUndoButton").tappable ->
-#       Meteor.call("undoCommand", Session.get("gameId"))
-#       $(".nUndoButton").tooltip("hide")
-#     $(".nRedoButton").tappable ->
-#       Meteor.call("redoCommand", Session.get("gameId"))
-#       $(".nRedoButton").tooltip("hide")
-#     $(".nUndoButton").tooltip({title: "Undo"})
-#     $(".nRedoButton").tooltip({title: "Redo"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -586,7 +551,7 @@ navBodyEvents = noughts.clickMap
     resignCallback = ->
       Meteor.call "resignGame", gameId, (err) ->
         if err then throw err
-        noughts.displayToast("You resigned the game.")
+        toastr.warning("You left the game.")
 
     noughts.displayModal("Confirm Leaving",
         "Are you sure you want to leave this game?",
