@@ -16,10 +16,6 @@ gameResources = [
   {name: "tilemap", type: "tmx", src: "/tilemaps/game.tmx"}
 ]
 
-toastr.options =
-  timeOut: 3000
-  positionClass: "toast-top-left"
-
 noughts.clickMap = (eventMap) ->
   events = {}
   for key,value of eventMap
@@ -296,11 +292,8 @@ noughts.NewGameMenu = noughts.Screen.extend
   handleUrlInviteButtonClick_: ->
     Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
       if err? then throw er
-      $(".nBubble").show()
-      $(".nDarkenScreen").show()
-      $(".nOkUrlCalloutButton").on noughts.util.clickEvent, ->
-        $(".nBubble").hide()
-        $(".nDarkenScreen").hide()
+      $(".nUrlPopover").popover("show")
+      setTimeout((-> $(".nUrlPopover").popover("hide")), 5000)
       playGame(gameId)
 
   handleFacebookInviteButtonClick_: ->
@@ -364,6 +357,9 @@ noughts.PlayScreen = noughts.Screen.extend
       ".nUndoButton": undoFn
       ".nRedoButton": redoFn
     Template.playScreen.events(events)
+    Template.playScreen.rendered = ->
+      $(".nUndoButton").tooltip({title: "Undo", placement: "bottom"})
+      $(".nRedoButton").tooltip({title: "Redo", placement: "bottom"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -470,6 +466,15 @@ Meteor.startup ->
 
   me.state.set(me.state.PLAY, new me.ScreenObject())
   me.state.change(me.state.PLAY)
+
+  if noughts.util.isMobile()
+    toastPosition = "toast-top-left"
+  else
+    toastPosition = "toast-top-right"
+
+  toastr.options =
+    timeOut: 3000
+    positionClass: toastPosition
 
   window.onReady(-> initialize())
   $.when(noughts.melonDeferred, noughts.facebookDeferred).done ->

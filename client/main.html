@@ -20,13 +20,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 <template name="page">
   {{> facebook}}
-  <div class="nDarkenScreen"></div>
+  <div class="nUrlPopover"
+      data-content="Send this URL to your opponent."
+      data-placement="bottom"
+      data-trigger="manual"></div>
   <div class="nWrapper">
-    <div class="nBubble">
-      <p>Simply send this URL to your opponent!</p>
-      <p><button class="btn btn-default nOkUrlCalloutButton">OK</button></p>
-    </div>
-
     <div class="nContainer">
       <header class="nMobileHeader" role="banner">
         <span class="nMenuToggleButton">
