@@ -51,8 +51,9 @@ noughts.state.changeState = (newState, urlBehavior) ->
 # no previous state, sets the state via loadDefaultState()
 noughts.state.back = () ->
   if noughts.state.hasPreviousState()
-    if noughts.util.inIframe
-      pop = noughts.state.stateHistory.pop()
+    if noughts.util.inIframe or noughts.util.isMobile()
+      # Mobile browser history performance is pretty bad.
+      noughts.state.stateHistory.pop()
       target = _.last(noughts.state.stateHistory)
       changeStateArgs = [target.state, noughts.state.UrlBehavior.REPLACE_URL].
           concat(target.additionalArguments)
@@ -83,8 +84,9 @@ noughts.state.hasPreviousState = -> return noughts.state.stateHistory.length > 1
 # the behavior requested in the 'urlBehavior' parameter (a
 # noughts.state.UrlBehavior).
 noughts.state.updateUrl = (urlBehavior, path) ->
-  # No point in doing this if we're inside an iframe:
-  return if noughts.util.inIframe
+  # No point in doing this if we're inside an iframe, and mobile browser
+  # history performance is pretty bad.
+  return if noughts.util.inIframe or noughts.util.isMobile()
   if urlBehavior == noughts.state.UrlBehavior.PUSH_URL
     window.history.pushState({}, "", path)
   else if urlBehavior == noughts.state.UrlBehavior.REPLACE_URL
@@ -218,7 +220,7 @@ buildSuggestedFriends = _.once ->
       placeholder: "Enter opponent's name"
       formatResult: (option) ->
         Template.facebookFriend({name: option.text, uid: option.id})
-      minimumInputLength: if noughts.isMobile() then 2 else 0
+      minimumInputLength: if noughts.util.isMobile() then 2 else 0
       maximumSelectionSize: 1
       formatSelectionTooBig: (maxInvitees) ->
         people = if maxInvitees == 1 then "person" else "people"
@@ -283,7 +285,9 @@ noughts.LoadingScreen = noughts.Screen.extend
 noughts.NewGameMenu = noughts.Screen.extend
   init: ->
     events = noughts.clickMap
-      ".nNewGameMenuCloseButton": => noughts.state.back()
+      ".nNewGameMenuCloseButton": =>
+        $(".nScreenNewGame").fadeOut(300)
+        noughts.state.back()
       ".nUrlInviteButton":
           _.bind(this.handleUrlInviteButtonClick_, this)
       ".nFacebookInviteButton":
@@ -295,6 +299,7 @@ noughts.NewGameMenu = noughts.Screen.extend
     @showScreen(".nScreenNewGame")
 
   handleUrlInviteButtonClick_: ->
+    $(".nScreenNewGame").fadeOut(300)
     Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
       if err? then throw er
       $(".nUrlPopover").popover("show")
@@ -322,7 +327,7 @@ noughts.FacebookInviteMenu = noughts.Screen.extend
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     updateUrl("/facebookInvite")
     @showScreen(".nScreenFacebookInvite")
-    unless noughts.isMobile()
+    unless noughts.util.isMobile()
       $(".nFacebookFriendSelect").select2("open")
 
     # Scaling tends to mess up on this screen, especially e.g. when the
@@ -444,10 +449,14 @@ noughts.PlayScreen = noughts.Screen.extend
         onClick = =>
           command = {column: x, row: y}
           if noughts.isLegalCommand(game._id, command)
+            @hoverAsset = @assets.drawAt(hoverAssetName, 200*x, 200*y)
             Meteor.call("addCommand", game._id, command)
 
         box.hover(onMouseOver) unless noughts.util.isTouch
-        box.click(onClick)
+        if noughts.util.isTouch
+          box.touchstart(onClick)
+        else
+          box.click(onClick)
 
   # Draws all of the moves so far in the game
   drawMoves_: (game) ->
@@ -504,7 +513,7 @@ Meteor.startup ->
   #me.state.set(me.state.PLAY, new me.ScreenObject())
   #me.state.change(me.state.PLAY)
 
-  if noughts.isMobile()
+  if noughts.util.isMobile()
     toastPosition = "toast-top-left"
   else
     toastPosition = "toast-top-right"

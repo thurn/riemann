@@ -21,7 +21,7 @@ noughts.ClientConfig = {
 
 noughts.util = {}
 
-noughts.util.inIframe = window != window.top
+noughts.util.isMobile = -> $("html").hasClass("nMobile")
 
 noughts.util.isTouch = "ontouchstart" of window
 
@@ -32,6 +32,8 @@ noughts.util.isiOS = /iP(ad|hone|od)/.test(navigator.userAgent)
 noughts.util.isiOSPhone = /iP(hone|od)/.test(navigator.userAgent)
 
 noughts.util.isChrome = /Chrome\/[0-9]+/.test(navigator.userAgent)
+
+noughts.util.inIframe = window != window.top
 
 # Checks if the device is known to have a reasonable implementation of the
 # "click" event (no 300ms delay)

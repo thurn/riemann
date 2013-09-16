@@ -36,7 +36,7 @@ noughts.Mode =
   PORTRAIT: "nPortraitMode"
   LANDSCAPE: "nLandscapeMode"
 
-noughts.isMobile = -> getInterfaceMode() != noughts.Mode.DESKTOP
+isMobile = -> getInterfaceMode() != noughts.Mode.DESKTOP
 
 # Computes which of the three UI modes (Desktop, Portrait, Landscape) should be
 # used, based on the current window height and width.
@@ -86,7 +86,7 @@ setInterfaceModeClass = ->
 
   mode = getInterfaceMode()
   $("html").addClass(mode)
-  if noughts.isMobile()
+  if isMobile()
     $("html").addClass("nMobile")
 
 # Scales the interface by setting the font-size attribute on the root <html>
