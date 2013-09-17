@@ -31,13 +31,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 ////////// DEBUG //////////
 
-html {
-  opacity: 0.1 !important;
-}
+// html {
+//   opacity: 0.1 !important;
+// }
 
-.normalOpacity {
-  opacity: 1 !important;
-}
+// .normalOpacity {
+//   opacity: 1 !important;
+// }
 
 ////////// END DEBUG //////////
 
@@ -103,6 +103,11 @@ html {
   .nDefaultFont();
 }
 
+// This helps bootstrap tooltips show up on top of scrollbars
+.tooltip {
+  position: fixed;
+}
+
 // Common Styles
 
 @charset "UTF-8";
@@ -155,6 +160,10 @@ body.modal-open {
   z-index: 5;
 }
 
+.nNavigation:hover {
+  overflow-y: auto;
+}
+
 .nMobileHeader {
   display: none;
 }
@@ -179,7 +188,7 @@ body.modal-open {
 .nCloseLink, .nCloseLink:hover {
   text-decoration: none;
   color: #000;
-  font-size: @smallFontSize;
+  font-size: @largeFontSize;
   float: right;
 }
 
@@ -361,7 +370,6 @@ body.modal-open {
   border-width: 0 0.3125rem 0 0.3125rem;
   border-color: #f5f5f5;
   .transition(background);
-  height: 4.125rem;
 }
 
 .nNavNewGameDescription {
@@ -397,6 +405,10 @@ body.modal-open {
   background: #ffffff;
 }
 
+.nGameListingBody {
+  display: inline-block;
+}
+
 .nGameListProfilePicture {
   vertical-align: top;
   width: 3.125rem;
@@ -410,34 +422,34 @@ body.modal-open {
   vertical-align: top;
 }
 
-.nResignGameButton {
-  position: absolute;
-  right: 0;
+.nCloseGameButton {
+  float: right;
   height: 3.125rem;
-  width: 3rem;
-  padding-left: 6px;
+  width: 2rem;
+  padding-left: 0.375rem;
   color: #ccc;
 }
 
-nav .nResignGameButton {
+nav .nCloseGameButton {
   opacity: 0;
 }
 
-.nCurrentNavSelection .nResignGameButton {
+.nCurrentNavSelection .nCloseGameButton {
   opacity: 1;
 }
 
-.nNavBody:hover .nResignGameButton {
+.nNavBody:hover .nCloseGameButton {
   opacity: 0;
 }
 
-.nNavItem:hover .nResignGameButton {
+.nNavItem:hover .nCloseGameButton {
   opacity: 1;
 }
 
 .nGameListDescription {
   display: inline-block;
   margin-left: 0.5rem;
+  width: 16rem;
 }
 
 .nGameStateSummary {
@@ -481,6 +493,7 @@ nav .nResignGameButton {
     .transition(box-shadow);
     left: 0;
     .transform(translate3d(-100%, 0, 0));
+    overflow-y: scroll;
   }
 
   .nNavOpen {
@@ -536,6 +549,10 @@ nav .nResignGameButton {
 
   .nNavOpen .nContainer {
     .transform(translate3d(@mobileNavigationWidth, 0, 0), scale3d(1, 1, 1));
+  }
+
+  .nGameListDescription {
+    width: 20rem;
   }
 
 }

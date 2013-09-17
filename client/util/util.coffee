@@ -27,5 +27,3 @@ noughts.util.isTouch = "ontouchstart" of window
 noughts.util.clickString = if noughts.util.isTouch then "tap" else "click"
 
 noughts.util.clickEvent = if noughts.util.isTouch then "touchend" else "click"
-
-noughts.util.isMobile = -> $("body").hasClass("nMobile")

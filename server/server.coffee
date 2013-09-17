@@ -15,6 +15,5 @@ Meteor.publish "me", ->
 Meteor.publish "game", (gameId) ->
   game = noughts.Games.findOne(gameId)
   return [
-    noughts.Games.find({_id: gameId})
     noughts.Actions.find({$and: [{gameId: gameId}, {submitted: true}]})
   ]

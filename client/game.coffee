@@ -113,25 +113,32 @@ noughts.state.updateUrl = (urlBehavior, path) ->
 #     clicked. Clicking either button will close the modal. Optional paramter.
 noughts.displayModal = (title, body, showCloseButton, actionButtonLabel,
     actionButtonClass, callback) ->
-  actionButtonLabel ||= "OK"
-  actionButtonClass ||= "btn-primary"
-  # Remove all previous click handlers
-  $(".nGameMessageAction").off(noughts.util.clickEvent)
-  $(".nGameMessageHeader").text(title)
-  $(".nGameMessageBody").text(body)
-  if showCloseButton?
-    $(".nGameMessageClose").show()
-  else
-    $(".nGameMessageClose").hide()
-  $(".nGameMessageAction").text(actionButtonLabel)
-  $(".nGameMessageAction").removeClass(). # Strip previous classes for safety
-      addClass("btn #{actionButtonClass} nGameMessageAction")
-  $(".nGameMessage").modal("show")
+  displayModalFn = ->
+    actionButtonLabel ||= "OK"
+    actionButtonClass ||= "btn-primary"
+    # Remove all previous click handlers
+    $(".nGameMessageAction").off(noughts.util.clickEvent)
+    $(".nGameMessageHeader").text(title)
+    $(".nGameMessageBody").text(body)
+    if showCloseButton?
+      $(".nGameMessageClose").show()
+    else
+      $(".nGameMessageClose").hide()
+    $(".nGameMessageAction").text(actionButtonLabel)
+    $(".nGameMessageAction").removeClass(). # Strip previous classes for safety
+        addClass("btn #{actionButtonClass} nGameMessageAction")
+    $(".nGameMessage").modal("show")
 
-  $(".nGameMessageAction").one noughts.util.clickEvent, (event) ->
-    $(".nGameMessage").modal("hide")
-    callback() if callback?
-  null
+    $(".nGameMessageAction").one noughts.util.clickEvent, (event) ->
+      $(".nGameMessage").modal("hide")
+      callback() if callback?
+
+  if noughts.util.isTouch
+    # Add a delay on touch platforms to prevent spurious touches from closing
+    # the modal.
+    setTimeout(displayModalFn, 300)
+  else
+    displayModalFn()
 
 # Loads the game with the specified ID
 playGame = (gameId) ->
@@ -141,7 +148,8 @@ playGame = (gameId) ->
 # Pops up an alert to the user saying that an error has occurred. Should be used
 # for un-recoverable errors.
 displayError = (msg) ->
-  alert("ERROR: " + msg)
+  toastr.error("Error: #{msg}")
+  loadDefaultState()
   throw new Error(msg)
 
 facebookInviteCallback = (inviteResponse) ->
@@ -214,13 +222,12 @@ buildSuggestedFriends = _.once ->
       noughts.state.back()
     $(".nFacebookFriendSelect").on "change", (e) ->
       setElementEnabled($(".nSmallFacebookInviteButton"), e.val.length > 0)
-    isMobile = $("html").hasClass("nMobile")
     $(".nFacebookFriendSelect").select2
       allowClear: true
       placeholder: "Enter opponent's name"
       formatResult: (option) ->
         Template.facebookFriend({name: option.text, uid: option.id})
-      minimumInputLength: if isMobile then 2 else 0
+      minimumInputLength: if noughts.isMobile() then 2 else 0
       maximumSelectionSize: 1
       formatSelectionTooBig: (maxInvitees) ->
         people = if maxInvitees == 1 then "person" else "people"
@@ -228,7 +235,7 @@ buildSuggestedFriends = _.once ->
       formatSelection: (option, container) ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
-    unless isMobile
+    unless noughts.isMobile()
       $(".nFacebookFriendSelect").select2("open")
     if Session.get("state") != noughts.state.FACEBOOK_INVITE
       $("#select2-drop").hide()
@@ -293,7 +300,7 @@ noughts.NewGameMenu = noughts.Screen.extend
     Meteor.call "newGame", Session.get("facebookProfile"), (err, gameId) ->
       if err? then throw er
       $(".nUrlPopover").popover("show")
-      setTimeout((-> $(".nUrlPopover").popover("hide")), 5000)
+      setTimeout((-> $(".nUrlPopover").popover("hide")), 4000)
       playGame(gameId)
 
   handleFacebookInviteButtonClick_: ->
@@ -358,8 +365,9 @@ noughts.PlayScreen = noughts.Screen.extend
       ".nRedoButton": redoFn
     Template.playScreen.events(events)
     Template.playScreen.rendered = ->
-      $(".nUndoButton").tooltip({title: "Undo", placement: "bottom"})
-      $(".nRedoButton").tooltip({title: "Redo", placement: "bottom"})
+      unless noughts.util.isTouch
+        $(".nUndoButton").tooltip({title: "Undo", placement: "bottom"})
+        $(".nRedoButton").tooltip({title: "Redo", placement: "bottom"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -467,13 +475,13 @@ Meteor.startup ->
   me.state.set(me.state.PLAY, new me.ScreenObject())
   me.state.change(me.state.PLAY)
 
-  if noughts.util.isMobile()
+  if noughts.isMobile()
     toastPosition = "toast-top-left"
   else
     toastPosition = "toast-top-right"
 
   toastr.options =
-    timeOut: 3000
+    timeOut: 2000
     positionClass: toastPosition
 
   window.onReady(-> initialize())
@@ -498,7 +506,10 @@ onSubscribe = ->
 # Builds a string which describes the state of the game, including when it was
 # last modified and whether or not it's in-progress or over, who won, etc.
 gameStateSummary = (game, lastModified) ->
-  lastModified = $.timeago(new Date(game.lastModified))
+  # Shorten some longer versions of the "last modified" string
+  lastModified = $.timeago(new Date(game.lastModified)).
+      replace(/less than a /, "1 ").
+      replace(/about /, "")
   if not game.gameOver
     return "Updated " + lastModified
   else if game.victors.length == 2
@@ -550,7 +561,6 @@ Template.navBody.games = ->
 
 navBodyEvents = noughts.clickMap
   ".nResignGameButton": (event) ->
-    event.stopPropagation()
     noughts.closeNav()
     gameId = $(this).attr("gameId")
     resignCallback = ->
@@ -565,20 +575,30 @@ navBodyEvents = noughts.clickMap
         "btn-danger",
         resignCallback)
 
-  ".nGameListing": (event) ->
-    event.preventDefault()
+  ".nArchiveGameButton": (event) ->
+    noughts.closeNav()
+    gameId = $(this).attr("gameId")
+    Meteor.call "archiveGame", gameId, (err) ->
+      if err then throw err
+      toastr.success("Game archived")
+      if gameId == Session.get("gameId")
+        loadDefaultState()
+
+  ".nGameListingBody": (event) ->
     noughts.closeNav()
     playGame($(this).attr("gameId"))
 
   ".nGameListNewGameButton": (event) ->
-    event.preventDefault()
     noughts.closeNav()
     noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 
+navBodyEvents["click a"] = (event) -> event.preventDefault()
 Template.navBody.events(navBodyEvents)
 
 Template.navBody.rendered = ->
-  $(".nResignGameButton").tooltip({title: "Leave Game"})
+  unless noughts.util.isTouch
+    $(".nResignGameButton").tooltip({title: "Leave Game", placement: "auto"})
+    $(".nArchiveGameButton").tooltip({title: "Archive", placement: "auto"})
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = () ->
@@ -612,7 +632,7 @@ setStateFromPath = (path) ->
     Meteor.call "validateGameId", gameId, (err, gameExists) ->
       if err? then throw err
       unless gameExists
-        displayError("Error: Game not found: #{gameId}")
+        displayError("Game not found!")
       profile = Session.get("facebookProfile")
       Meteor.call "addPlayerIfNotPresent", gameId, profile, (err) ->
         if err? then throw err

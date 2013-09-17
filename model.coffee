@@ -92,12 +92,17 @@ die = (msg) ->
 
 # Returns true if the current user is the current player in the provided game.
 isCurrentPlayer = (game) ->
+  return false if game.gameOver
   game.currentPlayerNumber? and Meteor.userId()? and
       Meteor.userId() == game.players[game.currentPlayerNumber]
 
+# Returns true if the current user is a player in the provided game.
+isPlayer = (game) ->
+  return _.contains(game.players, Meteor.userId())
+
 # Ensures that the current user is a player in the provided game.
 ensureIsPlayer = (game) ->
-  return if Meteor.userId()? and _.contains(game.players, Meteor.userId())
+  return if Meteor.userId()? and isPlayer(game)
   die("Unauthorized user: '#{Meteor.userId()}'")
 
 # Ensures that the current user is the current player in the provided game.
@@ -280,6 +285,15 @@ Meteor.methods
         victors: [noughts.getOpponentId(game)]
         lastModified: new Date().getTime()
 
+  # Completely remove a player from a game that is in the Game Over state.
+  archiveGame: (gameId) ->
+    game = getGame(gameId, true)
+    ensureIsPlayer(game)
+    die("game is not over") unless game.gameOver
+    noughts.Games.update gameId,
+      $pull: {players: this.userId}
+
+
 # Server-only methods (generally, things which won't work on the client because
 # the data isn't in scope yet).
 if Meteor.isServer
@@ -296,10 +310,11 @@ if Meteor.isServer
       return game._id
 
     # If the current user is not present in game.players (and the game is not
-    # full), add her to the player list. The optional "userProfile" parameter
-    # should contain a profile for the current user.
+    # full or over), add her to the player list. The optional "userProfile"
+    # parameter should contain a profile for the current user.
     addPlayerIfNotPresent: (gameId, userProfile) ->
       game = getGame(gameId)
+      return if game.gameOver
       if (game.players.length < noughts.Config.maxPlayers and
           not _.contains(game.players, this.userId))
         update = {$push: {players: this.userId}}
@@ -308,10 +323,16 @@ if Meteor.isServer
           update["$set"]["profiles.#{userProfile.facebookId}"] = userProfile
         noughts.Games.update(gameId, update)
 
-    # Checks that a game exists based on its ID and that the current user is a
-    # participant in it.
+    # Checks that a game exists based on its ID.
     validateGameId: (gameId) ->
-      noughts.Games.findOne(gameId)
+      game = noughts.Games.findOne(gameId)
+      if game?.gameOver and not isPlayer(game)
+        return false
+      else
+        return game?
+
+
+
 
 # Returns a 2-dimensional array of *submitted* game actions spatially indexed
 # by [column][row], so e.g. table[0][2] is the bottom-left square's action.
