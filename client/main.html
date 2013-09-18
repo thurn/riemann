@@ -52,7 +52,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="loadingScreen">
-  <div class="nGame nScreenLoading">
+  <div class="nGame nScreen nScreenLoading">
     <div class="nLoading">
       Loading...
     </div>
@@ -60,13 +60,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="facebookInviteScreen">
-  <div class="nGame nScreenFacebookInvite">
+  <div class="nGame nScreen nScreenFacebookInvite">
     <div class="nFacebookInviteMenu"></div>
   </div>
 </template>
 
 <template name="playScreen">
-  <div class="nScreenPlay">
+  <div class="nScreen nScreenPlay">
     {{> moveControls}}
     <div class="nGame nGameContainer" id="nIdGame"></div>
     <div class="nNotification"></div>
@@ -187,7 +187,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="newGamePromo">
-  <div class="nGame nScreenInitialPromo">
+  <div class="nGame nScreen nScreenInitialPromo">
     <div class="nNewGamePromo">
       <div class="nGameDescription">
         "Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is
@@ -204,9 +204,9 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="newGameMenu">
-  <div class="nGame nScreenNewGame">
+  <div class="nGame nScreen nScreenNewGame">
     <div class="nNewGameMenu">
-      <div class="nNewGameMenuHeader">
+      <div class="nMenuHeader">
         New Game:
       </div>
       <button type="button" class="btn btn-default nMenuButton nFacebookInviteButton">
@@ -244,7 +244,7 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="facebookInviteMenu">
-  <div class="nNewGameMenuHeader">
+  <div class="nMenuHeader">
     Invite Opponent:
   </div>
   <select multiple="true" class="nFacebookFriendSelect">

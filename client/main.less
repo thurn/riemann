@@ -31,13 +31,13 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 ////////// DEBUG //////////
 
-// html {
-//   opacity: 0.1 !important;
-// }
+html {
+  opacity: 0.1 !important;
+}
 
-// .normalOpacity {
-//   opacity: 1 !important;
-// }
+.normalOpacity {
+  opacity: 1 !important;
+}
 
 ////////// END DEBUG //////////
 
@@ -119,6 +119,10 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   width: device-width;
 }
 
+* {
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
 html {
   height: 100%;
   width: 100%;
@@ -160,7 +164,7 @@ body.modal-open {
   z-index: 5;
 }
 
-.nNavigation:hover {
+.nDesktopMode .nNavigation:hover {
   overflow-y: auto;
 }
 
@@ -173,7 +177,7 @@ body.modal-open {
 }
 
 // Initially hide all content, the individual screens are configured to show it selectively.
-.nMain > div {
+.nScreen {
   display: none;
 }
 
@@ -185,7 +189,7 @@ body.modal-open {
   top: 50%;
 }
 
-.nCloseLink, .nCloseLink:hover {
+.nCloseLink, .nDesktopMode .nCloseLink:hover {
   text-decoration: none;
   color: #000;
   font-size: @largeFontSize;
@@ -317,7 +321,14 @@ body.modal-open {
   .centeredBlock(35rem, 35rem);
 }
 
-.nNewGameMenuHeader {
+.nScreenFacebookInvite {
+  // This screen tends to get pushed around by mobile soft keyboards, this
+  // styling is to keep it on top of whatever it gets pushed onto.
+  z-index: 3;
+  background-color: white;
+}
+
+.nMenuHeader {
   height: @menuButtonHeight;
   width: @navigationWidth;
   line-height: @menuButtonHeight;
@@ -342,6 +353,10 @@ body.modal-open {
 
 .nFacebookFriendSelect {
   width: 24rem;
+}
+
+.dthurn {
+  position: fixed;
 }
 
 .select2-results {
@@ -384,20 +399,20 @@ body.modal-open {
   font-size: @smallFontSize;
 }
 
-.nNavBody:hover .nCurrentNavSelection {
+.nDesktopMode .nNavBody:hover .nCurrentNavSelection {
   background: #f5f5f5;
 }
 
-.nNavBody:hover .nCurrentNavSelection:hover {
+.nDesktopMode .nNavBody:hover .nCurrentNavSelection:hover {
   background: #ffffff;
 }
 
-.nGameListDescription:hover a {
+.nDesktopMode .nGameListDescription:hover a {
   color: #005580;
   text-decoration: underline;
 }
 
-.nNavItem:hover {
+.nDesktopMode .nNavItem:hover {
   background: #ffffff;
 }
 
@@ -438,11 +453,11 @@ nav .nCloseGameButton {
   opacity: 1;
 }
 
-.nNavBody:hover .nCloseGameButton {
+.nDesktopMode .nNavBody:hover .nCloseGameButton {
   opacity: 0;
 }
 
-.nNavItem:hover .nCloseGameButton {
+.nDesktopMode .nNavItem:hover .nCloseGameButton {
   opacity: 1;
 }
 

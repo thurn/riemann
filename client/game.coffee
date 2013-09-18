@@ -172,6 +172,7 @@ facebookInviteCallback = (inviteResponse) ->
       requestId = inviteResponse.request
       Meteor.call "facebookSetRequestId", gameId, requestId, (err) =>
         if err? then throw err
+        toastr.success("Invite sent")
         playGame(gameId)
 
 # Will be resolved with a list of the user IDs of the current user's Facebook
@@ -235,8 +236,6 @@ buildSuggestedFriends = _.once ->
       formatSelection: (option, container) ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
-    unless noughts.isMobile()
-      $(".nFacebookFriendSelect").select2("open")
     if Session.get("state") != noughts.state.FACEBOOK_INVITE
       $("#select2-drop").hide()
   null
@@ -270,7 +269,7 @@ displayNotice = (msg) -> $(".nNotification").text(msg)
 noughts.Screen = Object.extend
   # Shows a specific screen (a child of nMain) matching the provided selector.
   showScreen: (selector) ->
-    $(".nMain > div").not(selector).hide()
+    $(".nScreen").not(selector).hide()
     $(selector).show()
 
   enterState: (urlBehavior) ->
@@ -324,7 +323,8 @@ noughts.FacebookInviteMenu = noughts.Screen.extend
     # TODO(dthurn): Log user into facebook here if they aren't yet.
     updateUrl("/facebookInvite")
     @showScreen(".nScreenFacebookInvite")
-    $(".nFacebookFriendSelect").select2("open")
+    unless noughts.isMobile()
+      $(".nFacebookFriendSelect").select2("open")
 
     # Scaling tends to mess up on this screen, especially e.g. when the
     # keyboard pops up on mobile.
@@ -576,11 +576,10 @@ navBodyEvents = noughts.clickMap
         resignCallback)
 
   ".nArchiveGameButton": (event) ->
-    noughts.closeNav()
     gameId = $(this).attr("gameId")
     Meteor.call "archiveGame", gameId, (err) ->
       if err then throw err
-      toastr.success("Game archived")
+      toastr.success("Game deleted")
       if gameId == Session.get("gameId")
         loadDefaultState()
 
@@ -598,7 +597,7 @@ Template.navBody.events(navBodyEvents)
 Template.navBody.rendered = ->
   unless noughts.util.isTouch
     $(".nResignGameButton").tooltip({title: "Leave Game", placement: "auto"})
-    $(".nArchiveGameButton").tooltip({title: "Archive", placement: "auto"})
+    $(".nArchiveGameButton").tooltip({title: "Delete", placement: "auto"})
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = () ->

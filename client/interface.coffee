@@ -111,6 +111,13 @@ Meteor.startup ->
   iPhoneHideNavbar()
   scaleInterface()
 
+  # Touch events on mobile seem to have strange effects, such as flashing the
+  # last button you touched. Stopping "touchstart" on buttons seems empirically
+  # to solve the problem, although I don't really know why.
+  $('button').on 'touchstart', (e) ->
+    e.preventDefault();
+    e.stopPropagation();
+
   $(window).on "orientationchange", ->
     iPhoneHideNavbar()
     scaleInterface()
