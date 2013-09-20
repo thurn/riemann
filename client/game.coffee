@@ -532,14 +532,18 @@ myTurn = (game) ->
   return game.players[game.currentPlayerNumber] == Meteor.userId()
 
 Template.navBody.games = ->
+  isCurrentGame = (game) ->
+    return false unless Session.get("state") == noughts.state.PLAY
+    return game._id == Session.get("gameId")
+
   getGameInfo = (game) ->
     opponentId = noughts.getOpponentId(game)
     opponentProfile = game.profiles[opponentId]
-    isCurrentGame = (Session.get("state") == noughts.state.PLAY and
-        game._id == Session.get("gameId"))
+    isGameCurrent = isCurrentGame(game)
+
     return $.extend({}, game, {
       gameId: game._id
-      isCurrentGame: isCurrentGame
+      isCurrentGame: isGameCurrent
       hasOpponent: opponentId?
       opponentId: opponentId
       opponentHasProfile: opponentProfile?
@@ -549,10 +553,18 @@ Template.navBody.games = ->
       gameStateSummary: gameStateSummary(game)
     })
 
+  # Only show games in the game over list that have more than 1 submitted
+  # action.
+  interestingGameOverGame = (game) ->
+    return false unless game.gameOver
+    return true if isCurrentGame(game)
+    return game.actionCount > 1
+
   games = noughts.Games.find({}, {sort: {lastModified: -1}}).map(getGameInfo)
   inProgressGames = _.filter(games, (game) -> !game.gameOver)
+  gameOverGames = _.filter(games, interestingGameOverGame)
   result = {
-    gameOver: _.filter(games, (game) -> game.gameOver)
+    gameOver: gameOverGames
     myTurn: _.filter(inProgressGames, myTurn)
     theirTurn: _.filter(inProgressGames, (game) -> !myTurn(game))
     newGameSelected: Session.get("state") == noughts.state.NEW_GAME_MENU

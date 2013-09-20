@@ -30,6 +30,7 @@
 #       case of a "nobody wins" situation, an empty list should be present. This
 #       field cannot be present on a game which is still in progress.
 #   gameOver: (Boolean) True if this game has ended.
+#   actionCount: (Integer) Number of (submitted) actions so far in this game.
 # }
 #
 # An Action is defined as follows:
@@ -172,10 +173,16 @@ Meteor.methods
 
     if victors == null
       noughts.Games.update gameId,
-          $set: {currentPlayerNumber: newPlayerNumber, currentAction: null}
+          $inc:
+            actionCount: 1
+          $set:
+            currentPlayerNumber: newPlayerNumber
+            currentAction: null
     else
       # Game over!
       noughts.Games.update gameId,
+          $inc:
+            actionCount: 1
           $set:
             currentPlayerNumber: null,
             currentAction: null,
@@ -252,6 +259,7 @@ Meteor.methods
       currentAction: null
       lastModified: new Date().getTime()
       gameOver: false
+      actionCount: 0
 
     if userProfile?
       game.profiles[userProfile.facebookId] = userProfile
