@@ -81,13 +81,17 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         <i class="icon-play icon-large"></i>
       </span>
       <div class="nGameListDescription nNavNewGameDescription">
-        {{#unless games.newGameSelected}}
+        {{#if games.newGameSelected}}
+          <div class="nNavSelectionDescription">
+        {{else}}
           <a href="/new">
-        {{/unless}}
+        {{/if}}
           New Game
-        {{#unless games.newGameSelected}}
+        {{#if games.newGameSelected}}
+          </div>
+        {{else}}
           </a>
-        {{/unless}}
+        {{/if}}
       </div>
     </div>
     {{#if games.myTurn}}
@@ -156,9 +160,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         </span>
       {{/if}}
       <div class="nGameListDescription">
-        {{#unless isCurrentGame}}
+        {{#if isCurrentGame}}
+          <div class="nNavSelectionDescription">
+        {{else}}
           <a href="/{{gameId}}">
-        {{/unless}}
+        {{/if}}
         {{#if hasOpponent}}
           {{#if opponentHasProfile}}
             vs. {{opponentProfile.givenName}}
@@ -168,9 +174,11 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
         {{else}}
           vs. (No Opponent)
         {{/if}}
-        {{#unless isCurrentGame}}
+        {{#if isCurrentGame}}
+          </div>
+        {{else}}
           </a>
-        {{/unless}}
+        {{/if}}
         <div class="nGameStateSummary">
           {{gameStateSummary}}
         </div>
@@ -264,8 +272,20 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 </template>
 
 <template name="facebookFriend">
-  <img src="https://graph.facebook.com/{{uid}}/picture?type=square" />
-  <strong class="nFacebookFriendName">{{name}}</strong>
+  <!--
+    I've spent enough time trying to get this stupid layout to work with CSS,
+    it's time to Give Up And Use Tables (tm).
+  -->
+  <table class="nFacebookFriend">
+    <tr>
+      <td class="nFacebookFriendPicture">
+        <img src="https://graph.facebook.com/{{uid}}/picture?type=square"/>
+      </td>
+      <td class="nFacebookFriendName">
+        <strong class="">{{name}}</strong>
+      </td>
+    </tr>
+  </table>
 </template>
 
 <template name="gameUrl">

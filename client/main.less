@@ -108,6 +108,15 @@ If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
   position: fixed;
 }
 
+.select2-results {
+  max-height: 25rem;
+}
+
+.select2-search-choice {
+  // Man, why would you hardcode a value for this select2.js
+  line-height: inherit !important;
+}
+
 // Common Styles
 
 @charset "UTF-8";
@@ -179,6 +188,7 @@ body.modal-open {
 // Initially hide all content, the individual screens are configured to show it selectively.
 .nScreen {
   display: none;
+  opacity: 1;
 }
 
 .nGameCanvas {
@@ -207,7 +217,6 @@ body.modal-open {
 .nGame {
   .centeredBlock(37.5rem, 37.5rem);
   border: solid 1px #aaa;
-  display: block;
   left: 50%;
   position: absolute;
   top: 50%;
@@ -351,21 +360,16 @@ body.modal-open {
   height: 3rem;
 }
 
+.nFacebookFriend {
+  height: 50px;
+}
+
 .nFacebookFriendSelect {
   width: 24rem;
 }
 
-.dthurn {
-  position: fixed;
-}
-
-.select2-results {
-  max-height: 25rem;
-}
-
-.select2-search-choice {
-  // Man, why would you hardcode a value for this select2.js
-  line-height: inherit !important;
+.nFacebookFriendPicture {
+  width: 50px;
 }
 
 .nFacebookInviteMenuControls {
@@ -374,7 +378,9 @@ body.modal-open {
 }
 
 .nFacebookFriendName {
-  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  width: 15rem;
+  line-height: 25px;
 }
 
 .nNavItem {
@@ -482,6 +488,10 @@ nav .nCloseGameButton {
   border-width: 0 0 1px 0;
   border-style: solid;
   border-color: #ccc;
+}
+
+.nNavSelectionDescription {
+  font-weight: bold;
 }
 
 .nUrlPopover {

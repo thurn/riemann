@@ -39,7 +39,7 @@ noughts.state.stateHistory = []
 noughts.state.changeState = (newState, urlBehavior) ->
   urlBehavior ||= noughts.state.UrlBehavior.PUSH_URL
   additionalArguments = _.toArray(arguments).slice(2)
-  noughts.state.stateMap[Session.get("state")]?.onExitState?()
+  noughts.state.stateMap[Session.get("state")]?.exitState()
 
   if urlBehavior != noughts.state.UrlBehavior.PUSH_URL
     # Pop is a no-op on an empty array
@@ -236,6 +236,11 @@ buildSuggestedFriends = _.once ->
       formatSelection: (option, container) ->
         container.append(Template.facebookFriend({name: option.text, uid: option.id}))
         null
+    $(".nFacebookFriendSelect").on "change", (e) ->
+      focus = -> $(".nSmallFacebookInviteButton").focus()
+      # Need to do this on a timeout because select2 is dumb and is sending
+      # its own focus event
+      setTimeout(focus, 1)
     if Session.get("state") != noughts.state.FACEBOOK_INVITE
       $("#select2-drop").hide()
   null
@@ -275,6 +280,10 @@ noughts.Screen = Object.extend
   enterState: (urlBehavior) ->
     updateUrl = _.partial(noughts.state.updateUrl, urlBehavior)
     @onEnterState.apply(this, [updateUrl].concat(_.rest(arguments)))
+
+  exitState: ->
+    if @onExitState?
+      @onExitState()
 
 noughts.LoadingScreen = noughts.Screen.extend
   onEnterState: ->
@@ -373,8 +382,8 @@ noughts.PlayScreen = noughts.Screen.extend
   # game and hooks up the appropriate game click event handlers.
   onEnterState: (updateUrl, gameId) ->
     updateUrl("/#{gameId}")
-    Session.set("gameId", gameId)
     @showScreen(".nScreenPlay")
+    Session.set("gameId", gameId)
     $(".nMobileHeader .nMoveControlsContainer").show()
 
     @xImg_ = me.loader.getImage("x")
@@ -571,9 +580,13 @@ Template.navBody.games = ->
   }
   return result
 
+# Delay closing the nav to give the user time to process what's happening.
+closeNavDelay = ->
+  setTimeout((-> noughts.closeNav()), 300)
+
 navBodyEvents = noughts.clickMap
   ".nResignGameButton": (event) ->
-    noughts.closeNav()
+    closeNavDelay()
     gameId = $(this).attr("gameId")
     resignCallback = ->
       Meteor.call "resignGame", gameId, (err) ->
@@ -596,11 +609,11 @@ navBodyEvents = noughts.clickMap
         loadDefaultState()
 
   ".nGameListingBody": (event) ->
-    noughts.closeNav()
+    closeNavDelay()
     playGame($(this).attr("gameId"))
 
   ".nGameListNewGameButton": (event) ->
-    noughts.closeNav()
+    closeNavDelay()
     noughts.state.changeState(noughts.state.NEW_GAME_MENU)
 
 navBodyEvents["click a"] = (event) -> event.preventDefault()
