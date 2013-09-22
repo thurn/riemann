@@ -13,9 +13,9 @@
 #
 # Game {
 #   _id: (String) Game ID
-#   players: ([String]) An array of players in the game. The indices in this
-#       array are the player numbers of the different players. A player who
-#       leaves the game will have her entry in this array replaced with "null".
+#   players: (Map<Integer, String>) A map from player numbers to player IDs in
+#       the game. A player who leaves the game will have her entry in this map
+#       replaced with "null".
 #   profiles: (Map<String, Profile>) A mapping from player IDs to profile
 #       information about the player. See Profile below.
 #   currentPlayerNumber: (Integer) The number of the player whose turn it is,
@@ -31,6 +31,8 @@
 #       field cannot be present on a game which is still in progress.
 #   gameOver: (Boolean) True if this game has ended.
 #   actionCount: (Integer) Number of (submitted) actions so far in this game.
+#   resignedPlayers: ([String]) An array of player IDs who have resigned the
+#       game.
 # }
 #
 # An Action is defined as follows:
@@ -260,6 +262,7 @@ Meteor.methods
       lastModified: new Date().getTime()
       gameOver: false
       actionCount: 0
+      resignedPlayers: []
 
     if userProfile?
       game.profiles[userProfile.facebookId] = userProfile
@@ -286,6 +289,8 @@ Meteor.methods
     game = getGame(gameId)
     ensureIsPlayer(game)
     noughts.Games.update gameId,
+      $push:
+        resignedPlayers: this.userId
       $set:
         gameOver: true
         currentAction: null

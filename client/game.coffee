@@ -182,8 +182,6 @@ facebookInviteCallback = (inviteResponse) ->
 handleSendFacebookInviteClick = (e) ->
   values = $(".nFacebookFriendSelect").select2("val")
   die("expected a single value") if values.length != 1
-  # Safe to turn scaling back on now:
-  Session.set("disableScaling", false)
   FB.ui
     method: "apprequests",
     title: "Invite opponent",
@@ -340,6 +338,9 @@ noughts.FacebookInviteMenu = noughts.Screen.extend
     # TODO(dthurn): Fix this
     Session.set("disableScaling", true)
 
+  onExitState: ->
+    Session.set("disableScaling", false)
+
 # The initial promo for non-players that explains what's going on.
 noughts.InitialPromo = noughts.Screen.extend
   init: ->
@@ -375,8 +376,10 @@ noughts.PlayScreen = noughts.Screen.extend
     Template.playScreen.events(events)
     Template.playScreen.rendered = ->
       unless noughts.util.isTouch
-        $(".nUndoButton").tooltip({title: "Undo", placement: "bottom"})
-        $(".nRedoButton").tooltip({title: "Redo", placement: "bottom"})
+        $(".nUndoButton").tooltip(
+            {title: "Undo", placement: "bottom", container: "body"})
+        $(".nRedoButton").tooltip(
+            {title: "Redo", placement: "bottom", container: "body"})
 
   # Called whenever the game state changes to noughts.state.PLAY, initializes the
   # game and hooks up the appropriate game click event handlers.
@@ -440,7 +443,9 @@ noughts.PlayScreen = noughts.Screen.extend
         me.game.add(sprite, 2)
     me.game.sort()
 
-    if game.victors?.length == 1
+    if not _.contains(game.players, Meteor.userId())
+      displayNotice("Observing this game.")
+    else if game.victors?.length == 1
       if game.victors[0] == Meteor.userId()
         displayNotice("Hooray! You win!")
       else
@@ -517,14 +522,19 @@ onSubscribe = ->
 gameStateSummary = (game, lastModified) ->
   # Shorten some longer versions of the "last modified" string
   lastModified = $.timeago(new Date(game.lastModified)).
-      replace(/less than a /, "1 ").
-      replace(/about /, "")
+      replace(/less than /, "").
+      replace(/about /, "").
+      replace(/a /, "1 ").
+      replace(/an /, "1 ")
   if not game.gameOver
     return "Updated " + lastModified
   else if game.victors.length == 2
     return "Draw " + lastModified
   else if game.victors[0] == Meteor.userId()
     return "You won " + lastModified
+  else if _.contains(game.resignedPlayers, Meteor.userId())
+    return "You left " + lastModified
+
   opponentId = game.victors[0]
   opponentProfile = game.profiles[opponentId]
   if opponentProfile? and opponentProfile.gender == "male"
@@ -569,13 +579,19 @@ Template.navBody.games = ->
     return true if isCurrentGame(game)
     return game.actionCount > 1
 
+  # Returns true if the current player is a participant in this game and it is
+  # not their turn.
+  theirTurn = (game) ->
+    return false unless _.contains(game.players, Meteor.userId())
+    return !myTurn(game)
+
   games = noughts.Games.find({}, {sort: {lastModified: -1}}).map(getGameInfo)
   inProgressGames = _.filter(games, (game) -> !game.gameOver)
   gameOverGames = _.filter(games, interestingGameOverGame)
   result = {
     gameOver: gameOverGames
     myTurn: _.filter(inProgressGames, myTurn)
-    theirTurn: _.filter(inProgressGames, (game) -> !myTurn(game))
+    theirTurn: _.filter(inProgressGames, theirTurn)
     newGameSelected: Session.get("state") == noughts.state.NEW_GAME_MENU
   }
   return result
@@ -621,8 +637,10 @@ Template.navBody.events(navBodyEvents)
 
 Template.navBody.rendered = ->
   unless noughts.util.isTouch
-    $(".nResignGameButton").tooltip({title: "Leave Game", placement: "auto"})
-    $(".nArchiveGameButton").tooltip({title: "Delete", placement: "auto"})
+    $(".nResignGameButton").tooltip(
+        {title: "Leave Game", placement: "auto", container: "body"})
+    $(".nArchiveGameButton").tooltip(
+        {title: "Delete", placement: "auto", container: "body"})
 
 # Inspects the URL and sets the initial game state accordingly.
 setStateFromUrl = () ->
