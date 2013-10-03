@@ -3,7 +3,8 @@
   "http://google-web-toolkit.googlecode.com/svn/tags/2.5.1/distro-source/core/src/gwt-module.dtd">
 <module rename-to='noughts'>
   <inherits name='com.google.gwt.user.User'/>
-  <inherits name="com.google.common.collect.Collect"/>
+  <inherits name='org.eclipse.xtext.xbase.lib.Lib'/>
+  <inherits name='ca.thurn.Firebase' />
   <entry-point class='ca.thurn.noughts.MainEntryPoint'/>
   <source path='noughts'/>
   <set-property name="user.agent" value="safari"/>
