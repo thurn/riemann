@@ -42,9 +42,9 @@ class DoNothingChildEventListener implements ChildEventListener {
 }
 
 class ChildAddedListener extends DoNothingChildEventListener {
-	val Functions.Function2<DataSnapshot, String, Void> function
+	val Procedures.Procedure2<DataSnapshot, String> function
 	
-	new(Functions.Function2<DataSnapshot, String, Void> function) {
+	new(Procedures.Procedure2<DataSnapshot, String> function) {
 		this.function = function
 	}
 	

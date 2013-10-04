@@ -80,16 +80,32 @@ class Game {
 			throw new IllegalArgumentException("Game map is missing ID!")
 		}
 		_id = gameMap.get("id") as String
-		_players = gameMap.get("players") as List<String>
-		_profiles = gameMap.get("profiles") as Map<String, Map<String, String>>
+		if (gameMap.containsKey("players")) {
+			_players = gameMap.get("players") as List<String>
+		} else {
+			_players = newArrayList()
+		}
+		if (gameMap.containsKey("profiles")) {
+			_profiles = gameMap.get("profiles") as Map<String, Map<String, String>>
+		} else {
+			_profiles = newHashMap()
+		}
 		_currentPlayerNumber = gameMap.get("currentPlayerNumber") as Long
 		_currentAction = gameMap.get("currentAction") as String
 		_lastModified = gameMap.get("lastModified") as Long
 		_requestId = gameMap.get("requestId") as String
-		_victors = gameMap.get("victors") as List<String>
+		if (gameMap.containsKey("victors")) {
+			_victors = gameMap.get("victors") as List<String>
+		} else {
+			_victors = newArrayList()
+		}
 		_gameOver = gameMap.get("gameOver") as Boolean
 		_actionCount = gameMap.get("actionCount") as Long
-		_resignedPlayers = gameMap.get("resignedPlayers") as List<String>
+		if (gameMap.containsKey("resignedPlayers")) {
+			_resignedPlayers = gameMap.get("resignedPlayers") as List<String>
+		} else {
+			_resignedPlayers = newArrayList()
+		}
 	}
   
     def currentPlayerId() {
@@ -123,4 +139,23 @@ class Game {
   	override toString() {
   		return "Game: " + serialize().toString()
   	}
+  	
+  	override hashCode() {
+  		return serialize().hashCode()
+  	}
+ 
+	override equals(Object obj) {
+		if (this === obj) {
+			return true
+		}
+		if (obj === null) {
+			return false
+		}
+		if (getClass() !== obj.getClass()) {
+			return false
+		}
+		val other = obj as Game
+		return serialize().equals(other.serialize())
+	}
+ 
 }

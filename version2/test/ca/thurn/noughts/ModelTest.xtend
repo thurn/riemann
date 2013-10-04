@@ -38,7 +38,18 @@ class ModelTest extends GWTTestCase {
 			map.put("id", "id")
 		}
 		return new Game(map)
-	} 
+	}
+	
+	def void testNewGame() {
+		val g = model.newGame(null, null)
+		assertTrue(g.players.contains("userId"))
+		assertEquals(Model.X_PLAYER, g.currentPlayerNumber)
+		assertTrue(g.lastModified > 0)
+		assertFalse(g.gameOver)
+		assertEquals(0L, g.actionCount)
+		val games = model.__getGamesForTesting()
+		assertEquals(g, games.get(g.id))
+	}
 	
 	def void testIsCurrentPlayer() {
 		val g1 = newGame(#{"gameOver" -> true})

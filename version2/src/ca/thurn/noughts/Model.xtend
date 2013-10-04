@@ -9,7 +9,6 @@ class Model {
 	val String userId
 	val Firebase firebase
 	val Map<String, Game> games
-	@Property var Functions.Function1<Game, Void> gameAddedCallback;
 	
 	new(String userId) {
 		this.userId = userId
@@ -19,14 +18,11 @@ class Model {
 			new ChildAddedListener([snapshot, prevChildName |
 				val game = new Game(snapshot.getValue(new MapStringObject()))
 				games.put(snapshot.name, game)
-				if (gameAddedCallback != null) {
-					gameAddedCallback.apply(game)
-				}
 			]))
 	}
 	
-	static val X_PLAYER = 0L
-	static val O_PLAYER = 1L
+	public static val X_PLAYER = 0L
+	public static val O_PLAYER = 1L
 	
 	def newGame(Map<String, String> userProfile, Map<String, String> opponentProfile) {
 		val push = firebase.child("games").push()
@@ -85,6 +81,13 @@ class Model {
 	 */
 	def ensureIsCurrentPlayer(Game game) {
 		if (!isCurrentPlayer(game)) die("Unauthorized user:  + userId")
+	}
+	
+	/**
+	 * Returns the games table for use by testing code.
+	 */
+	def __getGamesForTesting() {
+		return games
 	}
 	
 }
