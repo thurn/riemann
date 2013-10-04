@@ -2,13 +2,12 @@ package ca.thurn.noughts
 
 import com.google.gwt.core.client.ScriptInjector
 import com.google.gwt.core.client.Callback
-import ca.thurn.firebase.Firebase
 import ca.thurn.firebase.ValueEventListener
 import ca.thurn.firebase.DataSnapshot
+import ca.thurn.firebase.ChildEventListener
 
 class Client {
 	new() {
-		println("Injecting")
     	ScriptInjector
     		.fromUrl("http://cdn.firebase.com/v0/firebase.js")
     		.setCallback(new RunnableCallback([ |
@@ -18,14 +17,39 @@ class Client {
 	}
 	
 	def onFirebaseLoad() {
-		val firebase = new Firebase("http://www.example.com")
-		firebase.addListenerForSingleValueEvent(new FunctionValueEventListener([ snapshot |
-			println("single value event")
-			return null
-		]))
-		firebase.setValue("bar")
-		//val model = new Model("userId")
-		println("Injected")
+		val model = new Model("122610483")
+		model.newGame(null, null)
+	}
+}
+
+class DoNothingChildEventListener implements ChildEventListener {
+	
+	override onCancelled() {
+		throw new RuntimeException("ChildEventListener cancelled!")
+	}
+	
+	override onChildAdded(DataSnapshot snapshot, String previousChildName) {
+	}
+	
+	override onChildChanged(DataSnapshot snapshot, String previousChildName) {
+	}
+	
+	override onChildMoved(DataSnapshot snapshot, String previousChildName) {
+	}
+	
+	override onChildRemoved(DataSnapshot snapshot) {
+	}
+}
+
+class ChildAddedListener extends DoNothingChildEventListener {
+	val Functions.Function2<DataSnapshot, String, Void> function
+	
+	new(Functions.Function2<DataSnapshot, String, Void> function) {
+		this.function = function
+	}
+	
+	override onChildAdded(DataSnapshot snapshot, String previousChildName) {
+		function.apply(snapshot, previousChildName)
 	}
 }
 
