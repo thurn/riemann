@@ -7,7 +7,7 @@ class Game {
   /**
    * The game ID
    */
-  @Property final String id
+  @Property String id
 
   /**
    * An array of the players in the game, which can be though of as a bimap
@@ -67,8 +67,7 @@ class Game {
    */
    @Property final List<String> resignedPlayers
    
-	new(String gameId) {
-		_id = gameId
+	new() {
 		_players = newArrayList()
 		_profiles = newHashMap()
 		_victors = newArrayList()
@@ -76,9 +75,6 @@ class Game {
 	}
 	
 	new(Map<String, Object> gameMap) {
-		if (!gameMap.containsKey("id")) {
-			throw new IllegalArgumentException("Game map is missing ID!")
-		}
 		_id = gameMap.get("id") as String
 		if (gameMap.containsKey("players")) {
 			_players = gameMap.get("players") as List<String>
@@ -107,42 +103,46 @@ class Game {
 			_resignedPlayers = newArrayList()
 		}
 	}
+	
+	def static fromMap(Map<String, Object> gameMap) {
+	  return new Game(gameMap)
+	}
   
-    def currentPlayerId() {
-  		return players.get(currentPlayerNumber.intValue())
-  	}
-  	
-  	def setGameOver(Boolean gameOver) {
-  		_gameOver = gameOver
-  	}
-  	
-  	def isGameOver() {
-  		return _gameOver != null && _gameOver == true
-  	}
+  def currentPlayerId() {
+		return players.get(currentPlayerNumber.intValue())
+	}
+	
+	def setGameOver(Boolean gameOver) {
+		_gameOver = gameOver
+	}
+	
+	def isGameOver() {
+		return _gameOver != null && _gameOver == true
+	}
 
-  	def serialize() {
-  		return #{
-  			"id" -> id,
-  			"players" -> players,
-  			"profiles" -> profiles,
-  			"currentPlayerNumber" -> currentPlayerNumber,
-  			"currentAction" -> currentAction,
-  			"lastModified" -> lastModified,
-  			"requestId" -> requestId,
-  			"victors" -> victors,
-  			"gameOver" -> gameOver,
-  			"actionCount" -> actionCount,
-  			"resignedPlayers" -> resignedPlayers
-  		}
-  	}
-  	
-  	override toString() {
-  		return "Game: " + serialize().toString()
-  	}
-  	
-  	override hashCode() {
-  		return serialize().hashCode()
-  	}
+	def serialize() {
+		return #{
+			"id" -> id,
+			"players" -> players,
+			"profiles" -> profiles,
+			"currentPlayerNumber" -> currentPlayerNumber,
+			"currentAction" -> currentAction,
+			"lastModified" -> lastModified,
+			"requestId" -> requestId,
+			"victors" -> victors,
+			"gameOver" -> gameOver,
+			"actionCount" -> actionCount,
+			"resignedPlayers" -> resignedPlayers
+		}
+	}
+	
+	override toString() {
+		return "Game: " + serialize().toString()
+	}
+	
+	override hashCode() {
+		return serialize().hashCode()
+	}
  
 	override equals(Object obj) {
 		if (this === obj) {
