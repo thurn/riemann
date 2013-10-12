@@ -4,7 +4,6 @@ import static ca.thurn.noughts.shared.Util.*;
 
 import java.util.Map
 import com.firebase.client.Firebase
-import java.util.List
 
 class Model {
   val String _userId
