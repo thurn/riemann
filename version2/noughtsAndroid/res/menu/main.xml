@@ -14,15 +14,9 @@
   limitations under the License.
   -->
 
-<resources>
-    <string name="app_name">noughts</string>
-    <string-array name="games_array">
-        <item>Game 1</item>
-        <item>Game 2</item>
-        <item>Game 3</item>
-    </string-array>
-    <string name="drawer_open">Open navigation drawer</string>
-    <string name="drawer_close">Close navigation drawer</string>
-    <string name="action_websearch">Web search</string>
-    <string name="app_not_available">Sorry, there\'s no web browser available</string>
-</resources>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_websearch"
+          android:icon="@drawable/action_search"
+          android:title="@string/action_websearch"
+          android:showAsAction="ifRoom|withText" />
+</menu>

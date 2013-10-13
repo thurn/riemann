@@ -14,15 +14,10 @@
   limitations under the License.
   -->
 
-<resources>
-    <string name="app_name">noughts</string>
-    <string-array name="games_array">
-        <item>Game 1</item>
-        <item>Game 2</item>
-        <item>Game 3</item>
-    </string-array>
-    <string name="drawer_open">Open navigation drawer</string>
-    <string name="drawer_close">Close navigation drawer</string>
-    <string name="action_websearch">Web search</string>
-    <string name="app_not_available">Sorry, there\'s no web browser available</string>
-</resources>
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/image"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:gravity="center"
+    android:padding="32dp" />
