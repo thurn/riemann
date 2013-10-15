@@ -16,13 +16,9 @@
 
 package ca.thurn.noughts.android;
 
-import com.example.android.navigationdrawerexample.R;
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.SearchManager;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -35,7 +31,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.TextView;
+
+import com.example.android.navigationdrawerexample.R;
 
 /**
  * This example illustrates a common usage of the DrawerLayout widget
@@ -81,6 +79,11 @@ public class MainActivity extends Activity {
 
         // set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        
+        TextView textView = (TextView)getLayoutInflater().inflate(
+            R.layout.new_game_item, mDrawerList, false);
+        mDrawerList.addHeaderView(textView);
+
         // set up the drawer's list view with items and click listener
         mDrawerList.setAdapter(new ArrayAdapter<String>(this,
                 R.layout.drawer_list_item, mGameNames));
@@ -129,7 +132,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    /* The click listner for ListView in the navigation drawer */
+    /* The click listener for ListView in the navigation drawer */
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -141,7 +144,7 @@ public class MainActivity extends Activity {
         // update the main content by replacing fragments
         Fragment fragment = new GameFragment();
         Bundle args = new Bundle();
-        args.putInt(GameFragment.ARG_GAME_ID, position);
+        
         fragment.setArguments(args);
 
         FragmentManager fragmentManager = getFragmentManager();

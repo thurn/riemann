@@ -18,60 +18,14 @@ function processImage {
     ;;
   esac
 
-  $inkscape -d 480 -e $2/res/drawable-xxhdpi/${file/.svg}.png $1 >& /dev/null
-  $inkscape -d 320 -e $2/res/drawable-xhdpi/${file/.svg}.png $1 >& /dev/null
-  $inkscape -d 240 -e $2/res/drawable-hdpi/${file/.svg}.png $1 >& /dev/null
-  $inkscape -d 160 -e $2/res/drawable-mdpi/${file/.svg}.png $1 >& /dev/null
-  $inkscape -d 120 -e $2/res/drawable-ldpi/${file/.svg}.png $1 >& /dev/null
+  $inkscape -d 480 -e ./res/drawable-xxhdpi/${file/.svg}.png $1 >& /dev/null
+  $inkscape -d 320 -e ./res/drawable-xhdpi/${file/.svg}.png $1 >& /dev/null
+  $inkscape -d 240 -e ./res/drawable-hdpi/${file/.svg}.png $1 >& /dev/null
+  $inkscape -d 160 -e ./res/drawable-mdpi/${file/.svg}.png $1 >& /dev/null
 }
 
-function displayHelp {
-
-    echo "-h Help"
-    echo "-f Force processing of all files"
-    echo "process_assets ./source_image_folder/ ./output_folder"
-    exit
-}
-
-while getopts ":fh" opt; do
-  case $opt in
-    f)
-      rm ./.lastprocess
-      ;;
-    h)
-      displayHelp
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      displayHelp
-      exit
-      ;;
-  esac
-done
-
-if [ $# -ne 2 ]
-then
-  echo "Incorrect number of args." >&2
-  displayHelp
-  exit
-fi
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-if [ ! -e ./.lastprocess ]
-then
-  touch -t 197001010100.00 ./.lastprocess
-fi
-
-for f in $(find $1 -name *.svg -type f -newer ./.lastprocess) ;
+for f in $(find ./assets -name *.svg -type f) ;
 do
   echo "Processing $f"
-  if [[ "$f" == *.9.svg* ]]; then
-    $DIR/gen9patch.py $f $2
-  else 
-    processImage $f $2
-  fi
+  processImage $f
 done
-
-touch -t $(date +%Y%m%d%H%M.%S) ./.lastprocess
-
