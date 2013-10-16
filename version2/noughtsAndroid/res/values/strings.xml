@@ -15,7 +15,7 @@
   -->
 
 <resources>
-    <string name="app_name">noughts</string>
+    <string name="app_name">Noughts</string>
     <string-array name="games_array">
         <item>Game 1</item>
         <item>Game 2</item>
@@ -26,4 +26,9 @@
     <string name="action_websearch">Web search</string>
     <string name="app_not_available">Sorry, there\'s no web browser available</string>
     <string name="new_game">New Game</string>
+    <string name="invite_via_facebook">Invite via Facebook</string>
+    <string name="play_vs_computer">Play vs. Computer</string>
+    <string name="local_multiplayer">Local Multiplayer</string>
+    <string name="invite_via_url">Invite via URL</string>
+    <string name="cancel">Cancel</string>
 </resources>
