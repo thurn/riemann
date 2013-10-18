@@ -18,7 +18,7 @@ package ca.thurn.noughts.android;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -28,12 +28,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.example.android.navigationdrawerexample.R;
 
 /**
  * This example illustrates a common usage of the DrawerLayout widget
@@ -104,6 +103,8 @@ public class MainActivity extends Activity {
         );
     mDrawerLayout.setDrawerListener(mDrawerToggle);
 
+    MainActivity.switchToFragment(this, new NewGamePromoFragment(), false);
+    
     if (savedInstanceState == null) {
       // TODO(dthurn): select previous menu item
     }
@@ -137,14 +138,7 @@ public class MainActivity extends Activity {
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
       if (view.getId() == R.id.new_game_item) {
-        Fragment fragment = new NewGameMenuFragment();
-        Bundle args = new Bundle();
-
-        fragment.setArguments(args);
-
-        FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
-
+        MainActivity.switchToFragment(MainActivity.this, new NewGameMenuFragment(), true);
         mDrawerList.setItemChecked(position, true);
         mDrawerLayout.closeDrawer(mDrawerList);
       }
@@ -168,5 +162,15 @@ public class MainActivity extends Activity {
     super.onConfigurationChanged(newConfig);
     // Pass any configuration change to the drawer toggls
     mDrawerToggle.onConfigurationChanged(newConfig);
+  }
+  
+  public static void switchToFragment(Activity activity, Fragment fragment,
+      boolean addToBackStack) {
+    FragmentTransaction transaction = activity.getFragmentManager().beginTransaction();
+    transaction.replace(R.id.content_frame, fragment);
+    if (addToBackStack) {
+      transaction.addToBackStack(null);
+    }
+    transaction.commit();
   }
 }

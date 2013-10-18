@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/new_game_menu_item"
+    android:text="@string/new_game"
+    android:textSize="26sp"
+    android:textStyle="bold" />

@@ -11,11 +11,14 @@ class Model {
   @Property val Callbacks<Game> games
   @Property val Callbacks<Action> actions
 
-  new(String userId) {
+  private new(String userId) {
     this(userId, new Firebase("http://www.example.com"))    
   }
 
-  new(String userId, Firebase firebase) {
+  private new(String userId, Firebase firebase) {
+    if (userId == null) {
+      throw new RuntimeException("UserID was null");
+    }
     _userId = userId
     _firebase = firebase
     _games = new Callbacks<Game>(firebase.child("games"),
@@ -24,6 +27,14 @@ class Model {
     _actions = new Callbacks<Action>(firebase.child("actions"),
       [ map | return new Action(map)]
     )
+  }
+  
+  def static newFromUserId(String userId) {
+    return new Model(userId)
+  }
+  
+  def static newFromUserId(String userId, Firebase firebase) {
+    return new Model(userId, firebase)
   }
 
   public static val X_PLAYER = 0L

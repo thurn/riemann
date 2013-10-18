@@ -17,7 +17,7 @@ class ModelTest extends SharedGWTTestCase {
     _userId = "userId"
     injectScript("https://cdn.firebase.com/v0/firebase.js", [ |
       _firebase = new Firebase("http://www.example.com/" + Math.abs(randomInteger()))
-      _model = new Model(_userId, _firebase)
+      _model = Model.newFromUserId(_userId, _firebase)
     ]);
   }
 
