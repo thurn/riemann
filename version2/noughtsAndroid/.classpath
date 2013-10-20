@@ -8,6 +8,6 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.xtend.XTEND_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/noughtsShared"/>
 	<classpathentry exported="true" kind="lib" path="libs/firebase-client-jvm-LATEST.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/svg-android-1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/androidsvg-1.2.0.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

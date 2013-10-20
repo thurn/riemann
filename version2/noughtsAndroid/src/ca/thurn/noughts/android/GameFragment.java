@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import ca.thurn.noughts.shared.Game;
 import ca.thurn.noughts.shared.Model;
 
@@ -22,32 +21,32 @@ public class GameFragment extends Fragment {
     
     // Model, initialized with ARG_USER_ID:
     private Model mModel;
-    // The game, null until the onGameReady() callback is invoked:
+    // The game, null until the onGameUpdate() callback is invoked:
     private Game mGame;
     // Reference to the top-level fragment_game layout:
-    private View mGameView;
+    private GameView mGameView;
 
     public GameFragment() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mGameView = inflater.inflate(R.layout.fragment_game, container, false);
+        mGameView = (GameView)inflater.inflate(R.layout.fragment_game, container, false);
+        mGameView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         String userId = getArguments().getString(ARG_USER_ID);
         mModel = Model.newFromUserId(userId);
         
         boolean createNewGame = getArguments().getBoolean(ARG_SHOULD_CREATE_GAME);
         if (createNewGame) {
-          onGameReady(mModel.newGame(null, null));
+          onGameUpdate(mModel.newGame(null, null));
         } else {
           throw new RuntimeException("wtf");
         }
         return mGameView;
     }
     
-    public void onGameReady(Game game) {
+    public void onGameUpdate(Game game) {
       mGame = game;
-      TextView text = (TextView)mGameView.findViewById(R.id.game_detail);
-      text.setText(mGame.getId());
+      mGameView.updateGame(game);
     }
 }
