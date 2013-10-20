@@ -94,7 +94,7 @@ class Model {
     ref.setValue(game.serialize())
     return game
   }
-
+  
   /**
    * Adds the provided command to the current action's command list. If there is
    * no current action, creates one. Any commands beyond the current location in

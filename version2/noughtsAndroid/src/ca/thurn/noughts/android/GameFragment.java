@@ -1,14 +1,13 @@
 package ca.thurn.noughts.android;
 
-import ca.thurn.noughts.shared.Game;
-import ca.thurn.noughts.shared.Model;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import ca.thurn.noughts.shared.Game;
+import ca.thurn.noughts.shared.Model;
 
 /**
  * Fragment that appears in the "content_frame", shows a planet

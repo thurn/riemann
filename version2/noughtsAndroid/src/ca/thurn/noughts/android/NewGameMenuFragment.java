@@ -56,7 +56,7 @@ public class NewGameMenuFragment extends ListFragment {
   }
 
   @Override
-  public void onListItemClick(ListView l, View v, int position, long id) {
+  public void onListItemClick(ListView listView, View view, int position, long rowId) {
     switch (position) {
       case LOCAL_MULTIPLAYER: {
         Fragment fragment = new GameFragment();
@@ -65,10 +65,14 @@ public class NewGameMenuFragment extends ListFragment {
         args.putBoolean(GameFragment.ARG_SHOULD_CREATE_GAME, true);
         fragment.setArguments(args);
         MainActivity.switchToFragment(getActivity(), fragment, true);
+        break;
       }
       case CANCEL: {
         getActivity().onBackPressed();
         break;
+      }
+      default: {
+        throw new RuntimeException("Unexpected position: " + position);
       }
     }
   }
