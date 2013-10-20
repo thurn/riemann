@@ -44,6 +44,13 @@ class ModelTest extends SharedGWTTestCase {
     } catch (NoughtsException expected) {}
   }
   
+  def makeTestGame() {
+    val game = new Game()
+    game.players.add(_userId)
+    game.currentPlayerNumber = 0L
+    return game    
+  }
+  
   def withTestData(Game game, Action action, boolean makeCurrent, Procedures.Procedure0 testFn) {
     val gPush = _firebase.child("games").push()
     val aPush = _firebase.child("actions").push()
@@ -182,6 +189,21 @@ class ModelTest extends SharedGWTTestCase {
     assertDies([|
       _model.ensureIsCurrentPlayer(new Game(#{"players" -> #["foo"], "currentPlayerNumber" -> 0L}))
     ])
+  }
+  
+  def void testAddGameListener() {
+    beginAsyncTestBlock()
+    val game = makeTestGame()
+    withTestData(game, new Action, true /* makeCurrent */, [|
+      _model.addGameListener(_testGameId, [changedGame|
+        assertEquals(42L, changedGame.lastModified)
+        finished()
+      ])
+      _firebase.child("games").child(_testGameId).updateChildren(m(
+        "lastModified" -> 42L
+      ))
+    ])
+    endAsyncTestBlock()
   }
 
 }

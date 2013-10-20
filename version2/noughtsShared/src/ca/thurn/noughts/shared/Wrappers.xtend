@@ -3,6 +3,7 @@ package ca.thurn.noughts.shared
 import com.firebase.client.ChildEventListener
 import com.firebase.client.DataSnapshot
 import java.util.Timer
+import com.firebase.client.ValueEventListener
 
 class DoNothingChildEventListener implements ChildEventListener {
 	
@@ -21,6 +22,23 @@ class DoNothingChildEventListener implements ChildEventListener {
 	
 	override onChildRemoved(DataSnapshot snapshot) {
 	}
+}
+
+class FunctionValueEventListener implements ValueEventListener {
+  
+  val Procedures.Procedure1<DataSnapshot> _function;
+  
+  new(Procedures.Procedure1<DataSnapshot> function) {
+    _function = function;
+  }
+  
+  override onCancelled() {
+  }
+  
+  override onDataChange(DataSnapshot snapshot) {
+    _function.apply(snapshot);
+  }
+  
 }
 
 class ChildAddedListener extends DoNothingChildEventListener {

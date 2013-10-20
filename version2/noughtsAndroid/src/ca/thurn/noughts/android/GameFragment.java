@@ -1,17 +1,19 @@
 package ca.thurn.noughts.android;
 
 import android.app.Fragment;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import ca.thurn.noughts.shared.Command;
 import ca.thurn.noughts.shared.Game;
 import ca.thurn.noughts.shared.Model;
 
 /**
  * Fragment that appears in the "content_frame", shows a planet
  */
-public class GameFragment extends Fragment {
+public class GameFragment extends Fragment implements CommandHandler{
     public static final String ARG_GAME_ID = "game_id";
     public static final String ARG_USER_ID = "user_id";
     // If true, create an new game instead of displaying the game in ARG_GAME_ID: 
@@ -33,6 +35,7 @@ public class GameFragment extends Fragment {
             Bundle savedInstanceState) {
         mGameView = (GameView)inflater.inflate(R.layout.fragment_game, container, false);
         mGameView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        mGameView.setCommandHandler(this);
         String userId = getArguments().getString(ARG_USER_ID);
         mModel = Model.newFromUserId(userId);
         
@@ -48,5 +51,15 @@ public class GameFragment extends Fragment {
     public void onGameUpdate(Game game) {
       mGame = game;
       mGameView.updateGame(game);
+    }
+
+    @Override
+    public void addCommand(Command command) {
+      mModel.addCommand(mGame, command);
+    }
+
+    @Override
+    public boolean isLegalCommand(Command command) {
+      return true;
     }
 }

@@ -63,6 +63,12 @@ class Model {
       data.value = action.serialize()
     ]))
   }
+  
+  def addGameListener(String gameId, Procedures.Procedure1<Game> listener) {
+    gameRef(gameId).addValueEventListener(new FunctionValueEventListener([snapshot|
+      listener.apply(new Game(snapshot.getValue() as Map<String, Object>))
+    ]))
+  }
 
   /**
    * Partially create a new game with no opponent specified yet, returning the game ID.
