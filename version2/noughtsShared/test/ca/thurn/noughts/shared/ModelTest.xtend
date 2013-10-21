@@ -4,13 +4,13 @@ import ca.thurn.gwt.SharedGWTTestCase
 import static ca.thurn.noughts.shared.Util.*;
 import com.firebase.client.Firebase
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.Map
 
 class ModelTest extends SharedGWTTestCase {
 
   String _userId
   Model _model
   String _testGameId
-  String _testActionId
   Firebase _firebase
 
   override gwtSetUp() {
@@ -25,7 +25,6 @@ class ModelTest extends SharedGWTTestCase {
     _userId = null
     _model = null
     _testGameId = null
-    _testActionId = null
     _firebase = null
   }
 
@@ -51,44 +50,30 @@ class ModelTest extends SharedGWTTestCase {
     return game    
   }
   
-  def withTestData(Game game, Action action, boolean makeCurrent, Procedures.Procedure0 testFn) {
+  def withTestData(Game game, Procedures.Procedure0 testFn) {
     val gPush = _firebase.child("games").push()
-    val aPush = _firebase.child("actions").push()
     _testGameId = gPush.name
-    _testActionId = aPush.name
     game.id = _testGameId
-    if (makeCurrent) {
-      game.currentAction = _testActionId
-    }
     val gamesRan = new AtomicBoolean(false)
     _firebase.child("games").addChildEventListener(new ChildAddedListener([s1, p1|
       if (gamesRan.getAndSet(true) == false) {
-        if (action == null){
-          testFn.apply()
-          return
-        }
-        action.id = _testActionId
-        action.gameId = _testGameId
-        val actionsRan = new AtomicBoolean(false)
-        _firebase.child("actions").addChildEventListener(new ChildAddedListener([s2, p2|
-          if (actionsRan.getAndSet(true) == false) {
-            testFn.apply()
-          }
-        ]))
-        aPush.setValue(action.serialize())
+        println("snp " + s1.getValue())
+        assertEquals(game, new Game(s1.getValue() as Map<String,Object>))
+        testFn.apply()
       }
     ]))
+    println("game " + game.serialize())
     gPush.setValue(game.serialize())
   }
 
   def void testNewGame() {
     beginAsyncTestBlock()
-    _model.games.childAddedCallbacks.add([g|
+    _model.gameCallbacks.childAddedCallbacks.add([g|
       assertTrue(g.players.contains(_userId))
       assertEquals(Model.X_PLAYER, g.currentPlayerNumber)
       assertTrue(g.lastModified > 0L)
       assertFalse(g.gameOver)
-      assertEquals(0L, g.actionCount)
+      assertEquals(0, g.actions.size())
       finished()
     ])
     val g = _model.newGame(null, null)
@@ -96,25 +81,26 @@ class ModelTest extends SharedGWTTestCase {
     assertEquals(Model.X_PLAYER, g.currentPlayerNumber)
     assertTrue(g.lastModified > 0L)
     assertFalse(g.gameOver)
-    assertEquals(0L, g.actionCount)
+    assertEquals(0L, g.actions.size())
     endAsyncTestBlock()
   }
   
   def testAddCommandExistingAction() {
-    beginAsyncTestBlock(2)
+    beginAsyncTestBlock()
     val game = new Game()
     game.players.add(_userId)
     game.currentPlayerNumber = 0L
-    val command = new Command(m("column" -> 2L, "row" -> 2L))
     val action = new Action()
-    withTestData(game, action, true /* makeCurrent */, [|
-      _model.actions.childChangedCallbacks.add([newAction|
+    game.actions.add(action)
+    game.currentActionNumber = 0L
+    assertEquals(action, game.getCurrentAction())
+    val command = new Command(m("column" -> 2L, "row" -> 2L))
+    withTestData(game, [|
+      _model.gameCallbacks.childChangedCallbacks.add([newGame|
+        assertTrue(newGame.lastModified > 0)
+        val newAction = newGame.getCurrentAction()
         assertEquals(#[], newAction.futureCommands)
         assertEquals(#[command], newAction.commands)
-        finished()
-      ])
-      _model.games.childChangedCallbacks.add([newGame|
-        assertTrue(newGame.lastModified > 0)
         finished()
       ])
       _model.addCommand(game, command)
@@ -129,26 +115,23 @@ class ModelTest extends SharedGWTTestCase {
   }
 
   def testAddCommandNewAction() {
-    beginAsyncTestBlock(2)
+    beginAsyncTestBlock()
 
     val game = new Game(m(
       "players" -> #[_userId],
       "currentPlayerNumber" -> 0L
     ))
     val command = new Command(m("column" -> 1L, "row" -> 1L))
-    withTestData(game, null, false /* makeCurrent */, [|
-      _model.actions.childAddedCallbacks.add([action|
-        assertNotNull(action.id)
-        assertEquals(_userId, action.player)
-        assertFalse(action.submitted)
-        assertEquals(_testGameId, action.gameId)
-        assertDeepEquals(#[command], action.commands)
-        finished()
-      ])
-      _model.games.childChangedCallbacks.add([g1 |
-        assertEquals(_testGameId, g1.id)
-        assertNotNull(g1.currentAction)
-        assertTrue(g1.lastModified > 0)
+    withTestData(game, [|
+      _model.gameCallbacks.childChangedCallbacks.add([newGame |
+        assertEquals(_testGameId, newGame.id)
+        assertEquals(0L, newGame.currentActionNumber)
+        assertTrue(newGame.lastModified > 0)
+        val newAction = newGame.getCurrentAction()
+        assertEquals(_userId, newAction.player)
+        assertFalse(newAction.submitted)
+        assertEquals(_testGameId, newAction.gameId)
+        assertDeepEquals(#[command], newAction.commands)        
         finished()
       ])
       _model.addCommand(game, command)
@@ -189,21 +172,6 @@ class ModelTest extends SharedGWTTestCase {
     assertDies([|
       _model.ensureIsCurrentPlayer(new Game(#{"players" -> #["foo"], "currentPlayerNumber" -> 0L}))
     ])
-  }
-  
-  def void testAddGameListener() {
-    beginAsyncTestBlock()
-    val game = makeTestGame()
-    withTestData(game, new Action, true /* makeCurrent */, [|
-      _model.addGameListener(_testGameId, [changedGame|
-        assertEquals(42L, changedGame.lastModified)
-        finished()
-      ])
-      _firebase.child("games").child(_testGameId).updateChildren(m(
-        "lastModified" -> 42L
-      ))
-    ])
-    endAsyncTestBlock()
   }
 
 }

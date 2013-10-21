@@ -27,12 +27,17 @@ class Game {
    */
    @Property Long currentPlayerNumber
 
+   /**
+    * Actions taken in this game, in the order in which they were taken.
+    * Potentially includes an unsubmitted action of the current player.
+    */
+   @Property final List<Action> actions
+
   /**
-   * ID of action currently being constructed, or null if no action is under
-   * construction (or the game is over). Should never polong to a submitted
-   * action. Null when the game is not in progress.
+   * Index in actions list of action currently being constructed, null when
+   * there is no current action.
    */
-   @Property String currentAction
+   @Property Long currentActionNumber
 
   /**
    * UNIX timestamp of time when game was last modified.
@@ -58,11 +63,6 @@ class Game {
    Boolean _gameOver
 
   /**
-   * Number of (submitted) actions so far in this game.
-   */
-   @Property Long actionCount
-
-  /**
    * An array of player IDs who have resigned the game.
    */
    @Property final List<String> resignedPlayers
@@ -70,6 +70,7 @@ class Game {
 	new() {
 		_players = newArrayList()
 		_profiles = newHashMap()
+		_actions = newArrayList()
 		_victors = newArrayList()
 		_resignedPlayers = newArrayList()
 	}
@@ -87,7 +88,13 @@ class Game {
 			_profiles = newHashMap()
 		}
 		_currentPlayerNumber = gameMap.get("currentPlayerNumber") as Long
-		_currentAction = gameMap.get("currentAction") as String
+		if (gameMap.containsKey("actions")) {
+		  val actionList = gameMap.get("actions") as List<Map<String, Object>>
+		  _actions = actionList.map([object | new Action(object)])
+		} else {
+		  _actions = newArrayList()
+		}
+		_currentActionNumber = gameMap.get("currentActionNumber") as Long
 		_lastModified = gameMap.get("lastModified") as Long
 		_requestId = gameMap.get("requestId") as String
 		if (gameMap.containsKey("victors")) {
@@ -96,7 +103,6 @@ class Game {
 			_victors = newArrayList()
 		}
 		_gameOver = gameMap.get("gameOver") as Boolean
-		_actionCount = gameMap.get("actionCount") as Long
 		if (gameMap.containsKey("resignedPlayers")) {
 			_resignedPlayers = gameMap.get("resignedPlayers") as List<String>
 		} else {
@@ -109,7 +115,15 @@ class Game {
 	}
   
   def currentPlayerId() {
-		return players.get(currentPlayerNumber.intValue())
+		return players.get(_currentPlayerNumber.intValue())
+	}
+	
+	def hasCurrentAction() {
+	  return _currentActionNumber != null
+	}
+	
+	def getCurrentAction() {
+	  return actions.get(_currentActionNumber.intValue())
 	}
 	
 	def setGameOver(Boolean gameOver) {
@@ -122,17 +136,17 @@ class Game {
 
 	def serialize() {
 		return #{
-			"id" -> id,
-			"players" -> players,
-			"profiles" -> profiles,
-			"currentPlayerNumber" -> currentPlayerNumber,
-			"currentAction" -> currentAction,
-			"lastModified" -> lastModified,
-			"requestId" -> requestId,
-			"victors" -> victors,
-			"gameOver" -> gameOver,
-			"actionCount" -> actionCount,
-			"resignedPlayers" -> resignedPlayers
+			"id" -> _id,
+			"players" -> _players,
+			"profiles" -> _profiles,
+			"currentPlayerNumber" -> _currentPlayerNumber,
+			"actions" -> _actions.map([action | action.serialize()]), 
+			"currentActionNumber" -> _currentActionNumber,
+			"lastModified" -> _lastModified,
+			"requestId" -> _requestId,
+			"victors" -> _victors,
+			"gameOver" -> _gameOver,
+			"resignedPlayers" -> _resignedPlayers
 		}
 	}
 	

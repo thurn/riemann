@@ -4,8 +4,6 @@ import java.util.List
 import java.util.Map
 
 class Action {
-  @Property String id;
-  
   @Property String player;
   
   @Property Long playerNumber;
@@ -24,7 +22,6 @@ class Action {
   }
   
   new(Map<String, Object> map) {
-    _id = map.get("id") as String
     _player = map.get("player") as String
     _playerNumber = map.get("playerNumber") as Long
     _gameId = map.get("gameId") as String
@@ -45,13 +42,12 @@ class Action {
   
   def serialize() {
     return #{
-      "id" -> id,
       "player" -> player,
       "playerNumber" -> playerNumber,
       "gameId" -> gameId,
       "submitted" -> submitted,
-      "commands" -> commands.map[command | command.serialize()],
-      "futureCommands" -> futureCommands.map[command | command.serialize()]
+      "commands" -> commands.map([command | command.serialize()]),
+      "futureCommands" -> futureCommands.map([command | command.serialize()])
     }
   }
   

@@ -1,18 +1,20 @@
 package ca.thurn.noughts.shared
 
-import static ca.thurn.noughts.shared.Util.*;
-
 import java.util.Map
 import com.firebase.client.Firebase
+import com.firebase.client.ChildEventListener
+import com.firebase.client.DataSnapshot
+import java.util.List
 
-class Model {
+class Model implements ChildEventListener {
   val String _userId
   val Firebase _firebase
-  @Property val Callbacks<Game> games
-  @Property val Callbacks<Action> actions
+  @Property val Map<String, Game> games
+  @Property val Callbacks<Game> gameCallbacks
+  val Map<String, List<Procedures.Procedure1<Game>>> _gameChangeListeners
 
   private new(String userId) {
-    this(userId, new Firebase("http://www.example.com"))    
+    this(userId, new Firebase("http://www.example.com"))
   }
 
   private new(String userId, Firebase firebase) {
@@ -21,12 +23,12 @@ class Model {
     }
     _userId = userId
     _firebase = firebase
-    _games = new Callbacks<Game>(firebase.child("games"),
+    _games = newHashMap()
+    _gameCallbacks = new Callbacks<Game>(firebase.child("games"),
       [ map | return new Game(map)]
     )
-    _actions = new Callbacks<Action>(firebase.child("actions"),
-      [ map | return new Action(map)]
-    )
+    _gameChangeListeners = newHashMap()
+    _firebase.child("games").addChildEventListener(this)
   }
   
   def static newFromUserId(String userId) {
@@ -48,28 +50,48 @@ class Model {
     return gameRef(game.id)
   }
 
-  def actionRef(String actionId) {
-    return _firebase.child("actions").child(actionId)
-  }
-
-  def actionRef(Action action) {
-    return actionRef(action.id)
-  }
-  
-  def modifyAction(Firebase firebase, Procedures.Procedure1<Action> function) {
+  def modifyGame(Firebase firebase, Procedures.Procedure1<Game> function) {
     firebase.runTransaction(new TransactionHandler([data|
-      val action = new Action(data.value as Map<String, Object>)
-      function.apply(action)
-      data.value = action.serialize()
+      val game = new Game(data.value as Map<String, Object>)
+      function.apply(game)
+      data.value = game.serialize()
     ]))
   }
   
-  def addGameListener(String gameId, Procedures.Procedure1<Game> listener) {
-    gameRef(gameId).addValueEventListener(new FunctionValueEventListener([snapshot|
-      listener.apply(new Game(snapshot.getValue() as Map<String, Object>))
-    ]))
+  def addGameChangeListener(String gameId, Procedures.Procedure1<Game> listener) {
+    if (!_gameChangeListeners.containsKey(gameId)) {
+      _gameChangeListeners.put(gameId, newArrayList())
+    }
+    _gameChangeListeners.get(gameId).add(listener)
   }
-
+  
+  def getGame(DataSnapshot snapshot) {
+    return new Game(snapshot.getValue() as Map<String, Object>)
+  }
+  
+  override onChildAdded(DataSnapshot snapshot, String prev) {
+    val game = getGame(snapshot)
+    _games.put(game.id, game)
+    if (_gameChangeListeners.containsKey(game.id)) {
+      _gameChangeListeners.get(game.id).forEach([listener| listener.apply(game)])
+    }
+  }
+  
+  override onChildChanged(DataSnapshot snapshot, String prev) {
+    val game = getGame(snapshot)
+    _games.put(game.id, game)
+    if (_gameChangeListeners.containsKey(game.id)) {
+      _gameChangeListeners.get(game.id).forEach([listener| listener.apply(game)])
+    }
+  }
+  
+  override onChildMoved(DataSnapshot snapshot, String prev) {
+  }
+  
+  override onChildRemoved(DataSnapshot snapshot) {
+    _games.remove(getGame(snapshot).id)
+  }
+  
   /**
    * Partially create a new game with no opponent specified yet, returning the game ID.
    *
@@ -84,10 +106,9 @@ class Model {
     game.id = ref.name
     game.players.add(_userId)
     game.currentPlayerNumber = X_PLAYER
-    game.currentAction = null
+    game.currentActionNumber = null
     game.lastModified = System.currentTimeMillis()
     game.gameOver = false
-    game.actionCount = 0L
 
     if (userProfile != null) {
       game.profiles.put(userProfile.get("facebookId"), userProfile)
@@ -114,28 +135,25 @@ class Model {
     if (!isLegalCommand(command)) {
       die("Illegal Command: " + command)
     }
-    val timestamp = System.currentTimeMillis()
-    if (game.currentAction != null) {
-      gameRef(game).child("lastModified").setValue(timestamp)
-      modifyAction(actionRef(game.currentAction), [action|
+    modifyGame(gameRef(game), [newGame|
+      val timestamp = System.currentTimeMillis()
+      if (game.hasCurrentAction()) {
+        newGame.lastModified = timestamp
+        val action = newGame.getCurrentAction()
         action.futureCommands.clear()
         action.commands.add(command)
-      ])
-    } else {
-      val ref = _firebase.child("actions").push()
-      val action = new Action()
-      action.id = ref.name
-      action.player = _userId
-      action.playerNumber = game.currentPlayerNumber
-      action.submitted = false
-      action.gameId = game.id
-      action.commands.add(command)
-      ref.setValue(action.serialize())
-      gameRef(game).updateChildren(m(
-        "currentAction" -> ref.name,
-        "lastModified" -> timestamp
-      ))
-    }
+      } else {
+        val action = new Action()
+        action.player = _userId
+        action.playerNumber = game.currentPlayerNumber
+        action.submitted = false
+        action.gameId = game.id
+        action.commands.add(command)
+        newGame.actions.add(action)
+        newGame.currentActionNumber = newGame.actions.size() - 1L
+        newGame.lastModified = timestamp
+      }
+    ])
   }
 
   def isLegalCommand(Command command) {
@@ -178,6 +196,9 @@ class Model {
    */
   def ensureIsCurrentPlayer(Game game) {
     if (!isCurrentPlayer(game)) die("Unauthorized user:  + userId")
+  }
+  
+  override onCancelled() {
   }
 
 }
