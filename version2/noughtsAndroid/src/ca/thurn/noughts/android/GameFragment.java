@@ -69,6 +69,6 @@ public class GameFragment extends Fragment implements CommandHandler{
 
     @Override
     public boolean isLegalCommand(Command command) {
-      return true;
+      return mModel.isLegalCommand(mGame, command);
     }
 }

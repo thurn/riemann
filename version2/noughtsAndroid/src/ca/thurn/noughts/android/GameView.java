@@ -76,8 +76,8 @@ public class GameView extends View implements OnTouchListener {
     if (y < 138 || y > 903) {
       return; // Outside of game grid, do nothing
     }
-    long column = (int) (x / 256.0);
-    long row = (int) ((y - 150) / 256.0);
+    int column = (int) (x / 256.0);
+    int row = (int) ((y - 150) / 256.0);
     Command command = new Command();
     command.setColumn(column);
     command.setRow(row);

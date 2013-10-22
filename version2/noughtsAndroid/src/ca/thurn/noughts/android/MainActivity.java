@@ -113,6 +113,7 @@ public class MainActivity extends Activity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main, menu);
+    menu.findItem(R.id.action_submit).setIcon(R.drawable.ic_submit_disabled);
     return super.onCreateOptionsMenu(menu);
   }
 
@@ -125,7 +126,7 @@ public class MainActivity extends Activity {
     }
     // Handle action buttons
     switch(item.getItemId()) {
-      case R.id.action_websearch:
+      case R.id.action_submit:
         return true;
       default:
         return super.onOptionsItemSelected(item);

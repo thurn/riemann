@@ -23,8 +23,7 @@
     </string-array>
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
-    <string name="action_websearch">Web search</string>
-    <string name="app_not_available">Sorry, there\'s no web browser available</string>
+    <string name="action_submit">Submit</string>
     <string name="new_game">New Game</string>
     <string name="invite_via_facebook">Invite via Facebook</string>
     <string name="play_vs_computer">Play vs. Computer</string>
