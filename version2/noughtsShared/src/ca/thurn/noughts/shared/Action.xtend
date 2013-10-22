@@ -3,14 +3,14 @@ package ca.thurn.noughts.shared
 import java.util.List
 import java.util.Map
 
-class Action {
+class Action extends Entity {
   @Property String player;
   
-  @Property Long playerNumber;
+  @Property Integer playerNumber;
   
   @Property String gameId;
   
-  @Property Boolean submitted;
+  Boolean _submitted;
   
   @Property final List<Command> commands;
   
@@ -23,32 +23,42 @@ class Action {
   
   new(Map<String, Object> map) {
     _player = map.get("player") as String
-    _playerNumber = map.get("playerNumber") as Long
+    _playerNumber = toInteger(map.get("playerNumber"))
     _gameId = map.get("gameId") as String
     _submitted = map.get("submitted") as Boolean
+    _commands = newArrayList()    
     if (map.containsKey("commands")) {
       val commands = map.get("commands") as List<Map<String, Object>>
-      _commands = commands.map([object | new Command(object)])
-    } else {
-      _commands = newArrayList()    
+      for (object : commands) {
+        _commands.add(new Command(object))
+      }
     }
+    _futureCommands = newArrayList()
     if (map.containsKey("futureCommands")) {
       val futureCommands = map.get("futureCommands") as List<Map<String, Object>>
-      _futureCommands = futureCommands.map([object | new Command(object)])
-    } else {
-      _futureCommands = newArrayList()
-    }  
+      for (object : futureCommands) {
+        _futureCommands.add(new Command(object))
+      }
+    }
   }
   
   def serialize() {
     return #{
-      "player" -> player,
-      "playerNumber" -> playerNumber,
-      "gameId" -> gameId,
-      "submitted" -> submitted,
-      "commands" -> commands.map([command | command.serialize()]),
-      "futureCommands" -> futureCommands.map([command | command.serialize()])
+      "player" -> _player,
+      "playerNumber" -> _playerNumber,
+      "gameId" -> _gameId,
+      "submitted" -> _submitted,
+      "commands" -> _commands.map([command | command.serialize()]),
+      "futureCommands" -> _futureCommands.map([command | command.serialize()])
     }
+  }
+  
+  def setSubmitted(Boolean submitted) {
+    _submitted = submitted
+  }
+  
+  def isSubmitted() {
+    return _submitted != null && _submitted == true
   }
   
   override toString() {

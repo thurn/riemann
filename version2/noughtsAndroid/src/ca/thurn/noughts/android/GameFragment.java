@@ -1,8 +1,10 @@
 package ca.thurn.noughts.android;
 
+import org.eclipse.xtext.xbase.lib.Procedures;
+
 import android.app.Fragment;
-import android.graphics.Canvas;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +25,7 @@ public class GameFragment extends Fragment implements CommandHandler{
     
     // Model, initialized with ARG_USER_ID:
     private Model mModel;
-    // The game, null until the onGameUpdate() callback is invoked:
+    // The game
     private Game mGame;
     // Reference to the top-level fragment_game layout:
     private GameView mGameView;
@@ -41,7 +43,14 @@ public class GameFragment extends Fragment implements CommandHandler{
         
         boolean createNewGame = getArguments().getBoolean(ARG_SHOULD_CREATE_GAME);
         if (createNewGame) {
-          onGameUpdate(mModel.newGame(null, null));
+          mGame = mModel.newGame(null, null);
+          mModel.addGameChangeListener(mGame.getId(), new Procedures.Procedure1<Game>() {
+            @Override
+            public void apply(Game game) {
+              onGameUpdate(game);
+            }
+          });
+          onGameUpdate(mGame);
         } else {
           throw new RuntimeException("wtf");
         }

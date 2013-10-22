@@ -3,7 +3,7 @@ package ca.thurn.noughts.shared
 import java.util.List
 import java.util.Map
 
-class Game {
+class Game extends Entity {
   /**
    * The game ID
    */
@@ -25,7 +25,7 @@ class Game {
    * The number of the player whose turn it is, that is, their index within
    * the players array. -1 when the game is not in progress.
    */
-   @Property Long currentPlayerNumber
+   @Property Integer currentPlayerNumber
 
    /**
     * Actions taken in this game, in the order in which they were taken.
@@ -37,7 +37,7 @@ class Game {
    * Index in actions list of action currently being constructed, null when
    * there is no current action.
    */
-   @Property Long currentActionNumber
+   @Property Integer currentActionNumber
 
   /**
    * UNIX timestamp of time when game was last modified.
@@ -87,14 +87,15 @@ class Game {
 		} else {
 			_profiles = newHashMap()
 		}
-		_currentPlayerNumber = gameMap.get("currentPlayerNumber") as Long
+		_currentPlayerNumber = toInteger(gameMap.get("currentPlayerNumber"))
+	  _actions = newArrayList()
 		if (gameMap.containsKey("actions")) {
 		  val actionList = gameMap.get("actions") as List<Map<String, Object>>
-		  _actions = actionList.map([object | new Action(object)])
-		} else {
-		  _actions = newArrayList()
+		  for (object : actionList) {
+		    _actions.add(new Action(object))
+		  }
 		}
-		_currentActionNumber = gameMap.get("currentActionNumber") as Long
+		_currentActionNumber = toInteger(gameMap.get("currentActionNumber"))
 		_lastModified = gameMap.get("lastModified") as Long
 		_requestId = gameMap.get("requestId") as String
 		if (gameMap.containsKey("victors")) {
@@ -115,7 +116,7 @@ class Game {
 	}
   
   def currentPlayerId() {
-		return players.get(_currentPlayerNumber.intValue())
+		return _players.get(_currentPlayerNumber.intValue())
 	}
 	
 	def hasCurrentAction() {
@@ -123,7 +124,7 @@ class Game {
 	}
 	
 	def getCurrentAction() {
-	  return actions.get(_currentActionNumber.intValue())
+	  return _actions.get(_currentActionNumber.intValue())
 	}
 	
 	def setGameOver(Boolean gameOver) {

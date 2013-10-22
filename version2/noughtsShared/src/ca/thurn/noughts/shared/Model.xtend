@@ -39,18 +39,28 @@ class Model implements ChildEventListener {
     return new Model(userId, firebase)
   }
 
-  public static val X_PLAYER = 0L
-  public static val O_PLAYER = 1L
+  public static val X_PLAYER = 0
+  public static val O_PLAYER = 1
 
-  def gameRef(String gameId) {
+  /**
+   * Gets a firebase reference to a game by ID.
+   */
+  def private gameRef(String gameId) {
     return _firebase.child("games").child(gameId)
   }
 
-  def gameRef(Game game) {
+  /**
+   * Gets a firebase reference to a game.
+   */
+  def private gameRef(Game game) {
     return gameRef(game.id)
   }
 
-  def modifyGame(Firebase firebase, Procedures.Procedure1<Game> function) {
+  /**
+   * Mutate a game via a transaction. The "firebase" parameter must represent a
+   * reference to an existing game (such as one returned by "gameRef").
+   */
+  def private modifyGame(Firebase firebase, Procedures.Procedure1<Game> function) {
     firebase.runTransaction(new TransactionHandler([data|
       val game = new Game(data.value as Map<String, Object>)
       function.apply(game)
@@ -58,6 +68,13 @@ class Model implements ChildEventListener {
     ]))
   }
   
+  /**
+   * Adds a listener which will be notified every time a specified gameId is
+   * modified.
+   * 
+   * @param gameId The ID of the game to listen for changes to.
+   * @param listener The function to call when changes happen.
+   */
   def addGameChangeListener(String gameId, Procedures.Procedure1<Game> listener) {
     if (!_gameChangeListeners.containsKey(gameId)) {
       _gameChangeListeners.put(gameId, newArrayList())
@@ -92,13 +109,17 @@ class Model implements ChildEventListener {
     _games.remove(getGame(snapshot).id)
   }
   
+  override onCancelled() {
+  }
+  
   /**
-   * Partially create a new game with no opponent specified yet, returning the game ID.
+   * Partially create a new game with no opponent specified yet, returning the
+   * game ID.
    *
    * @param userProfile Optionally, the Facebook profile of the current user.
    * @param opponentProfile Optionally, the Facebook profile of the opponent
    *     for this game.
-   * @return The newly created game
+   * @return The newly created game.
    */
   def newGame(Map<String, String> userProfile, Map<String, String> opponentProfile) {
     val ref = _firebase.child("games").push()
@@ -123,16 +144,16 @@ class Model implements ChildEventListener {
   }
   
   /**
-   * Adds the provided command to the current action's command list. If there is
-   * no current action, creates one. Any commands beyond the current location in
-   * the undo history are deleted.
+   * Adds the provided command to the current action's command list. If there
+   * is no current action, creates one. Any commands beyond the current
+   * location in the undo history are deleted.
    *
    * @param game The current game.
    * @param command The command to add.
    */
   def addCommand(Game game, Command command) {
     ensureIsCurrentPlayer(game)
-    if (!isLegalCommand(command)) {
+    if (!isLegalCommand(game, command)) {
       die("Illegal Command: " + command)
     }
     modifyGame(gameRef(game), [newGame|
@@ -141,6 +162,7 @@ class Model implements ChildEventListener {
         newGame.lastModified = timestamp
         val action = newGame.getCurrentAction()
         action.futureCommands.clear()
+        action.gameId = "bar"
         action.commands.add(command)
       } else {
         val action = new Action()
@@ -150,25 +172,67 @@ class Model implements ChildEventListener {
         action.gameId = game.id
         action.commands.add(command)
         newGame.actions.add(action)
-        newGame.currentActionNumber = newGame.actions.size() - 1L
+        newGame.currentActionNumber = newGame.actions.size() - 1
         newGame.lastModified = timestamp
       }
     ])
   }
 
-  def isLegalCommand(Command command) {
-    return true;
+   /**
+    * Checks if a command could legally be added to a game.
+    * 
+    * @param game Game the command will be added to.
+    * @param command The command to check.
+    * @return true if this command could be added the current action of this
+    *     game. 
+    */
+  def isLegalCommand(Game game, Command command) {
+    if (!isCurrentPlayer(game)) {
+      return false;
+    }
+    if (game.hasCurrentAction() && game.getCurrentAction().commands.size() != 0) {
+      return false;
+    }
+    return isSquareAvailable(game, command.column, command.row);
+  }
+  
+  /**
+   * Checks if the square at (column, row) has been already taken.
+   */
+  def private isSquareAvailable(Game game, int column, int row) {
+    if (column < 0 || row < 0 || column > 2 || row > 2) {
+      return false;
+    }
+    return !makeActionTable(game).get(column.intValue).containsKey(row.intValue)
   }
 
+  /** 
+   * Returns a 2-dimensional map of *submitted* game actions spatially indexed
+   * by [column][row], so e.g. table[0][2] is the bottom-left square's action. 
+   */
+  def private makeActionTable(Game game) {
+    val result = newHashMap(0 -> newHashMap(), 1 -> newHashMap(), 2 -> newHashMap())
+    for (action : game.actions) {
+      if (action.submitted) {
+        for (command : action.commands) {
+          val column = command.column.intValue()
+          result.get(column).put(command.row.intValue(), action)
+        }
+      }
+    }
+    return result
+  }
 
   def die(String message) {
     throw new NoughtsException(message)
   }
 
   /**
-     * Returns true if the current user is the current player in the provided
-     * game.
-     */
+   * Returns true if the current user is the current player in the provided
+   * game.
+   * 
+   * @param game The game
+   */
   def isCurrentPlayer(Game game) {
     return if (game.gameOver) {
       false
@@ -179,6 +243,8 @@ class Model implements ChildEventListener {
 
   /**
    * Returns true if the current user is a player in the provided game.
+   * 
+   * @param game The game
    */
   def isPlayer(Game game) {
     return game.players.contains(_userId)
@@ -186,6 +252,8 @@ class Model implements ChildEventListener {
 
   /**
    * Ensures the current user is a player in the provided game.
+   * 
+   * @param game The game
    */
   def ensureIsPlayer(Game game) {
     if (!isPlayer(game)) die("Unauthorized user: " + _userId)
@@ -193,12 +261,11 @@ class Model implements ChildEventListener {
 
   /**
    * Ensures the current user is the current player in the provided game.
+   * 
+   * @param game The game
    */
   def ensureIsCurrentPlayer(Game game) {
     if (!isCurrentPlayer(game)) die("Unauthorized user:  + userId")
-  }
-  
-  override onCancelled() {
   }
 
 }

@@ -46,23 +46,21 @@ class ModelTest extends SharedGWTTestCase {
   def makeTestGame() {
     val game = new Game()
     game.players.add(_userId)
-    game.currentPlayerNumber = 0L
+    game.currentPlayerNumber = 0
     return game    
   }
   
-  def withTestData(Game game, Procedures.Procedure0 testFn) {
+  def void withTestData(Game game, Procedures.Procedure0 testFn) {
     val gPush = _firebase.child("games").push()
     _testGameId = gPush.name
     game.id = _testGameId
     val gamesRan = new AtomicBoolean(false)
     _firebase.child("games").addChildEventListener(new ChildAddedListener([s1, p1|
       if (gamesRan.getAndSet(true) == false) {
-        println("snp " + s1.getValue())
         assertEquals(game, new Game(s1.getValue() as Map<String,Object>))
         testFn.apply()
       }
     ]))
-    println("game " + game.serialize())
     gPush.setValue(game.serialize())
   }
 
@@ -85,14 +83,15 @@ class ModelTest extends SharedGWTTestCase {
     endAsyncTestBlock()
   }
   
-  def testAddCommandExistingAction() {
+  def void testAddCommandExistingAction() {
     beginAsyncTestBlock()
     val game = new Game()
     game.players.add(_userId)
-    game.currentPlayerNumber = 0L
+    game.currentPlayerNumber = 0
     val action = new Action()
+    action.gameId = "foo"
     game.actions.add(action)
-    game.currentActionNumber = 0L
+    game.currentActionNumber = 0
     assertEquals(action, game.getCurrentAction())
     val command = new Command(m("column" -> 2L, "row" -> 2L))
     withTestData(game, [|
@@ -108,13 +107,13 @@ class ModelTest extends SharedGWTTestCase {
     endAsyncTestBlock()
   }
 
-  def testAddCommandNotCurrentPlayer() {
+  def void testAddCommandNotCurrentPlayer() {
     assertDies([| _model.addCommand(new Game(
         m("players" -> #["foo", _userId], "currentPlayerNumber" -> 0L)
         ), new Command())])    
   }
 
-  def testAddCommandNewAction() {
+  def void testAddCommandNewAction() {
     beginAsyncTestBlock()
 
     val game = new Game(m(
@@ -137,6 +136,43 @@ class ModelTest extends SharedGWTTestCase {
       _model.addCommand(game, command)
     ])
     endAsyncTestBlock()
+  }
+  
+  def void testGameChangeListener() {
+    beginAsyncTestBlock()
+    withTestData(new Game(), [|
+      _model.addGameChangeListener(_testGameId, [changedGame|
+        assertEquals(123L, changedGame.lastModified)
+        finished()
+      ])
+      _firebase.child("games").child(_testGameId).updateChildren(
+        m("lastModified" -> 123L)
+      )
+    ])
+    endAsyncTestBlock()
+  }
+  
+  def void testIsLegalCommand() {
+    val command = new Command(m("row" -> 1L, "column" -> 1L))
+    assertFalse(_model.isLegalCommand(new Game(m("gameOver" -> true)), command))
+    val g1 = new Game(m(
+      "currentPlayerNumber" -> 0L,
+      "players" -> #[_userId],
+      "actions" -> #[m(
+        "commands" -> #[m(
+          "row" -> 1L,
+          "column" -> 2L
+        )]
+      )],
+      "currentActionNumber" -> 0L
+    ))
+    assertFalse(_model.isLegalCommand(g1, command))
+    g1.currentActionNumber = null
+    g1.actions.get(0).submitted = true
+    assertTrue(_model.isLegalCommand(g1, command))
+    assertFalse(_model.isLegalCommand(g1, new Command(m("row" -> 3L, "column" -> 1L))))
+    g1.actions.get(0).commands.get(0).column = 1;
+    assertFalse(_model.isLegalCommand(g1, command))
   }
 
   def void testIsCurrentPlayer() {

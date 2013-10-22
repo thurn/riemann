@@ -2,20 +2,16 @@ package ca.thurn.noughts.shared
 
 import java.util.Map
 
-class Command {
-  @Property Long column
-  @Property Long row
+class Command extends Entity {
+  @Property Integer column
+  @Property Integer row
   
   new() {
   }
   
   new(Map<String, Object> map) {
-    if (map.containsKey("column")) {
-      _column = map.get("column") as Long
-    }
-    if (map.containsKey("row")) {
-      _row = map.get("row") as Long
-    }
+    _column = toInteger(map.get("column"))
+    _row = toInteger(map.get("row"))
   }
   
   def serialize() {
