@@ -61,6 +61,11 @@ class Game extends Entity {
    * True if this game has ended.
    */
    Boolean _gameOver
+   
+   /**
+    * True if this game is in local multiplayer mode
+    */
+   Boolean _localMultiplayer
 
   /**
    * An array of player IDs who have resigned the game.
@@ -104,6 +109,7 @@ class Game extends Entity {
 			_victors = newArrayList()
 		}
 		_gameOver = gameMap.get("gameOver") as Boolean
+		_localMultiplayer = gameMap.get("localMultiplayer") as Boolean
 		if (gameMap.containsKey("resignedPlayers")) {
 			_resignedPlayers = gameMap.get("resignedPlayers") as List<String>
 		} else {
@@ -115,8 +121,8 @@ class Game extends Entity {
 	  return new Game(gameMap)
 	}
   
-  def currentPlayerId() {
-		return _players.get(_currentPlayerNumber.intValue())
+  def getCurrentPlayerId() {
+		return _players.get(_currentPlayerNumber)
 	}
 	
 	def hasCurrentAction() {
@@ -124,7 +130,7 @@ class Game extends Entity {
 	}
 	
 	def getCurrentAction() {
-	  return _actions.get(_currentActionNumber.intValue())
+	  return _actions.get(_currentActionNumber)
 	}
 	
 	def setGameOver(Boolean gameOver) {
@@ -133,6 +139,14 @@ class Game extends Entity {
 	
 	def isGameOver() {
 		return _gameOver != null && _gameOver == true
+	}
+	
+	def setLocalMultiplayer(Boolean localMultiplayer) {
+	  _localMultiplayer = localMultiplayer
+	}
+	
+	def isLocalMultiplayer() {
+	  return _localMultiplayer != null && _localMultiplayer == true
 	}
 
 	def serialize() {
@@ -147,6 +161,7 @@ class Game extends Entity {
 			"requestId" -> _requestId,
 			"victors" -> _victors,
 			"gameOver" -> _gameOver,
+			"localMultiplayer" -> _localMultiplayer,
 			"resignedPlayers" -> _resignedPlayers
 		}
 	}

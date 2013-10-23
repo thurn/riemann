@@ -7,14 +7,14 @@ import com.firebase.client.DataSnapshot
 import java.util.List
 
 class Model implements ChildEventListener {
-  val String _userId
+  String _userId
   val Firebase _firebase
   @Property val Map<String, Game> games
   @Property val Callbacks<Game> gameCallbacks
   val Map<String, List<Procedures.Procedure1<Game>>> _gameChangeListeners
 
   private new(String userId) {
-    this(userId, new Firebase("http://www.example.com"))
+    this(userId, new Firebase("https://gwt.firebaseio.com/"))
   }
 
   private new(String userId, Firebase firebase) {
@@ -41,6 +41,7 @@ class Model implements ChildEventListener {
 
   public static val X_PLAYER = 0
   public static val O_PLAYER = 1
+  public static String LOCAL_MULTIPLAYER_OPPONENT_ID = "LOCAL_MULTIPLAYER_OPPONENT_ID"
 
   /**
    * Gets a firebase reference to a game by ID.
@@ -66,6 +67,15 @@ class Model implements ChildEventListener {
       function.apply(game)
       data.value = game.serialize()
     ]))
+  }
+  
+  /**
+   * Updates the current user for this model.
+   * 
+   * @param userId New user id.
+   */
+  def setUserId(String userId) {
+    _userId = userId
   }
   
   /**
@@ -116,27 +126,37 @@ class Model implements ChildEventListener {
    * Partially create a new game with no opponent specified yet, returning the
    * game ID.
    *
-   * @param userProfile Optionally, the Facebook profile of the current user.
-   * @param opponentProfile Optionally, the Facebook profile of the opponent
+   * @param localMultiplayer Optionally, sets whether the game is a local
+   *     multiplayer game.
+   * @param userProfile Optionally, the profile of the current user.
+   * @param opponentProfile Optionally, the profile of the opponent
    *     for this game.
    * @return The newly created game.
    */
-  def newGame(Map<String, String> userProfile, Map<String, String> opponentProfile) {
+  def newGame(boolean localMultiplayer, Map<String, String> userProfile,
+      Map<String, String> opponentProfile) {
     val ref = _firebase.child("games").push()
     val game = new Game()
     game.id = ref.name
     game.players.add(_userId)
+    game.localMultiplayer = localMultiplayer 
+    if (localMultiplayer) {
+      game.players.add(LOCAL_MULTIPLAYER_OPPONENT_ID)
+    }
     game.currentPlayerNumber = X_PLAYER
     game.currentActionNumber = null
     game.lastModified = System.currentTimeMillis()
     game.gameOver = false
 
     if (userProfile != null) {
-      game.profiles.put(userProfile.get("facebookId"), userProfile)
+      if (userProfile.get("id") != _userId) {
+        die("Expected user ID in profile to match model user ID")
+      }
+      game.profiles.put(userProfile.get("id"), userProfile)
     }
     if (opponentProfile != null) {
-      game.profiles.put(opponentProfile.get("facebookId"), opponentProfile)
-      game.players.add(opponentProfile.get("facebookId"))
+      game.profiles.put(opponentProfile.get("id"), opponentProfile)
+      game.players.add(opponentProfile.get("id"))
     }
 
     ref.setValue(game.serialize())
@@ -156,6 +176,7 @@ class Model implements ChildEventListener {
     if (!couldSubmitCommand(game, command)) {
       die("Illegal Command: " + command)
     }
+    val userId = _userId
     modifyGame(gameRef(game), [newGame|
       val timestamp = System.currentTimeMillis()
       if (game.hasCurrentAction()) {
@@ -166,7 +187,7 @@ class Model implements ChildEventListener {
         action.commands.add(command)
       } else {
         val action = new Action()
-        action.player = _userId
+        action.player = userId
         action.playerNumber = game.currentPlayerNumber
         action.submitted = false
         action.gameId = game.id
@@ -298,6 +319,10 @@ class Model implements ChildEventListener {
       if (victors == null) {
         newGame.currentPlayerNumber = newPlayerNumber
         newGame.currentActionNumber = null
+        if (newGame.localMultiplayer) {
+          // Update model with new player number in local multiplayer games
+          _userId = newGame.currentPlayerId
+        }
       } else {
         // Game over!
         newGame.currentPlayerNumber = null
@@ -342,6 +367,30 @@ class Model implements ChildEventListener {
     // Game is not over.
     return null
   }
+  
+  def undoCommand(Game game) {
+    ensureIsCurrentPlayer(game)
+    if (game.currentAction.commands.size() == 0) {
+      die("No previous command to undo")
+    }
+    modifyGame(gameRef(game), [newGame|
+      val action = newGame.currentAction
+      val command = action.commands.remove(action.commands.size() - 1)
+      action.futureCommands.add(command)
+    ])
+  }
+  
+  def redoCommand(Game game) {
+    ensureIsCurrentPlayer(game)
+    if (game.currentAction.futureCommands.size() == 0) {
+      die("No previous next command to redo")
+    }
+    modifyGame(gameRef(game), [newGame|
+      val action = newGame.currentAction
+      val command = action.futureCommands.remove(action.futureCommands.size() - 1)
+      action.commands.add(command)
+    ])
+  }
 
   def die(String message) {
     throw new NoughtsException(message)
@@ -357,7 +406,7 @@ class Model implements ChildEventListener {
     return if (game.gameOver) {
       false
       } else {
-        game.currentPlayerId() == _userId
+        game.getCurrentPlayerId() == _userId
       }
   }
 

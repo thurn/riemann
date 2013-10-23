@@ -67,13 +67,13 @@ class ModelTest extends SharedGWTTestCase {
   def newGameWithCurrentAction() {
     return new Game(m(
       "currentPlayerNumber" -> 0,
-      "players" -> #[_userId],
-      "actions" -> #[m(
-        "commands" -> #[m(
-          "row" -> 1,
-          "column" -> 2
-        )]
-      )],
+      "players" -> newArrayList(_userId),
+      "actions" -> newArrayList(m(
+        "commands" -> newArrayList(m(
+          "column" -> 2,
+          "row" -> 1
+        ))
+      )),
       "currentActionNumber" -> 0
     ))    
   }
@@ -84,14 +84,16 @@ class ModelTest extends SharedGWTTestCase {
       assertTrue(g.players.contains(_userId))
       assertEquals(Model.X_PLAYER, g.currentPlayerNumber)
       assertTrue(g.lastModified > 0L)
+      assertTrue(g.localMultiplayer)
       assertFalse(g.gameOver)
       assertEquals(0, g.actions.size())
       finished()
     ])
-    val g = _model.newGame(null, null)
+    val g = _model.newGame(true, null, null)
     assertTrue(g.players.contains(_userId))
     assertEquals(Model.X_PLAYER, g.currentPlayerNumber)
     assertTrue(g.lastModified > 0L)
+    assertTrue(g.localMultiplayer)
     assertFalse(g.gameOver)
     assertEquals(0, g.actions.size())
     endAsyncTestBlock()
@@ -275,6 +277,84 @@ class ModelTest extends SharedGWTTestCase {
         finished()
       ])
       _model.submitCurrentAction(game)
+    ])
+    endAsyncTestBlock()
+  }
+  
+  def void testSubmitCurrentActionLocalMultiplayer() {
+    beginAsyncTestBlock()
+    val game = newGameWithCurrentAction()
+    game.localMultiplayer = true
+    game.players.add(Model.LOCAL_MULTIPLAYER_OPPONENT_ID)
+    withTestData(game, [|
+      _model.addGameChangeListener(_testGameId, [newGame|
+        assertEquals(Model.LOCAL_MULTIPLAYER_OPPONENT_ID, newGame.currentPlayerId)
+        finished()
+      ])
+      _model.submitCurrentAction(game)
+    ])
+    endAsyncTestBlock()
+  }
+  
+  def void testSubmitCurrentActionGameOver() {
+    beginAsyncTestBlock()
+    val game = new Game()
+    game.players.add(_userId)
+    game.players.add("o")
+    game.actions.clear()
+    game.actions.addAll(#[
+      act(_userId, 0, 2),
+      act("o", 1, 1),
+      act(_userId, 1, 2),
+      act("o", 0, 1)
+    ])
+    val action = new Action()
+    action.commands.add(new Command(m("column" -> 2, "row" -> 2)))
+    action.player = _userId
+    game.actions.add(action)
+    game.currentActionNumber = 4
+    game.currentPlayerNumber = 0
+    withTestData(game, [|
+      _model.addGameChangeListener(_testGameId, [newGame|
+        assertNull(newGame.currentPlayerNumber)
+        assertNull(newGame.currentActionNumber)
+        assertDeepEquals(#[_userId], newGame.victors)
+        assertTrue(newGame.gameOver)
+        finished()
+      ])
+      _model.submitCurrentAction(game)
+    ])
+    endAsyncTestBlock()
+  }
+
+  def void testUndo() {
+    beginAsyncTestBlock()
+    val game = newGameWithCurrentAction()
+    withTestData(game, [|
+      _model.addGameChangeListener(_testGameId, [newGame|
+        assertDeepEquals(#[], newGame.currentAction.commands)
+        assertDeepEquals(#[new Command(m("column" -> 2, "row" -> 1))],
+            newGame.currentAction.futureCommands)
+        finished()
+      ])
+      _model.undoCommand(game)
+    ])
+    endAsyncTestBlock()
+  }
+  
+  def void testRedo() {
+    beginAsyncTestBlock()
+    val game = newGameWithCurrentAction()
+    game.currentAction.commands.clear()
+    val command = new Command(m("column" -> 0, "row" -> 0))
+    game.currentAction.futureCommands.add(command)
+    withTestData(game, [|
+      _model.addGameChangeListener(_testGameId, [newGame|
+        assertDeepEquals(#[command], newGame.currentAction.commands)
+        assertDeepEquals(#[], newGame.currentAction.futureCommands)
+        finished()
+      ])
+      _model.redoCommand(game)
     ])
     endAsyncTestBlock()
   }

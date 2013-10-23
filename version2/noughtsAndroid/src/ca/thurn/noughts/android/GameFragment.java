@@ -1,8 +1,8 @@
 package ca.thurn.noughts.android;
 
-import org.eclipse.xtext.xbase.lib.Procedures;
+import java.util.logging.LogManager;
 
-import com.example.android.cheatsheet.CheatSheet;
+import org.eclipse.xtext.xbase.lib.Procedures;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -12,12 +12,14 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import ca.thurn.noughts.shared.Command;
 import ca.thurn.noughts.shared.Game;
 import ca.thurn.noughts.shared.Model;
+
+import com.example.android.cheatsheet.CheatSheet;
 
 /**
  * Fragment that appears in the "content_frame", shows a planet
@@ -25,6 +27,7 @@ import ca.thurn.noughts.shared.Model;
 public class GameFragment extends Fragment implements CommandHandler{
     public static final String ARG_GAME_ID = "game_id";
     public static final String ARG_USER_ID = "user_id";
+    public static final String ARG_LOCAL_MULTIPLAYER = "local_multiplayer";
     // If true, create an new game instead of displaying the game in ARG_GAME_ID: 
     public static final String ARG_SHOULD_CREATE_GAME = "should_create_game";
     public static final String ARG_USER_PROFILE = "user_profile";
@@ -46,12 +49,14 @@ public class GameFragment extends Fragment implements CommandHandler{
         mGameView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         mGameView.setCommandHandler(this);
         String userId = getArguments().getString(ARG_USER_ID);
+        boolean localMultiplayer = getArguments().getBoolean(ARG_LOCAL_MULTIPLAYER);
         mModel = Model.newFromUserId(userId);
         setHasOptionsMenu(true);
+        getActivity().setTitle(R.string.app_name);
         
         boolean createNewGame = getArguments().getBoolean(ARG_SHOULD_CREATE_GAME);
         if (createNewGame) {
-          mGame = mModel.newGame(null, null);
+          mGame = mModel.newGame(localMultiplayer, null, null);
           mModel.addGameChangeListener(mGame.getId(), new Procedures.Procedure1<Game>() {
             @Override
             public void apply(Game game) {
@@ -77,16 +82,60 @@ public class GameFragment extends Fragment implements CommandHandler{
       submitView.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          Log.e("dthurn", ">>>>> onClick submit");
+          mModel.submitCurrentAction(mGame);
         }
       });
       CheatSheet.setup(submitView, R.string.action_submit);
       super.onCreateOptionsMenu(menu, inflater);
     }
-
+    
+    @Override
+    public void onPrepareOptionsMenu (Menu menu) {
+      MenuItem submitItem = menu.findItem(R.id.action_submit);
+      boolean canSubmit = mModel.canSubmit(mGame);
+      submitItem.setEnabled(canSubmit);
+      TextView submitView = (TextView)submitItem.getActionView();
+      submitView.setEnabled(canSubmit);
+      if (canSubmit) {
+        submitView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_submit, 0, 0, 0);
+      } else {
+        submitView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_submit_disabled, 0, 0, 0);
+      }
+      boolean canUndo = mModel.canUndo(mGame);
+      menu.findItem(R.id.action_undo).setEnabled(canUndo);
+      if (canUndo) {
+        menu.findItem(R.id.action_undo).setIcon(R.drawable.ic_undo);
+      } else {
+        menu.findItem(R.id.action_undo).setIcon(R.drawable.ic_undo_disabled);
+      }
+      boolean canRedo = mModel.canRedo(mGame);
+      menu.findItem(R.id.action_redo).setEnabled(canRedo);
+      if (canRedo) {
+        menu.findItem(R.id.action_redo).setIcon(R.drawable.ic_redo);
+      } else {
+        menu.findItem(R.id.action_redo).setIcon(R.drawable.ic_redo_disabled);
+      }
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+      switch (item.getItemId()) {
+        case R.id.action_undo:
+          mModel.undoCommand(mGame);
+          return true;
+        case R.id.action_redo:
+          mModel.redoCommand(mGame);
+          return true;
+        default:
+          return super.onOptionsItemSelected(item);
+      }
+    }
+    
     public void onGameUpdate(Game game) {
+      Log.e("dthurn", ">>>>> onGameUpdate " + game);
       mGame = game;
       mGameView.updateGame(game);
+      getActivity().invalidateOptionsMenu();
     }
 
     @Override
