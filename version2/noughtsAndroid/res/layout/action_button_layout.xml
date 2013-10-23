@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+   android:layout_width="wrap_content"
+   android:layout_height="match_parent"
+   android:gravity="center"
+   style="@style/Widget.Sherlock.ActionButton"
+   android:background="@drawable/abs__item_background_holo_light"
+   android:clickable="true"
+   android:textSize="12sp"
+   android:textStyle="bold"
+   android:textColor="?attr/actionMenuTextColor"
+   android:textAllCaps="@bool/abs__config_actionMenuItemAllCaps" />

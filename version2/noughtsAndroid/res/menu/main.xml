@@ -1,22 +1,25 @@
-<!--
-  Copyright 2013 The Android Open Source Project
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
+    <item
+        android:id="@+id/action_submit"
+        android:actionLayout="@layout/action_button_layout"
+        android:showAsAction="always"
+        android:title="@string/action_submit"/>
+    <item
+        android:id="@+id/action_undo"
+        android:icon="@drawable/ic_undo_disabled"
+        android:showAsAction="ifRoom|withText"
+        android:enabled="false"
+        android:title="@string/action_undo"/>
+    <item
+        android:id="@+id/action_redo"
+        android:icon="@drawable/ic_redo_disabled"
+        android:showAsAction="ifRoom|withText"
+        android:enabled="false"
+        android:title="@string/action_redo"/>
+    <item
+        android:id="@+id/action_new_game"
+        android:showAsAction="never"
+        android:title="@string/new_game"/>
 
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-  -->
-
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/action_submit"
-          android:icon="@drawable/ic_submit"
-          android:title="@string/action_submit"
-          android:showAsAction="ifRoom|withText" />
 </menu>

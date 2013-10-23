@@ -2,12 +2,19 @@ package ca.thurn.noughts.android;
 
 import org.eclipse.xtext.xbase.lib.Procedures;
 
+import com.example.android.cheatsheet.CheatSheet;
+
 import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
+import android.widget.TextView;
 import ca.thurn.noughts.shared.Command;
 import ca.thurn.noughts.shared.Game;
 import ca.thurn.noughts.shared.Model;
@@ -40,6 +47,7 @@ public class GameFragment extends Fragment implements CommandHandler{
         mGameView.setCommandHandler(this);
         String userId = getArguments().getString(ARG_USER_ID);
         mModel = Model.newFromUserId(userId);
+        setHasOptionsMenu(true);
         
         boolean createNewGame = getArguments().getBoolean(ARG_SHOULD_CREATE_GAME);
         if (createNewGame) {
@@ -57,6 +65,25 @@ public class GameFragment extends Fragment implements CommandHandler{
         return mGameView;
     }
     
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+      inflater.inflate(R.menu.main, menu);
+      MenuItem submitItem = menu.findItem(R.id.action_submit);
+      submitItem.setEnabled(false);
+      TextView submitView = (TextView)submitItem.getActionView();
+      submitView.setEnabled(false);
+      submitView.setText(R.string.action_submit);
+      submitView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_submit_disabled, 0, 0, 0);
+      submitView.setOnClickListener(new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          Log.e("dthurn", ">>>>> onClick submit");
+        }
+      });
+      CheatSheet.setup(submitView, R.string.action_submit);
+      super.onCreateOptionsMenu(menu, inflater);
+    }
+
     public void onGameUpdate(Game game) {
       mGame = game;
       mGameView.updateGame(game);
@@ -69,6 +96,6 @@ public class GameFragment extends Fragment implements CommandHandler{
 
     @Override
     public boolean isLegalCommand(Command command) {
-      return mModel.isLegalCommand(mGame, command);
+      return mModel.couldSubmitCommand(mGame, command);
     }
 }

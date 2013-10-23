@@ -153,7 +153,7 @@ class Model implements ChildEventListener {
    */
   def addCommand(Game game, Command command) {
     ensureIsCurrentPlayer(game)
-    if (!isLegalCommand(game, command)) {
+    if (!couldSubmitCommand(game, command)) {
       die("Illegal Command: " + command)
     }
     modifyGame(gameRef(game), [newGame|
@@ -179,27 +179,29 @@ class Model implements ChildEventListener {
   }
 
    /**
-    * Checks if a command could legally be added to a game.
+    * Checks if a command could legally be played in a game.
     * 
     * @param game Game the command will be added to.
     * @param command The command to check.
     * @return true if this command could be added the current action of this
     *     game. 
     */
-  def isLegalCommand(Game game, Command command) {
+  def couldSubmitCommand(Game game, Command command) {
     if (!isCurrentPlayer(game)) {
       return false;
     }
     if (game.hasCurrentAction() && game.getCurrentAction().commands.size() != 0) {
       return false;
     }
-    return isSquareAvailable(game, command.column, command.row);
+    return isLegalCommand(game, command);
   }
   
   /**
    * Checks if the square at (column, row) has been already taken.
    */
-  def private isSquareAvailable(Game game, int column, int row) {
+  def private isLegalCommand(Game game, Command command) {
+    val column = command.column
+    val row = command.row 
     if (column < 0 || row < 0 || column > 2 || row > 2) {
       return false;
     }
@@ -221,6 +223,124 @@ class Model implements ChildEventListener {
       }
     }
     return result
+  }
+
+  /**
+   * Checks if an undo action is currently possible.
+   * 
+   * @param game The game to check
+   * @return True if a command has been added to the current action of "game"
+   *     which can be undone.
+   */
+  def canUndo(Game game) {
+    if (game.hasCurrentAction()) {
+      return game.getCurrentAction().commands.size() > 0
+    } else {
+      return false;
+    }
+  }
+  
+  /**
+   * Checks if a redo action is currently possible.
+   * 
+   * @param game The game to check.
+   * @return True if a command has been added to the "futureCommands" of the
+   *     current action of "game" and thus can be redone.
+   */
+  def canRedo(Game game) {
+    if (game.hasCurrentAction()) {
+      return game.getCurrentAction().futureCommands.size() > 0
+    } else {
+      return false;
+    }
+  }
+  
+  /**
+   * Checks if the current action can be submitted.
+   * 
+   * @param game The game to check
+   * @return True if the current action of "game" is a legal one which could be
+   *     submitted. 
+   */
+  def canSubmit(Game game) {
+    if (!game.hasCurrentAction()) {
+      return false
+    }
+    val action = game.getCurrentAction()
+    if (action.commands.size() == 0) {
+      return false;
+    }
+    for (command : action.commands) {
+      if (!isLegalCommand(game, command)) {
+        return false;
+      } 
+    }
+    return true;    
+  }
+
+  /**
+  * Submits the provided game's current action, if it is a legal one. If this
+  * ends the game: populates the "victors" array and sets the "gameOver"
+  * bit. Otherwise, updates the current player.
+  * 
+  * @param game The game to submit.
+  */
+  def submitCurrentAction(Game game) {
+    ensureIsCurrentPlayer(game)
+    if (!canSubmit(game)) {
+      die("Illegal action!")
+    }
+    val isXPlayer = game.currentPlayerNumber == X_PLAYER
+    val newPlayerNumber = if (isXPlayer) O_PLAYER else X_PLAYER
+    modifyGame(gameRef(game), [newGame|
+      newGame.getCurrentAction().submitted = true
+      val victors = computeVictors(newGame)
+      if (victors == null) {
+        newGame.currentPlayerNumber = newPlayerNumber
+        newGame.currentActionNumber = null
+      } else {
+        // Game over!
+        newGame.currentPlayerNumber = null
+        newGame.currentActionNumber = null
+        newGame.victors.clear()
+        newGame.victors.addAll(victors)
+        newGame.gameOver = true
+      }
+    ])
+  }
+  
+  /**
+   * Builds the "victors" array for the game. If the game is over, a list will be
+   * returned containing the victorious or drawing players (which may be empty to
+   * indicate that "nobody wins"). Otherwise, null is returned.
+   * 
+   * @param game The game to find the victors for
+   * @return A list of victors or null if the game is not over.
+   */
+  def computeVictors(Game game) {
+    // Check for win
+    val actionTable = makeActionTable(game)
+    // All possible winning lines in [column, row] format
+    val lines =  #[ #[#[0,0], #[1,0], #[2,0]], #[#[0,1], #[1,1], #[2,1]],
+      #[#[0,2], #[1,2], #[2,2]], #[#[0,0], #[0,1], #[0,2]], #[#[1,0], #[1,1], #[1,2]],
+      #[#[2,0], #[2,1], #[2,2]], #[#[0,0], #[1,1], #[2,2]], #[#[2,0], #[1,1], #[0,2]] ]
+    for (line : lines) {
+      val action1 = actionTable.get(line.get(0).get(0))?.get(line.get(0).get(1))
+      val action2 = actionTable.get(line.get(1).get(0))?.get(line.get(1).get(1))
+      val action3 = actionTable.get(line.get(2).get(0))?.get(line.get(2).get(1))
+      if (action1 != null && action2 != null && action3 != null &&
+          action1.player == action2.player && action2.player == action3.player) {
+        return #[action1.player]
+      }
+    }
+    
+    // Check for draw
+    if (game.actions.filter([action | action.submitted]).size() == 9) {
+      return game.players
+    }
+    
+    // Game is not over.
+    return null
   }
 
   def die(String message) {

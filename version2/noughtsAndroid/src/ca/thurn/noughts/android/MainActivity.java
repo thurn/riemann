@@ -23,15 +23,19 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.example.android.cheatsheet.CheatSheet;
 
 /**
  * This example illustrates a common usage of the DrawerLayout widget
@@ -78,10 +82,6 @@ public class MainActivity extends Activity {
     // set a custom shadow that overlays the main content when the drawer opens
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.START);
 
-    TextView textView = (TextView)getLayoutInflater().inflate(
-        R.layout.new_game_item, mDrawerList, false);
-    mDrawerList.addHeaderView(textView);
-
     // set up the drawer's list view with items and click listener
     mDrawerList.setAdapter(new ArrayAdapter<String>(this,
         R.layout.drawer_list_item, mGameNames));
@@ -110,26 +110,13 @@ public class MainActivity extends Activity {
   }
 
   @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.main, menu);
-    menu.findItem(R.id.action_submit).setIcon(R.drawable.ic_submit_disabled);
-    return super.onCreateOptionsMenu(menu);
-  }
-
-  @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // The action bar home/up action should open or close the drawer.
     // ActionBarDrawerToggle will take care of this.
     if (mDrawerToggle.onOptionsItemSelected(item)) {
       return true;
-    }
-    // Handle action buttons
-    switch(item.getItemId()) {
-      case R.id.action_submit:
-        return true;
-      default:
-        return super.onOptionsItemSelected(item);
+    } else {
+      return super.onOptionsItemSelected(item);
     }
   }
 
@@ -137,11 +124,6 @@ public class MainActivity extends Activity {
   private class DrawerItemClickListener implements ListView.OnItemClickListener {
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-      if (view.getId() == R.id.new_game_item) {
-        MainActivity.switchToFragment(MainActivity.this, new NewGameMenuFragment(), true);
-        mDrawerList.setItemChecked(position, true);
-        mDrawerLayout.closeDrawer(mDrawerList);
-      }
     }
   }
 
