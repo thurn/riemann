@@ -18,7 +18,7 @@ public class NewGamePromoFragment extends Fragment {
       newGameButton.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          MainActivity.switchToFragment(getActivity(), new NewGameMenuFragment(), true);          
+          ((MainActivity)getActivity()).switchToFragment(new NewGameMenuFragment(), true);  
         }
       });
       return view;

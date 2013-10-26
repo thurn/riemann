@@ -1,7 +1,5 @@
 package ca.thurn.noughts.android;
 
-import java.util.logging.LogManager;
-
 import org.eclipse.xtext.xbase.lib.Procedures;
 
 import android.app.Fragment;
@@ -26,7 +24,6 @@ import com.example.android.cheatsheet.CheatSheet;
  */
 public class GameFragment extends Fragment implements CommandHandler{
     public static final String ARG_GAME_ID = "game_id";
-    public static final String ARG_USER_ID = "user_id";
     public static final String ARG_LOCAL_MULTIPLAYER = "local_multiplayer";
     // If true, create an new game instead of displaying the game in ARG_GAME_ID: 
     public static final String ARG_SHOULD_CREATE_GAME = "should_create_game";
@@ -48,9 +45,8 @@ public class GameFragment extends Fragment implements CommandHandler{
         mGameView = (GameView)inflater.inflate(R.layout.fragment_game, container, false);
         mGameView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         mGameView.setCommandHandler(this);
-        String userId = getArguments().getString(ARG_USER_ID);
         boolean localMultiplayer = getArguments().getBoolean(ARG_LOCAL_MULTIPLAYER);
-        mModel = Model.newFromUserId(userId);
+        mModel = ((MainActivity)getActivity()).getModel();
         setHasOptionsMenu(true);
         getActivity().setTitle(R.string.app_name);
         

@@ -16,6 +16,12 @@
 
 package ca.thurn.noughts.android;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.xtext.xbase.lib.Procedures;
+
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -27,8 +33,9 @@ import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import ca.thurn.noughts.shared.Game;
+import ca.thurn.noughts.shared.Model;
 
 /**
  * This example illustrates a common usage of the DrawerLayout widget
@@ -61,25 +68,32 @@ public class MainActivity extends Activity {
   private DrawerLayout mDrawerLayout;
   private ListView mDrawerList;
   private ActionBarDrawerToggle mDrawerToggle;
-  private String[] mGameNames;
+  private Model mModel;
+  private GameListAdapter mGameListAdapter;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    mGameNames = getResources().getStringArray(R.array.games_array);
     mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
     mDrawerList = (ListView) findViewById(R.id.left_drawer);
 
     // set a custom shadow that overlays the main content when the drawer opens
     mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, Gravity.START);
 
-    // set up the drawer's list view with items and click listener
-    mDrawerList.setAdapter(new ArrayAdapter<String>(this,
-        R.layout.drawer_list_item, mGameNames));
+    mModel = Model.newFromUserId("12345");
+    mGameListAdapter = new GameListAdapter(this, R.layout.drawer_list_item, new LinkedList<Game>(), mModel);
+    mModel.addGameListChangeListener(new Procedures.Procedure1<Map<String, Game>>() {
+      @Override
+      public void apply(Map<String, Game> games) {
+        mGameListAdapter.clear();
+        mGameListAdapter.addAll(games.values());
+      }
+    });
+    mDrawerList.setAdapter(mGameListAdapter);
     mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-
+    
     // enable ActionBar app icon to behave as action to toggle nav drawer
     getActionBar().setDisplayHomeAsUpEnabled(true);
     getActionBar().setHomeButtonEnabled(true);
@@ -95,11 +109,12 @@ public class MainActivity extends Activity {
         );
     mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-    MainActivity.switchToFragment(this, new NewGamePromoFragment(), false);
+    switchToFragment(new NewGamePromoFragment(), false);
     
     if (savedInstanceState == null) {
       // TODO(dthurn): select previous menu item
     }
+
   }
 
   @Override
@@ -140,13 +155,17 @@ public class MainActivity extends Activity {
     mDrawerToggle.onConfigurationChanged(newConfig);
   }
   
-  public static void switchToFragment(Activity activity, Fragment fragment,
+  public void switchToFragment(Fragment fragment,
       boolean addToBackStack) {
-    FragmentTransaction transaction = activity.getFragmentManager().beginTransaction();
+    FragmentTransaction transaction = getFragmentManager().beginTransaction();
     transaction.replace(R.id.content_frame, fragment);
     if (addToBackStack) {
       transaction.addToBackStack(null);
     }
     transaction.commit();
+  }
+  
+  public Model getModel() {
+    return mModel;
   }
 }

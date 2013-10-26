@@ -12,7 +12,8 @@ class Model implements ChildEventListener {
   @Property val Map<String, Game> games
   @Property val Callbacks<Game> gameCallbacks
   val Map<String, List<Procedures.Procedure1<Game>>> _gameChangeListeners
-
+  val List<Procedures.Procedure1<Map<String, Game>>> _gameListChangeListeners
+  
   private new(String userId) {
     this(userId, new Firebase("https://gwt.firebaseio.com/"))
   }
@@ -28,6 +29,7 @@ class Model implements ChildEventListener {
       [ map | return new Game(map)]
     )
     _gameChangeListeners = newHashMap()
+    _gameListChangeListeners = newArrayList()
     _firebase.child("games").addChildEventListener(this)
   }
   
@@ -92,6 +94,15 @@ class Model implements ChildEventListener {
     _gameChangeListeners.get(gameId).add(listener)
   }
   
+  /**
+   * Adds a listener which will be notified every time the game list is changed.
+   * 
+   * @param listener The function to call with the new state of the game database.
+   */
+  def addGameListChangeListener(Procedures.Procedure1<Map<String, Game>> listener) {
+    _gameListChangeListeners.add(listener)
+  }
+  
   def getGame(DataSnapshot snapshot) {
     return new Game(snapshot.getValue() as Map<String, Object>)
   }
@@ -99,16 +110,26 @@ class Model implements ChildEventListener {
   override onChildAdded(DataSnapshot snapshot, String prev) {
     val game = getGame(snapshot)
     _games.put(game.id, game)
+    for (listener : _gameListChangeListeners) {
+      listener.apply(_games)
+    }
     if (_gameChangeListeners.containsKey(game.id)) {
-      _gameChangeListeners.get(game.id).forEach([listener| listener.apply(game)])
+      for (listener : _gameChangeListeners.get(game.id)) {
+        listener.apply(game)
+      }
     }
   }
   
   override onChildChanged(DataSnapshot snapshot, String prev) {
     val game = getGame(snapshot)
     _games.put(game.id, game)
+    for (listener : _gameListChangeListeners) {
+      listener.apply(_games)
+    }
     if (_gameChangeListeners.containsKey(game.id)) {
-      _gameChangeListeners.get(game.id).forEach([listener| listener.apply(game)])
+      for (listener : _gameChangeListeners.get(game.id)) {
+        listener.apply(game)
+      }
     }
   }
   
@@ -126,8 +147,7 @@ class Model implements ChildEventListener {
    * Partially create a new game with no opponent specified yet, returning the
    * game ID.
    *
-   * @param localMultiplayer Optionally, sets whether the game is a local
-   *     multiplayer game.
+   * @param localMultiplayer Sets whether the game is a local multiplayer game.
    * @param userProfile Optionally, the profile of the current user.
    * @param opponentProfile Optionally, the profile of the opponent
    *     for this game.
@@ -368,6 +388,12 @@ class Model implements ChildEventListener {
     return null
   }
   
+  /**
+   * Undoes the player's previous command. Throws an exception if there's no
+   * previous command to undo.
+   * 
+   * @param game The game to undo the previous command of.
+   */
   def undoCommand(Game game) {
     ensureIsCurrentPlayer(game)
     if (game.currentAction.commands.size() == 0) {
@@ -380,6 +406,12 @@ class Model implements ChildEventListener {
     ])
   }
   
+  /**
+   * Re-does the player's previously undone command. Throws an exception if there's no
+   * previous command to redo.
+   * 
+   * @param game The game to undo the previous command of.
+   */
   def redoCommand(Game game) {
     ensureIsCurrentPlayer(game)
     if (game.currentAction.futureCommands.size() == 0) {
@@ -391,8 +423,25 @@ class Model implements ChildEventListener {
       action.commands.add(command)
     ])
   }
-
-  def die(String message) {
+  
+  /**
+   * @param game The game, assumed to be 2-player game.
+   * @return The ID of your opponent in this game, or null if there isn't one.
+   */
+  def getOpponentId(Game game) {
+    val result = game.players.findFirst([player | player != _userId])
+    if (result == null) {
+      throw new NullPointerException("No opponent found")
+    }
+    return result
+  }
+  
+  /**
+   * Throws an exception.
+   * 
+   * @param message Exception message.
+   */
+  def private die(String message) {
     throw new NoughtsException(message)
   }
 

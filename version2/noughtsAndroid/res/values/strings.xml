@@ -33,4 +33,6 @@
     <string name="invite_via_email">Invite via Email</string>
     <string name="cancel">Cancel</string>
     <string name="new_game_promo">"Noughts and Crosses", also known as "Tic-Tac-Toe" and "Xs and Os", is a game for two players.</string>
+    <string name="game_no_opponent">vs. (No Opponent)</string>
+    <string name="game_anonymous">vs. Anonymous</string>
 </resources>

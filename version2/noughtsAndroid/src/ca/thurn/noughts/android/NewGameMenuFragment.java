@@ -61,11 +61,10 @@ public class NewGameMenuFragment extends ListFragment {
       case LOCAL_MULTIPLAYER: {
         Fragment fragment = new GameFragment();
         Bundle args = new Bundle();
-        args.putString(GameFragment.ARG_USER_ID, "12345");
         args.putBoolean(GameFragment.ARG_SHOULD_CREATE_GAME, true);
         args.putBoolean(GameFragment.ARG_LOCAL_MULTIPLAYER, true);
         fragment.setArguments(args);
-        MainActivity.switchToFragment(getActivity(), fragment, true);
+        ((MainActivity)getActivity()).switchToFragment(fragment, true);
         break;
       }
       case CANCEL: {
