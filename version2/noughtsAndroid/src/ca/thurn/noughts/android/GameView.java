@@ -3,6 +3,7 @@ package ca.thurn.noughts.android;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -26,6 +27,7 @@ public class GameView extends View implements OnTouchListener {
     super(context, attrs);
     setOnTouchListener(this);
     try {
+      Log.e("dthurn", ">>>>> GameView loading assets");
       mBackground = SVG.getFromResource(getContext(), R.raw.background);
       mXAsset = SVG.getFromResource(getContext(), R.raw.x);
       mOAsset = SVG.getFromResource(getContext(), R.raw.o);

@@ -17,7 +17,6 @@
 package ca.thurn.noughts.android;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.xtext.xbase.lib.Procedures;
@@ -29,7 +28,9 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -70,7 +71,8 @@ public class MainActivity extends Activity {
   private ActionBarDrawerToggle mDrawerToggle;
   private Model mModel;
   private GameListAdapter mGameListAdapter;
-
+  private GameView mGameView;
+  
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -108,6 +110,7 @@ public class MainActivity extends Activity {
         R.string.drawer_close  /* "close drawer" description for accessibility */
         );
     mDrawerLayout.setDrawerListener(mDrawerToggle);
+    mGameView = (GameView)LayoutInflater.from(this).inflate(R.layout.fragment_game, null, false);    
 
     switchToFragment(new NewGamePromoFragment(), false);
     
@@ -115,6 +118,10 @@ public class MainActivity extends Activity {
       // TODO(dthurn): select previous menu item
     }
 
+  }
+  
+  public GameView getGameView() {
+    return mGameView;
   }
 
   @Override
@@ -132,7 +139,13 @@ public class MainActivity extends Activity {
   private class DrawerItemClickListener implements ListView.OnItemClickListener {
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-      // do nothing
+      mDrawerLayout.closeDrawer(Gravity.LEFT);      
+      String gameId = mGameListAdapter.getItem(position).getId();
+      Fragment fragment = new GameFragment();
+      Bundle args = new Bundle();
+      args.putString(GameFragment.ARG_GAME_ID, gameId);
+      fragment.setArguments(args);
+      switchToFragment(fragment, true);
     }
   }
 

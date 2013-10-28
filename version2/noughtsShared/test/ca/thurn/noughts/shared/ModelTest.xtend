@@ -89,13 +89,9 @@ class ModelTest extends SharedGWTTestCase {
       assertEquals(0, g.actions.size())
       finished()
     ])
-    val g = _model.newGame(true, null, null)
-    assertTrue(g.players.contains(_userId))
-    assertEquals(Model.X_PLAYER, g.currentPlayerNumber)
-    assertTrue(g.lastModified > 0L)
-    assertTrue(g.localMultiplayer)
-    assertFalse(g.gameOver)
-    assertEquals(0, g.actions.size())
+    val id = _model.newGame(true, null, null)
+    assertNotNull(id)
+    assertTrue(id != "")
     endAsyncTestBlock()
   }
   

@@ -1,5 +1,7 @@
 package ca.thurn.noughts.android;
 
+import java.util.logging.LogManager;
+
 import org.eclipse.xtext.xbase.lib.Procedures;
 
 import android.app.Fragment;
@@ -37,32 +39,31 @@ public class GameFragment extends Fragment implements CommandHandler{
     // Reference to the top-level fragment_game layout:
     private GameView mGameView;
 
-    public GameFragment() {}
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mGameView = (GameView)inflater.inflate(R.layout.fragment_game, container, false);
-        mGameView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        mGameView = ((MainActivity)getActivity()).getGameView();
+        //mGameView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         mGameView.setCommandHandler(this);
         boolean localMultiplayer = getArguments().getBoolean(ARG_LOCAL_MULTIPLAYER);
         mModel = ((MainActivity)getActivity()).getModel();
         setHasOptionsMenu(true);
         getActivity().setTitle(R.string.app_name);
-        
         boolean createNewGame = getArguments().getBoolean(ARG_SHOULD_CREATE_GAME);
+        String gameId;
         if (createNewGame) {
-          mGame = mModel.newGame(localMultiplayer, null, null);
-          mModel.addGameChangeListener(mGame.getId(), new Procedures.Procedure1<Game>() {
-            @Override
-            public void apply(Game game) {
-              onGameUpdate(game);
-            }
-          });
-          onGameUpdate(mGame);
+          gameId = mModel.newGame(localMultiplayer, null, null);
         } else {
-          throw new RuntimeException("wtf");
+          gameId = getArguments().getString(ARG_GAME_ID);
         }
+
+        mModel.addGameChangeListener(gameId, new Procedures.Procedure1<Game>() {
+          @Override
+          public void apply(Game game) {
+            onGameUpdate(game);
+          }
+        });
+
         return mGameView;
     }
     
@@ -128,7 +129,6 @@ public class GameFragment extends Fragment implements CommandHandler{
     }
     
     public void onGameUpdate(Game game) {
-      Log.e("dthurn", ">>>>> onGameUpdate " + game);
       mGame = game;
       mGameView.updateGame(game);
       getActivity().invalidateOptionsMenu();

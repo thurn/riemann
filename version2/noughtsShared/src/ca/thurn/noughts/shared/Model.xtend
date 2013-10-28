@@ -82,7 +82,8 @@ class Model implements ChildEventListener {
   
   /**
    * Adds a listener which will be notified every time a specified gameId is
-   * modified.
+   * modified. The listener will also be called with the current state of the
+   * game upon being added.
    * 
    * @param gameId The ID of the game to listen for changes to.
    * @param listener The function to call when changes happen.
@@ -92,6 +93,9 @@ class Model implements ChildEventListener {
       _gameChangeListeners.put(gameId, newArrayList())
     }
     _gameChangeListeners.get(gameId).add(listener)
+    if (games.containsKey(gameId)) {
+      listener.apply(games.get(gameId));
+    }
   }
   
   /**
@@ -103,7 +107,7 @@ class Model implements ChildEventListener {
     _gameListChangeListeners.add(listener)
   }
   
-  def getGame(DataSnapshot snapshot) {
+  def private getGame(DataSnapshot snapshot) {
     return new Game(snapshot.getValue() as Map<String, Object>)
   }
   
@@ -151,7 +155,7 @@ class Model implements ChildEventListener {
    * @param userProfile Optionally, the profile of the current user.
    * @param opponentProfile Optionally, the profile of the opponent
    *     for this game.
-   * @return The newly created game.
+   * @return The newly created game's ID.
    */
   def newGame(boolean localMultiplayer, Map<String, String> userProfile,
       Map<String, String> opponentProfile) {
@@ -180,7 +184,7 @@ class Model implements ChildEventListener {
     }
 
     ref.setValue(game.serialize())
-    return game
+    return game.id
   }
   
   /**
